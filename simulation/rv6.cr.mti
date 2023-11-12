@@ -1,0 +1,113 @@
+/home/kiclu/projects/rv/hdl/bpu.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/bpu.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module bpu
+
+Top level modules:
+	bpu
+
+} {} {}} /home/kiclu/projects/rv/hdl/hart.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/hart.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module hart
+
+Top level modules:
+	hart
+
+} {} {}} /home/kiclu/projects/rv/hdl/cu.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/cu.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module cu
+
+Top level modules:
+	cu
+
+} {} {}} /home/kiclu/projects/rv/hdl/rv64g.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/rv64g.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module rv64g
+
+Top level modules:
+	rv64g
+
+} {} {}} /home/kiclu/projects/rv/hdl/hart_cache.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/hart_cache.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module hart_cache
+
+Top level modules:
+	hart_cache
+
+} {} {}} /home/kiclu/projects/rv/test/tb_pc.sv {1 {vlog -work work -sv -stats=none /home/kiclu/projects/rv/test/tb_pc.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module tb_pc
+
+Top level modules:
+	tb_pc
+
+} {} {}} /home/kiclu/projects/rv/hdl/pc.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/pc.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module pc
+
+Top level modules:
+	pc
+
+} {} {}} /home/kiclu/projects/rv/hdl/pd.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/pd.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module pd
+
+Top level modules:
+	pd
+
+} {} {}} /home/kiclu/projects/rv/test/tb_if.sv {1 {vlog -work work -sv -stats=none /home/kiclu/projects/rv/test/tb_if.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module tb_if
+
+Top level modules:
+	tb_if
+
+} {} {}} /home/kiclu/projects/rv/hdl/imem.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/imem.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module imem
+
+Top level modules:
+	imem
+
+} {} {}} /home/kiclu/projects/rv/hdl/alu.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/alu.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module alu
+
+Top level modules:
+	alu
+
+} {} {}} /home/kiclu/projects/rv/test/tb_dmem.sv {1 {vlog -work work -sv -stats=none /home/kiclu/projects/rv/test/tb_dmem.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module tb_dmem
+
+Top level modules:
+	tb_dmem
+
+} {} {}} /home/kiclu/projects/rv/hdl/dmem.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/dmem.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module dmem
+
+Top level modules:
+	dmem
+
+} {} {}} /home/kiclu/projects/rv/test/tb_br_alu.sv {1 {vlog -work work -sv -stats=none /home/kiclu/projects/rv/test/tb_br_alu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module tb_br_alu
+
+Top level modules:
+	tb_br_alu
+
+} {} {}} /home/kiclu/projects/rv/hdl/br_alu.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/br_alu.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module br_alu
+
+Top level modules:
+	br_alu
+
+} {} {}} /home/kiclu/projects/rv/hdl/regfile.v {1 {vlog -work work -vlog01compat -stats=none /home/kiclu/projects/rv/hdl/regfile.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module regfile
+
+Top level modules:
+	regfile
+
+} {} {}}

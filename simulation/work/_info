@@ -1,0 +1,412 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+d/home/kiclu
+valu
+Z0 !s110 1699830440
+!i10b 1
+!s100 5F5VY=d]h6g1XB98l8]I60
+Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
+Ik_KG[aWz`6hH^3i?i[LHL3
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+Z3 d/home/kiclu/projects/rv/simulation
+w1699745364
+8/home/kiclu/projects/rv/hdl/alu.v
+F/home/kiclu/projects/rv/hdl/alu.v
+!i122 16
+L0 19 45
+Z4 OV;L;2020.1;71
+r1
+!s85 0
+31
+!s108 1699830439.000000
+!s107 /home/kiclu/projects/rv/hdl/alu.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/alu.v|
+!i113 1
+Z5 o-work work -vlog01compat
+Z6 tCvgOpt 0
+vbpu
+R0
+!i10b 1
+!s100 ;65XZE45[fbi]lg[5XJ[92
+R1
+IYOMfcRd9hl=U7id3_SG:h2
+R2
+R3
+w1699747807
+8/home/kiclu/projects/rv/hdl/bpu.v
+F/home/kiclu/projects/rv/hdl/bpu.v
+!i122 17
+Z7 L0 19 34
+R4
+r1
+!s85 0
+31
+Z8 !s108 1699830440.000000
+!s107 /home/kiclu/projects/rv/hdl/bpu.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/bpu.v|
+!i113 1
+R5
+R6
+vbr_alu
+R0
+!i10b 1
+!s100 dzN`;;1U;X?b4?VoJcciz2
+R1
+IV9[bQ_hEg2fE8ZOUe?AYI2
+R2
+R3
+w1699828772
+8/home/kiclu/projects/rv/hdl/br_alu.v
+F/home/kiclu/projects/rv/hdl/br_alu.v
+!i122 18
+L0 19 51
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/br_alu.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/br_alu.v|
+!i113 1
+R5
+R6
+vcu
+R0
+!i10b 1
+!s100 l=>ElOE@];olSnAPh?VOF3
+R1
+I;bhEjA>6S3mC;:RSGigUb2
+R2
+R3
+w1699811905
+8/home/kiclu/projects/rv/hdl/cu.v
+F/home/kiclu/projects/rv/hdl/cu.v
+!i122 19
+L0 19 65
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/cu.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/cu.v|
+!i113 1
+R5
+R6
+vdmem
+R0
+!i10b 1
+!s100 lR`>Rf>g>kFiaKT1Bc:HQ1
+R1
+I2lD?Liz0REdG2a_o]Lf1D3
+R2
+R3
+w1699811561
+8/home/kiclu/projects/rv/hdl/dmem.v
+F/home/kiclu/projects/rv/hdl/dmem.v
+!i122 20
+L0 19 195
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/dmem.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/dmem.v|
+!i113 1
+R5
+R6
+vhart
+R0
+!i10b 1
+!s100 ECJY3XUkNzK8509[:G<ze2
+R1
+IK1Ub0Rb<;0@C[kYNY`egS1
+R2
+R3
+w1699829138
+8/home/kiclu/projects/rv/hdl/hart.v
+F/home/kiclu/projects/rv/hdl/hart.v
+!i122 21
+L0 19 366
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/hart.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/hart.v|
+!i113 1
+R5
+R6
+vhart_cache
+R0
+!i10b 1
+!s100 n]E]WNdVf3R3f3B2nn1cm3
+R1
+IQBE5Ni_TOL0lCaVT[1dUg1
+R2
+R3
+w1699588371
+8/home/kiclu/projects/rv/hdl/hart_cache.v
+F/home/kiclu/projects/rv/hdl/hart_cache.v
+!i122 22
+Z9 L0 19 6
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/hart_cache.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/hart_cache.v|
+!i113 1
+R5
+R6
+vimem
+!s110 1699831132
+!i10b 1
+!s100 Xe;YJ@UKY_Gm0B9zN^:TU2
+R1
+IJi@=nU5]Enm8V@m[C>YUz0
+R2
+R3
+w1699830733
+8/home/kiclu/projects/rv/hdl/imem.v
+F/home/kiclu/projects/rv/hdl/imem.v
+!i122 33
+L0 19 102
+R4
+r1
+!s85 0
+31
+!s108 1699831132.000000
+!s107 /home/kiclu/projects/rv/hdl/imem.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/imem.v|
+!i113 1
+R5
+R6
+vpc
+R0
+!i10b 1
+!s100 ;gGIJFGXF@95Cco:8_V8]1
+R1
+IKaee=k9_5b_GjgLb]Sb4Q0
+R2
+R3
+w1699814729
+8/home/kiclu/projects/rv/hdl/pc.v
+F/home/kiclu/projects/rv/hdl/pc.v
+!i122 23
+R7
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/pc.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/pc.v|
+!i113 1
+R5
+R6
+vpd
+R0
+!i10b 1
+!s100 bZhIA@<O=bEeIjWI<EM@[1
+R1
+Id`;87l`4ALJm2Qo40eY1c2
+R2
+R3
+w1699788342
+8/home/kiclu/projects/rv/hdl/pd.v
+F/home/kiclu/projects/rv/hdl/pd.v
+!i122 24
+L0 19 24
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/pd.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/pd.v|
+!i113 1
+R5
+R6
+vregfile
+R0
+!i10b 1
+!s100 K;=WlEI`X]O>OJDJUR^221
+R1
+IoHDalj?Y7XW?2Pk1]h8DZ0
+R2
+R3
+w1699745445
+8/home/kiclu/projects/rv/hdl/regfile.v
+F/home/kiclu/projects/rv/hdl/regfile.v
+!i122 25
+L0 19 22
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/regfile.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/regfile.v|
+!i113 1
+R5
+R6
+vrv64g
+R0
+!i10b 1
+!s100 GEVa5Nz`k1Jd;MW^5E;BH1
+R1
+InN@oN9::h>=k?0i3@o_WZ1
+R2
+R3
+w1699588392
+8/home/kiclu/projects/rv/hdl/rv64g.v
+F/home/kiclu/projects/rv/hdl/rv64g.v
+!i122 26
+R9
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/hdl/rv64g.v|
+!s90 -reportprogress|300|-work|work|-vlog01compat|-stats=none|/home/kiclu/projects/rv/hdl/rv64g.v|
+!i113 1
+R5
+R6
+vtb_br_alu
+Z10 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+R0
+!i10b 1
+!s100 <Ij7I0CY>B4iCN1mhbZhI2
+R1
+II8KYL`eA?:3bMzzIz:Llg1
+R2
+S1
+R3
+w1699588466
+8/home/kiclu/projects/rv/test/tb_br_alu.sv
+F/home/kiclu/projects/rv/test/tb_br_alu.sv
+!i122 27
+L0 20 3
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/test/tb_br_alu.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|/home/kiclu/projects/rv/test/tb_br_alu.sv|
+!i113 1
+Z11 o-work work -sv
+R6
+vtb_dmem
+R10
+Z12 !s110 1699830441
+!i10b 1
+!s100 OTN]fb1EGgd]AdQj39G9J0
+R1
+I`dab9`3;Hojmk7B=H>QSG0
+R2
+S1
+R3
+w1699588439
+8/home/kiclu/projects/rv/test/tb_dmem.sv
+F/home/kiclu/projects/rv/test/tb_dmem.sv
+!i122 28
+L0 20 112
+R4
+r1
+!s85 0
+31
+R8
+!s107 /home/kiclu/projects/rv/test/tb_dmem.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|/home/kiclu/projects/rv/test/tb_dmem.sv|
+!i113 1
+R11
+R6
+vtb_hart
+R10
+!s110 1699831424
+!i10b 1
+!s100 U8YoidICXYf_o=2>dgPbK1
+R1
+IQ2J=kRRjTmRD@J[DHhd<62
+R2
+S1
+R3
+w1699831416
+8/home/kiclu/projects/rv/test/tb_hart.sv
+F/home/kiclu/projects/rv/test/tb_hart.sv
+!i122 36
+L0 20 100
+R4
+r1
+!s85 0
+31
+!s108 1699831424.000000
+!s107 /home/kiclu/projects/rv/test/tb_hart.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|/home/kiclu/projects/rv/test/tb_hart.sv|
+!i113 1
+R11
+R6
+vtb_if
+R10
+R12
+!i10b 1
+!s100 VMi9MOhT4zRh5lObi_OUL3
+R1
+IA0G1`SbkYh:I9OWj<GoZG2
+R2
+S1
+R3
+w1699712990
+8/home/kiclu/projects/rv/test/tb_if.sv
+F/home/kiclu/projects/rv/test/tb_if.sv
+!i122 30
+L0 20 80
+R4
+r1
+!s85 0
+31
+Z13 !s108 1699830441.000000
+!s107 /home/kiclu/projects/rv/test/tb_if.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|/home/kiclu/projects/rv/test/tb_if.sv|
+!i113 1
+R11
+R6
+vtb_pc
+R10
+R12
+!i10b 1
+!s100 QNR:FLn9F?7MQ2E3OI<;`1
+R1
+I64g6FfQ;]GA8eaBmIih<=0
+R2
+S1
+R3
+w1699588430
+8/home/kiclu/projects/rv/test/tb_pc.sv
+F/home/kiclu/projects/rv/test/tb_pc.sv
+!i122 31
+L0 20 81
+R4
+r1
+!s85 0
+31
+R13
+!s107 /home/kiclu/projects/rv/test/tb_pc.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|/home/kiclu/projects/rv/test/tb_pc.sv|
+!i113 1
+R11
+R6
