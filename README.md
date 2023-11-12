@@ -1,6 +1,4 @@
-# RV6
-## Early development
-
+# RV6 (W.I.P)
 Multi-core RISC-V application processor.
 
 ## License
