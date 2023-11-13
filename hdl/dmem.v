@@ -95,7 +95,6 @@ module dmem(
     end
 
     // load on miss
-    //reg b_wr_l;
     always @(posedge clk, negedge clr_n) begin
         if(!clr_n) clr_v();
         // on cache miss and valid data bus, load data into cache line
@@ -180,14 +179,13 @@ module dmem(
                 endcase
             end
         end
-        //b_wr_l <= wr && b_dv && b_rd;
     end
-	 
-	 wire b_wr_l = wr && b_dv && b_rd;
 
     // control signal generation
     reg b_wr_h;
     reg b_wr_h_prev;
+    wire b_wr_l = wr && b_dv && b_rd;
+
     always @(posedge clk) begin
         b_wr_h_prev <= wr && hit && !b_rd;
         b_wr_h      <= wr && hit && !b_rd && !b_wr_h_prev;
