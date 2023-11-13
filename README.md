@@ -1,6 +1,4 @@
 # RV6
-## Early development
-
 Multi-core RISC-V application processor.
 
 ## License
