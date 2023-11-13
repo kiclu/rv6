@@ -64,15 +64,15 @@ module dmem(
 
     assign b_addr = {addr[63:7], 7'b0};
 
-
     // check for cache hit and set mux
     reg hit;
     always @(*) begin : cache_check
         integer e;
         hit <= 1'b0;
         for(e = 0; e < 4; e = e + 1) begin
+            set_mux[e] <= 2'b00;
             if(tag[addr_set][e] == addr_tag && v[addr_set][e]) begin
-                set_mux[addr_set] <= e;
+                set_mux[addr_set] <= e[1:0];
                 hit <= 1'b1;
             end
         end
@@ -95,7 +95,7 @@ module dmem(
     end
 
     // load on miss
-    reg b_wr_l;
+    //reg b_wr_l;
     always @(posedge clk, negedge clr_n) begin
         if(!clr_n) clr_v();
         // on cache miss and valid data bus, load data into cache line
@@ -180,8 +180,10 @@ module dmem(
                 endcase
             end
         end
-        b_wr_l <= wr && b_dv && b_rd;
+        //b_wr_l <= wr && b_dv && b_rd;
     end
+	 
+	 wire b_wr_l = wr && b_dv && b_rd;
 
     // control signal generation
     reg b_wr_h;

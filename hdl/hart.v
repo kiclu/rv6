@@ -219,15 +219,14 @@ module hart(
     always @(*) begin
         case(bpd_ir[6:0])
             // I-type
-            7'b0000011, 7'b0010011, 7'b1100111: s_mux_imm <= 2'b00;
+            7'b0000011, 7'b0010011: s_mux_imm <= 2'b00;
             // S-type
-            7'b0100011:                         s_mux_imm <= 2'b01;
+            7'b0100011:             s_mux_imm <= 2'b01;
             // U-type
-            7'b0110111, 7'b0010111:             s_mux_imm <= 2'b10;
+            7'b0110111, 7'b0010111: s_mux_imm <= 2'b10;
             // J-type
-            7'b1101111, 7'b1100111:             s_mux_imm <= 2'b11;
-
-            default:                            s_mux_imm <= 2'b00;
+            7'b1101111, 7'b1100111: s_mux_imm <= 2'b11;
+            default: s_mux_imm <= 2'b00;
         endcase
     end
 
