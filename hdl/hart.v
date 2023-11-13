@@ -53,9 +53,10 @@ module hart(
     wire [12:0] pr_offs;
 
     wire jalr_taken;
-    wire br_taken;
     wire jal_taken;
     wire pr_taken;
+
+    wire pr_miss;
 
     wire stall_if;
 
@@ -225,6 +226,8 @@ module hart(
             7'b0110111, 7'b0010111:             s_mux_imm <= 2'b10;
             // J-type
             7'b1101111, 7'b1100111:             s_mux_imm <= 2'b11;
+
+            default:                            s_mux_imm <= 2'b00;
         endcase
     end
 
@@ -255,7 +258,7 @@ module hart(
     /* EX */
 
     // TODO: add forwarding
-    wire [63:0] alu_mx_a [0:3];
+    wire [63:0] alu_mx_a [0:1];
     assign alu_mx_a[0] = bdx_r1;
     assign alu_mx_a[1] = bdx_pc;
     wire [1:0] s_alu_mx_a;
@@ -263,7 +266,8 @@ module hart(
     assign s_alu_mx_a[1] = 1'b0;
     assign s_alu_mx_a[0] = (bdx_ir == 7'b1101111) || (bdx_ir == 7'b1101111);
 
-    wire [63:0] alu_mx_b [0:3];
+    // TODO: add forwarding
+    wire [63:0] alu_mx_b [0:1];
     assign alu_mx_b[0] = bdx_imm;
     assign alu_mx_b[1] = bdx_r2;
     wire [1:0] s_alu_mx_b;

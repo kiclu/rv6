@@ -47,8 +47,9 @@ module imem(
         integer e;
         hit <= 1'b0;
         for(e = 0; e < 4; e = e + 1) begin
+            set_mux[e] <= 2'b0;
             if(tag[addr_set][e] == addr_tag && v[addr_set][e]) begin
-                set_mux[addr_set] <= e;
+                set_mux[addr_set] <= e[1:0];
                 hit <= 1'b1;
             end
         end

@@ -23,8 +23,8 @@ module br_alu(
     input      [63:0] r1,
     input      [63:0] r2,
 
-    output reg        jalr_taken,
-    output reg [63:0] jalr_addr,
+    output            jalr_taken,
+    output     [63:0] jalr_addr,
 
     output            pr_miss,
     output     [63:0] br_addr,
@@ -32,38 +32,30 @@ module br_alu(
     input             pr_taken
 );
 
-    wire signed [63:0] r1s = r1;
-    wire signed [63:0] r2s = r2;
+    // JALR
+    assign jalr_taken = ir[6:0] == 7'b1100111;
+    assign jalr_addr  = r1 + {{52{ir[31]}}, ir[31:21], 1'b0};
 
+    // branch
     wire [63:0] br_offs = {{51{ir[31]}}, ir[31], ir[7], ir[30:25], ir[11:8], 1'b0};
 
-    reg brc;
-
-    assign pr_miss = pr_taken != brc;
+    reg brc = 0;
+    wire branch    = ir[6:0] == 7'b1100011;
+    assign pr_miss = (pr_taken != brc) && branch;
     assign br_addr = brc ? pc + br_offs : pc + 4;
 
+    wire signed [63:0] r1s = r1;
+    wire signed [63:0] r2s = r2;
     always @(*) begin
-        jalr_taken <= 0;
-        brc        <= 0;
-
-        // branch
-        if(ir[6:0] == 7'b1100011) begin
-            case(ir[14:12])
-                3'b000:  brc <= (r1   ==  r2);
-                3'b001:  brc <= (r1   !=  r2);
-                3'b100:  brc <= (r1s  <   r2s);
-                3'b101:  brc <= (r1s  >=  r2s);
-                3'b110:  brc <= (r1   <   r2);
-                3'b111:  brc <= (r1   >=  r2);
-                default: brc <= 0;
-            endcase
-        end
-        // JALR
-        else if(ir[6:0] == 7'b1100111) begin
-            jalr_addr    <= r1 + {{52{ir[31]}}, ir[31:20]};
-            jalr_addr[0] <= 1'b0;
-            jalr_taken   <= 1;
-        end
+        case(ir[14:12])
+            3'b000:  brc <= (r1   ==  r2);
+            3'b001:  brc <= (r1   !=  r2);
+            3'b100:  brc <= (r1s  <   r2s);
+            3'b101:  brc <= (r1s  >=  r2s);
+            3'b110:  brc <= (r1   <   r2);
+            3'b111:  brc <= (r1   >=  r2);
+            default: brc <= 0;
+        endcase
     end
 
 endmodule

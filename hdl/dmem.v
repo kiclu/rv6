@@ -52,7 +52,7 @@ module dmem(
     reg           v    [0:3][0:3];
 
     reg    [ 1:0] set_mux  [0:3];
-    wire   [63:0] data_mux [0:7];
+    wire   [63:0] data_mux [0:6];
     assign data_mux[0] = {{56{data[addr_set][set_mux[addr_set]][8*addr_offs+ 7]}}, data[addr_set][set_mux[addr_set]][8*addr_offs+ 7 -:  8]};
     assign data_mux[1] = {{48{data[addr_set][set_mux[addr_set]][8*addr_offs+15]}}, data[addr_set][set_mux[addr_set]][8*addr_offs+15 -: 16]};
     assign data_mux[2] = {{32{data[addr_set][set_mux[addr_set]][8*addr_offs+32]}}, data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32]};
@@ -64,29 +64,6 @@ module dmem(
 
     assign b_addr = {addr[63:7], 7'b0};
 
-    // data write-through
-    always @(posedge clk) begin
-        if(wr) begin
-            case(len)
-                3'b000: begin
-                    b_data_out[8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                    data[addr_set][set_mux[addr_set]][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                end
-                3'b001: begin
-                    b_data_out[8*addr_offs+15 -: 16] <= data_in[15:0];
-                    data[addr_set][set_mux[addr_set]][8*addr_offs+15 -: 16] <= data_in[15:0];
-                end
-                3'b010: begin
-                    b_data_out[8*addr_offs+31 -: 32] <= data_in[31:0];
-                    data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32] <= data_in[31:0];
-                end
-                3'b011: begin
-                    b_data_out[8*addr_offs+63 -: 64] <= data_in[63:0];
-                    data[addr_set][set_mux[addr_set]][8*addr_offs+63 -: 64] <= data_in[63:0];
-                end
-            endcase
-        end
-    end
 
     // check for cache hit and set mux
     reg hit;
@@ -179,11 +156,34 @@ module dmem(
                     v[addr_set][3]    <= 1'b1;
                 end
             end
+
+            // data write-through
             b_data_out <= b_data_in;
+            if(wr) begin
+                case(len)
+                    3'b000: begin
+                        b_data_out[8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
+                    end
+                    3'b001: begin
+                        b_data_out[8*addr_offs+15 -: 16] <= data_in[15:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs+15 -: 16] <= data_in[15:0];
+                    end
+                    3'b010: begin
+                        b_data_out[8*addr_offs+31 -: 32] <= data_in[31:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32] <= data_in[31:0];
+                    end
+                    3'b011: begin
+                        b_data_out[8*addr_offs+63 -: 64] <= data_in[63:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs+63 -: 64] <= data_in[63:0];
+                    end
+                endcase
+            end
         end
         b_wr_l <= wr && b_dv && b_rd;
     end
 
+    // control signal generation
     reg b_wr_h;
     reg b_wr_h_prev;
     always @(posedge clk) begin

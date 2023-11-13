@@ -51,7 +51,7 @@ module cu(
     wire wr_mem = (ir_mem[6:0] != 7'b1100011) && (ir_mem[6:0] != 7'b0100011);
     wire wr_wb  = (ir_wb [6:0] != 7'b1100011) && (ir_wb [6:0] != 7'b0100011);
 
-    assign stall_all = !rst_n || b_rd_i || b_rd || b_wr;
+    wire stall_all = !rst_n || b_rd_i || b_rd || b_wr;
 
     reg  [1:0] stall_c;
 

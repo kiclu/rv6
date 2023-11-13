@@ -28,17 +28,18 @@ module alu(
 
     always @(*) begin
         if(ir[6:0] == 7'b0010011) begin
-            case({ir[30], ir[14:12]})
-                4'b?000: alu_out <= a + b;
-                4'b?010: alu_out <= sa < sb;
-                4'b?011: alu_out <= a < b;
-                4'b?100: alu_out <= a ^ b;
-                4'b?110: alu_out <= a | b;
-                4'b?111: alu_out <= a & b;
+            casez({ir[30], ir[14:12]})
+                4'bz000: alu_out <= a + b;
+                4'bz010: alu_out <= sa < sb;
+                4'bz011: alu_out <= a < b;
+                4'bz100: alu_out <= a ^ b;
+                4'bz110: alu_out <= a | b;
+                4'bz111: alu_out <= a & b;
 
                 4'b0001: alu_out <= a << b[5:0];
                 4'b0101: alu_out <= a >> b[5:0];
                 4'b1101: alu_out <= a >>> b[5:0];
+                default: alu_out <= a + b;
             endcase
         end
         if(ir[6:0] == 7'b0110011) begin
@@ -54,6 +55,7 @@ module alu(
 
                 4'b1000: alu_out <= a - b;
                 4'b1101: alu_out <= a >>> b[5:0];
+                default: alu_out <= a + b;
             endcase
         end
         else if(ir[6:0] == 7'b0110111) alu_out <= b;
