@@ -51,17 +51,19 @@ module dmem(
     reg  [  54:0] tag  [0:3][0:3];
     reg           v    [0:3][0:3];
 
+    // output data mux and sign/zero extend
     reg    [ 1:0] set_mux  [0:3];
     wire   [63:0] data_mux [0:6];
-    assign data_mux[0] = {{56{data[addr_set][set_mux[addr_set]][8*addr_offs+ 7]}}, data[addr_set][set_mux[addr_set]][8*addr_offs+ 7 -:  8]};
-    assign data_mux[1] = {{48{data[addr_set][set_mux[addr_set]][8*addr_offs+15]}}, data[addr_set][set_mux[addr_set]][8*addr_offs+15 -: 16]};
-    assign data_mux[2] = {{32{data[addr_set][set_mux[addr_set]][8*addr_offs+32]}}, data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32]};
-    assign data_mux[3] = data[addr_set][set_mux[addr_set]][8*addr_offs+63 -: 64];
-    assign data_mux[4] = {56'b0, data[addr_set][set_mux[addr_set]][8*addr_offs+ 7 -:  8]};
-    assign data_mux[5] = {48'b0, data[addr_set][set_mux[addr_set]][8*addr_offs+15 -: 16]};
-    assign data_mux[6] = {32'b0, data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32]};
+    assign data_mux[0] = {{56{data[addr_set][set_mux[addr_set]][8*addr_offs+ 7]}}, data[addr_set][set_mux[addr_set]][8*addr_offs +:  8]};   // byte
+    assign data_mux[1] = {{48{data[addr_set][set_mux[addr_set]][8*addr_offs+15]}}, data[addr_set][set_mux[addr_set]][8*addr_offs +: 16]};   // half word
+    assign data_mux[2] = {{32{data[addr_set][set_mux[addr_set]][8*addr_offs+31]}}, data[addr_set][set_mux[addr_set]][8*addr_offs +: 32]};   // word
+    assign data_mux[3] = data[addr_set][set_mux[addr_set]][8*addr_offs +: 64];                                                              // double word
+    assign data_mux[4] = {56'b0, data[addr_set][set_mux[addr_set]][8*addr_offs +:  8]};                                                     // unsigned byte
+    assign data_mux[5] = {48'b0, data[addr_set][set_mux[addr_set]][8*addr_offs +: 16]};                                                     // unsigned half word
+    assign data_mux[6] = {32'b0, data[addr_set][set_mux[addr_set]][8*addr_offs +: 32]};                                                     // unsigned word
     assign data_out = data_mux[len];
 
+    // external bus address
     assign b_addr = {addr[63:7], 7'b0};
 
     // check for cache hit and set mux
@@ -105,10 +107,10 @@ module dmem(
                     data[addr_set][0] <= b_data_in;
                     if(wr) begin
                         case(len)
-                            3'b000: data[addr_set][0][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                            3'b001: data[addr_set][0][8*addr_offs+15 -: 16] <= data_in[15:0];
-                            3'b010: data[addr_set][0][8*addr_offs+31 -: 32] <= data_in[31:0];
-                            3'b011: data[addr_set][0][8*addr_offs+63 -: 64] <= data_in[63:0];
+                            3'b000: data[addr_set][0][8*addr_offs +:  8] <= data_in[ 7:0];
+                            3'b001: data[addr_set][0][8*addr_offs +: 16] <= data_in[15:0];
+                            3'b010: data[addr_set][0][8*addr_offs +: 32] <= data_in[31:0];
+                            3'b011: data[addr_set][0][8*addr_offs +: 64] <= data_in[63:0];
                         endcase
                     end
                     v[addr_set][0]    <= 1'b1;
@@ -118,10 +120,10 @@ module dmem(
                     data[addr_set][1] <= b_data_in;
                     if(wr) begin
                         case(len)
-                            3'b000: data[addr_set][1][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                            3'b001: data[addr_set][1][8*addr_offs+15 -: 16] <= data_in[15:0];
-                            3'b010: data[addr_set][1][8*addr_offs+31 -: 32] <= data_in[31:0];
-                            3'b011: data[addr_set][1][8*addr_offs+63 -: 64] <= data_in[63:0];
+                            3'b000: data[addr_set][1][8*addr_offs +:  8] <= data_in[ 7:0];
+                            3'b001: data[addr_set][1][8*addr_offs +: 16] <= data_in[15:0];
+                            3'b010: data[addr_set][1][8*addr_offs +: 32] <= data_in[31:0];
+                            3'b011: data[addr_set][1][8*addr_offs +: 64] <= data_in[63:0];
                         endcase
                     end
                     v[addr_set][1]    <= 1'b1;
@@ -133,10 +135,10 @@ module dmem(
                     data[addr_set][2] <= b_data_in;
                     if(wr) begin
                         case(len)
-                            3'b000: data[addr_set][2][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                            3'b001: data[addr_set][2][8*addr_offs+15 -: 16] <= data_in[15:0];
-                            3'b010: data[addr_set][2][8*addr_offs+31 -: 32] <= data_in[31:0];
-                            3'b011: data[addr_set][2][8*addr_offs+63 -: 64] <= data_in[63:0];
+                            3'b000: data[addr_set][2][8*addr_offs +:  8] <= data_in[ 7:0];
+                            3'b001: data[addr_set][2][8*addr_offs +: 16] <= data_in[15:0];
+                            3'b010: data[addr_set][2][8*addr_offs +: 32] <= data_in[31:0];
+                            3'b011: data[addr_set][2][8*addr_offs +: 64] <= data_in[63:0];
                         endcase
                     end
                     v[addr_set][2]    <= 1'b1;
@@ -146,10 +148,10 @@ module dmem(
                     data[addr_set][3] <= b_data_in;
                     if(wr) begin
                         case(len)
-                            3'b000: data[addr_set][3][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                            3'b001: data[addr_set][3][8*addr_offs+15 -: 16] <= data_in[15:0];
-                            3'b010: data[addr_set][3][8*addr_offs+31 -: 32] <= data_in[31:0];
-                            3'b011: data[addr_set][3][8*addr_offs+63 -: 64] <= data_in[63:0];
+                            3'b000: data[addr_set][3][8*addr_offs +:  8] <= data_in[ 7:0];
+                            3'b001: data[addr_set][3][8*addr_offs +: 16] <= data_in[15:0];
+                            3'b010: data[addr_set][3][8*addr_offs +: 32] <= data_in[31:0];
+                            3'b011: data[addr_set][3][8*addr_offs +: 64] <= data_in[63:0];
                         endcase
                     end
                     v[addr_set][3]    <= 1'b1;
@@ -162,19 +164,19 @@ module dmem(
                 case(len)
                     3'b000: begin
                         b_data_out[8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
-                        data[addr_set][set_mux[addr_set]][8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs +:  8] <= data_in[ 7:0];
                     end
                     3'b001: begin
                         b_data_out[8*addr_offs+15 -: 16] <= data_in[15:0];
-                        data[addr_set][set_mux[addr_set]][8*addr_offs+15 -: 16] <= data_in[15:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs +: 16] <= data_in[15:0];
                     end
                     3'b010: begin
                         b_data_out[8*addr_offs+31 -: 32] <= data_in[31:0];
-                        data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32] <= data_in[31:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs +: 32] <= data_in[31:0];
                     end
                     3'b011: begin
                         b_data_out[8*addr_offs+63 -: 64] <= data_in[63:0];
-                        data[addr_set][set_mux[addr_set]][8*addr_offs+63 -: 64] <= data_in[63:0];
+                        data[addr_set][set_mux[addr_set]][8*addr_offs +: 64] <= data_in[63:0];
                     end
                 endcase
             end

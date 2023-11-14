@@ -280,7 +280,7 @@ module hart(
         .a(alu_mx_a[s_alu_mx_a]),
         .b(alu_mx_b[s_alu_mx_b]),
         .alu_out(alu_out),
-        .ir(bdx_ir)
+        .op_ir({bdx_ir[30], bdx_ir[14:12], bdx_ir[6:0]})
     );
 
     reg [31:0] bxm_ir;

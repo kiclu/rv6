@@ -39,7 +39,7 @@ module imem(
     reg           v    [0:3][0:3];
 
     reg [1:0] set_mux [0:3];
-    assign ir = data[addr_set][set_mux[addr_set]][8*addr_offs+31 -: 32];
+    assign ir = data[addr_set][set_mux[addr_set]][8*addr_offs +: 32];
 
     // check for cache hit and set mux
     reg hit;
