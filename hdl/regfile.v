@@ -35,6 +35,6 @@ module regfile(
     assign r1 = rs1 ? register[rs1] : 64'b0;
     assign r2 = rs2 ? register[rs2] : 64'b0;
 
-    always @(posedge clk) if(wr) register[rd] <= d;
+    always @(posedge clk) if(wr && rd) register[rd] <= d;
 
 endmodule
