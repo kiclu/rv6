@@ -36,14 +36,18 @@ module br_alu(
     assign jalr_taken = ir[6:0] == 7'b1100111;
     assign jalr_addr  = r1 + {{52{ir[31]}}, ir[31:21], 1'b0};
 
-    // branch
+    // branch offset calculation
     wire [63:0] br_offs = {{51{ir[31]}}, ir[31], ir[7], ir[30:25], ir[11:8], 1'b0};
 
-    reg brc = 0;
+    // branch instruction check
     wire branch    = ir[6:0] == 7'b1100011;
+
+    // branch prediction miss check
+    reg brc = 0;
     assign pr_miss = (pr_taken != brc) && branch;
     assign br_addr = brc ? pc + br_offs : pc + 4;
 
+    // branch condition evaluation
     wire signed [63:0] r1s = r1;
     wire signed [63:0] r2s = r2;
     always @(*) begin
