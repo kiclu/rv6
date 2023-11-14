@@ -163,19 +163,19 @@ module dmem(
             if(wr) begin
                 case(len)
                     3'b000: begin
-                        b_data_out[8*addr_offs+ 7 -:  8] <= data_in[ 7:0];
+                        b_data_out[8*addr_offs +:  8] <= data_in[ 7:0];
                         data[addr_set][set_mux[addr_set]][8*addr_offs +:  8] <= data_in[ 7:0];
                     end
                     3'b001: begin
-                        b_data_out[8*addr_offs+15 -: 16] <= data_in[15:0];
+                        b_data_out[8*addr_offs +: 16] <= data_in[15:0];
                         data[addr_set][set_mux[addr_set]][8*addr_offs +: 16] <= data_in[15:0];
                     end
                     3'b010: begin
-                        b_data_out[8*addr_offs+31 -: 32] <= data_in[31:0];
+                        b_data_out[8*addr_offs +: 32] <= data_in[31:0];
                         data[addr_set][set_mux[addr_set]][8*addr_offs +: 32] <= data_in[31:0];
                     end
                     3'b011: begin
-                        b_data_out[8*addr_offs+63 -: 64] <= data_in[63:0];
+                        b_data_out[8*addr_offs +: 64] <= data_in[63:0];
                         data[addr_set][set_mux[addr_set]][8*addr_offs +: 64] <= data_in[63:0];
                     end
                 endcase
