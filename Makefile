@@ -18,7 +18,7 @@ VCFLAGS     = -g2012 -Dvcicarus
 
 all: ${OBJECTS} ${SIMULATIONS}
 
-${DIR_BUILD}/%.o: ${DIR_SIM}/%.sv ${DIR_SYN} | ${DIR_BUILD}
+${DIR_BUILD}/%.o: ${DIR_SIM}/%.sv ${DIR_SYN} | ${DIR_BUILD} program
 	${VC} ${VCFLAGS} -o ${@} ${<} $(addprefix ${DIR_SYN}/,${SOURCES_SYN})
 
 ${DIR_VCD}/%.vcd: ${DIR_BUILD}/%.o | ${DIR_VCD}
@@ -30,5 +30,9 @@ ${DIR_BUILD}:
 ${DIR_VCD}:
 	@mkdir -p ${DIR_VCD}
 
+program:
+	cd test/program/ && make all
+
 clean:
 	rm -rf ${DIR_BUILD}
+	cd test/program/ && make clean
