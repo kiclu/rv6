@@ -35,6 +35,8 @@ module cu(
     output            stall_ex,
     output            stall_mem,
 
+    output            flush_ex_n,
+
     input             rst_n,
 
     input             clk
@@ -79,5 +81,9 @@ module cu(
         end
         else if(!stall_all) if(stall_c) stall_c <= stall_c - 1;
     end
+
+    // TODO: check if correct
+    assign flush_ex_n = !(stall_c != 2 && dh_ex && !stall_all);
+    //assign flush_ex_n = !(stall_c != 2 && dh && !stall_all);
 
 endmodule

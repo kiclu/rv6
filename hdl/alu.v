@@ -20,15 +20,15 @@ module alu(
     input      [63:0] a,
     input      [63:0] b,
     output reg [63:0] alu_out,
-    input      [31:0] ir
+    input      [10:0] op_ir
 );
 
     wire signed [63:0] sa = a;
     wire signed [63:0] sb = b;
 
     always @(*) begin
-        if(ir[6:0] == 7'b0010011) begin
-            casez({ir[30], ir[14:12]})
+        if(op_ir[6:0] == 7'b0010011) begin
+            casez(op_ir[10:7])
                 4'bz000: alu_out <= a + b;
                 4'bz010: alu_out <= sa < sb;
                 4'bz011: alu_out <= a < b;
@@ -42,8 +42,8 @@ module alu(
                 default: alu_out <= a + b;
             endcase
         end
-        if(ir[6:0] == 7'b0110011) begin
-            case({ir[30], ir[14:12]})
+        if(op_ir[6:0] == 7'b0110011) begin
+            case(op_ir[10:7])
                 4'b0000: alu_out <= a + b;
                 4'b0001: alu_out <= a << b[5:0];
                 4'b0010: alu_out <= sa < sb;
@@ -58,7 +58,7 @@ module alu(
                 default: alu_out <= a + b;
             endcase
         end
-        else if(ir[6:0] == 7'b0110111) alu_out <= b;
+        else if(op_ir[6:0] == 7'b0110111) alu_out <= b;
         else alu_out <= a + b;
     end
 

@@ -240,8 +240,10 @@ module hart(
 
     wire stall_id;
 
+    wire flush_ex_n;
+
     always @(posedge clk) begin
-        if(!rst_n) bdx_ir <= 32'h13;
+        if(!rst_n || !flush_ex_n) bdx_ir <= 32'h13;
         else if(!stall_id) begin
             bdx_pc <= bpd_pc;
             bdx_ir <= bpd_ir;
@@ -251,7 +253,6 @@ module hart(
 
             bdx_imm <= mux_imm[s_mux_imm];
         end
-        else bdx_ir <= 32'h13;
     end
 
     /* EX */
@@ -378,6 +379,8 @@ module hart(
         .stall_id(stall_id),
         .stall_ex(stall_ex),
         .stall_mem(stall_mem),
+
+        .flush_ex_n(flush_ex_n),
 
         .rst_n(rst_n),
 
