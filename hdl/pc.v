@@ -41,8 +41,8 @@ module pc(
     always @(posedge clk, negedge clr_n) begin
         if(!clr_n) pc <= 64'h80000000;
         else if(!stall) begin
-            if(jalr_taken) pc <= jalr_addr;
-            else if(pr_miss) pc <= br_addr;
+            if(pr_miss) pc <= br_addr;
+            else if(jalr_taken) pc <= jalr_addr;
             else if(jal_taken) pc <= jal_addr;
             else if(pr_taken) pc <= pc + {{51{pr_offs[12]}}, pr_offs};
             else pc <= pc + 4;
