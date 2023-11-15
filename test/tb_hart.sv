@@ -19,6 +19,9 @@ module tb_hart();
 
     reg           clk;
 
+    reg [7:0] rom [0:4096];
+    reg [7:0] ram [0:32768];
+
     initial begin
         b_data_i  = 1024'bZ;
         b_dv_i    = 1'b0;
@@ -33,28 +36,34 @@ module tb_hart();
         forever #10 clk = ~clk;
     end
 
+    `ifdef vcicarus
+        `define program_hex_path "test/program/rv6.hex"
+        `define mem_trace_path   "test/out/mem_trace.hex"
+    `else
+        `define program_hex_path "../test/program/rv6.hex"
+        `define mem_trace_path   "../test/out/mem_trace.hex"
+    `endif
 
-    reg [7:0] rom [0:4096];
-    reg [7:0] ram [0:4096];
+
+    initial $readmemh(`program_hex_path, rom, 0);
 
     initial begin
-        $readmemh("../test/program/rv6.hex", rom, 0);
-    end
-
-    initial begin
-        $dumpfile("vcd/tb_hart.vcd");
-        $dumpvars(0, tb_hart);
         #20
         rst_n = 1'b1;
         #100000
-        $stop();
+        $writememh(`mem_trace_path, ram, 0);
+        `ifdef vcicarus
+            $finish();
+        `else
+            $stop();
+        `endif
     end
 
     always @(posedge clk) begin
         if(b_rd_i) begin
             #80
             for(integer i = 0; i < 128; ++i) begin
-                b_data_i[8*i+7 -: 8] = rom[b_addr_i + i - 64'h80000000];
+                b_data_i[8*i +: 8] = rom[b_addr_i + i - 64'h80000000];
             end
             b_dv_i = 1;
             #20
@@ -64,7 +73,7 @@ module tb_hart();
         if(b_rd) begin
             #80
             for(integer i = 0; i < 128; ++i) begin
-                b_data_in[8*i+7 -: 8] = 8'b0; //ram[b_addr + i];
+                b_data_in[8*i +: 8] = ram[b_addr + i];
             end
             b_dv = 1;
             #20
@@ -73,7 +82,7 @@ module tb_hart();
         end
         if(b_wr) begin
             for(integer i = 0; i < 128; ++i) begin
-                ram[b_addr + i] <= b_data_out[8*i+7 -: 8];
+                ram[b_addr + i] = b_data_out[8*i +: 8];
             end
         end
     end
