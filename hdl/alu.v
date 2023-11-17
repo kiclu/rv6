@@ -23,43 +23,47 @@ module alu(
     input      [10:0] op_ir
 );
 
-    wire signed [63:0] sa = a;
-    wire signed [63:0] sb = b;
+    `define op_itype   op_ir[6:0] == 7'b0010011
+    `define op_itype_w op_ir[6:0] == 7'b0011011
+
+    `define op_rtype   op_ir[6:0] == 7'b0110011
+    `define op_rtype_w op_ir[6:0] == 7'b0111011
+
+    `define op_lui     op_ir[6:0] == 7'b0110111
+
+    `define sa $signed(a)
+    `define sb $signed(b)
+
+    `define wa a[31:0]
+    `define wb b[31:0]
+
+    `define swa $signed(a[31:0])
 
     always @(*) begin
-        if(op_ir[6:0] == 7'b0010011) begin
-            casez(op_ir[10:7])
-                4'bz000: alu_out <= a + b;
-                4'bz010: alu_out <= sa < sb;
-                4'bz011: alu_out <= a < b;
-                4'bz100: alu_out <= a ^ b;
-                4'bz110: alu_out <= a | b;
-                4'bz111: alu_out <= a & b;
-
-                4'b0001: alu_out <= a << b[5:0];
-                4'b0101: alu_out <= a >> b[5:0];
-                4'b1101: alu_out <= a >>> b[5:0];
+        alu_out <= a + b;
+        if(`op_lui) alu_out <= b;
+        else if(`op_rtype || `op_itype) begin
+            case(op_ir[9:7])
+                4'b000:  alu_out <= `op_rtype && op_ir[10] ? a - b : a + b;
+                4'b001:  alu_out <= `sa << b[5:0];
+                4'b010:  alu_out <= `sa < `sb;
+                4'b011:  alu_out <= a  <  b;
+                4'b100:  alu_out <= a  ^  b;
+                4'b101:  alu_out <= op_ir[10] ? `sa >>> b[5:0] : `sa >> b[5:0];
+                4'b110:  alu_out <= a  |  b;
+                4'b111:  alu_out <= a  &  b;
                 default: alu_out <= a + b;
             endcase
         end
-        if(op_ir[6:0] == 7'b0110011) begin
-            case(op_ir[10:7])
-                4'b0000: alu_out <= a + b;
-                4'b0001: alu_out <= a << b[5:0];
-                4'b0010: alu_out <= sa < sb;
-                4'b0011: alu_out <= a < b;
-                4'b0100: alu_out <= a ^ b;
-                4'b0101: alu_out <= a >> b[5:0];
-                4'b0110: alu_out <= a | b;
-                4'b0111: alu_out <= a & b;
-
-                4'b1000: alu_out <= a - b;
-                4'b1101: alu_out <= a >>> b[5:0];
-                default: alu_out <= a + b;
+        else if(`op_rtype_w || `op_itype_w) begin
+            case(op_ir[9:7])
+                3'b000:  alu_out[31:0] <= `op_rtype_w && op_ir[10] ? `wa - `wb : `wa + `wb;
+                3'b001:  alu_out[31:0] <= `wa << b[4:0];
+                3'b101:  alu_out[31:0] <= op_ir[10] ? `swa >>> b[4:0] : `wa >> b[4:0];
+                default: alu_out[31:0] <= `wa + `wb;
             endcase
+            alu_out[63:32] <= 32'b0;
         end
-        else if(op_ir[6:0] == 7'b0110111) alu_out <= b;
-        else alu_out <= a + b;
     end
 
 endmodule
