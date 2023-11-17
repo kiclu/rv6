@@ -264,7 +264,7 @@ module hart(
     wire [1:0] s_alu_mx_a;
 
     assign s_alu_mx_a[1] = 1'b0;
-    assign s_alu_mx_a[0] = (bdx_ir == 7'b1101111) || (bdx_ir == 7'b1101111);
+    assign s_alu_mx_a[0] = (bdx_ir[6:0] == 7'b1101111) || (bdx_ir[6:0] == 7'b1100111);
 
     // TODO: add forwarding
     wire [63:0] alu_mx_b [0:1];
@@ -273,7 +273,7 @@ module hart(
     wire [1:0] s_alu_mx_b;
 
     assign s_alu_mx_b[1] = 1'b0;
-    assign s_alu_mx_b[0] = (bdx_ir == 7'b0110011);
+    assign s_alu_mx_b[0] = (bdx_ir[6:0] == 7'b0110011);
 
     wire [63:0] alu_out;
 
