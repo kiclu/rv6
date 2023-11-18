@@ -1,0 +1,18 @@
+
+# C build files
+*.o
+*.d
+*.asm
+*.elf
+*.hex
+
+# Simulation output
+test/out/
+vcd/
+
+# Compilation output
+vvp/
+
+# LSP config files
+.svlint.toml
+.svls.toml
