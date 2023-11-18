@@ -43,7 +43,7 @@ module imem(
 
     // check for cache hit and set mux
     reg hit;
-    always @(*) begin : cache_hit_check
+    always @(*) begin : imem_cache_hit_check
         integer e;
         hit <= 1'b0;
         for(e = 0; e < 4; e = e + 1) begin
@@ -59,8 +59,11 @@ module imem(
 
     // update lru tree on hit
     reg [2:0] lru_tree [0:3];
-    always @(posedge clk, negedge clr_n) begin
-        if(!clr_n) clr_lru_tree();
+    always @(posedge clk) begin
+        if(!clr_n) begin : imem_clr_lru_tree
+            integer s;
+            for(s = 0; s < 4; s = s + 1) lru_tree[s] <= 3'b000;
+        end
         else if(hit) begin
             case(set_mux[addr_set])
                 2'b00: lru_tree[addr_set] <= lru_tree[addr_set] & 3'b001 | 3'b000;
@@ -72,8 +75,15 @@ module imem(
     end
 
     // load on miss
-    always @(posedge clk, negedge clr_n) begin
-        if(!clr_n) clr_v();
+    always @(posedge clk) begin
+        if(!clr_n) begin : imem_clr_v
+            integer s, e;
+            for(s = 0; s < 4; s = s + 1) begin
+                for(e = 0; e < 4; e = e + 1) begin
+                    v[s][e] = 0;
+                end
+            end
+        end
         else if(!hit && b_dv) begin
             if(lru_tree[addr_set][2]) begin
                 if(lru_tree[addr_set][1]) begin
@@ -101,21 +111,5 @@ module imem(
             end
         end
     end
-
-    // clear valid bits on reset
-    task clr_v();
-        integer s, e;
-        for(s = 0; s < 4; s = s + 1) begin
-            for(e = 0; e < 4; e = e + 1) begin
-                v[s][e] = 0;
-            end
-        end
-    endtask
-
-    // clear lru tree on reset
-    task clr_lru_tree();
-        integer s;
-        for(s = 0; s < 4; s = s + 1) lru_tree[s] <= 3'b000;
-    endtask
 
 endmodule

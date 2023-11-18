@@ -68,7 +68,7 @@ module dmem(
 
     // check for cache hit and set mux
     reg hit;
-    always @(*) begin : cache_check
+    always @(*) begin : dmem_cache_hit_check
         integer e;
         hit <= 1'b0;
         for(e = 0; e < 4; e = e + 1) begin
@@ -84,8 +84,11 @@ module dmem(
 
     // update lru tree on hit
     reg [2:0] lru_tree [0:3];
-    always @(posedge clk, negedge clr_n) begin
-        if(!clr_n) clr_lru_tree();
+    always @(posedge clk) begin
+        if(!clr_n) begin : dmem_clr_lru_tree
+            integer s;
+            for(s = 0; s < 4; s = s + 1) lru_tree[s] <= 3'b000;
+        end
         else if(hit && (rd || wr)) begin
             case(set_mux[addr_set])
                 2'b00: lru_tree[addr_set] <= lru_tree[addr_set] & 3'b001 | 3'b000;
@@ -97,8 +100,15 @@ module dmem(
     end
 
     // load on miss
-    always @(posedge clk, negedge clr_n) begin
-        if(!clr_n) clr_v();
+    always @(posedge clk) begin
+        if(!clr_n) begin : dmem_clr_v
+            integer s, e;
+            for(s = 0; s < 4; s = s + 1) begin
+                for(e = 0; e < 4; e = e + 1) begin
+                    v[s][e] = 0;
+                end
+            end
+        end
         // on cache miss and valid data bus, load data into cache line
         else if(!hit && b_rd && b_dv) begin
             if(lru_tree[addr_set][2]) begin
@@ -194,22 +204,5 @@ module dmem(
     end
 
     assign b_wr = b_wr_l || (b_wr_h && !b_rd);
-
-    // clear valid bits on reset
-    task clr_v();
-        integer s;
-        integer e;
-        for(s = 0; s < 4; s = s + 1) begin
-            for(e = 0; e < 4; e = e + 1) begin
-                v[s][e] = 0;
-            end
-        end
-    endtask
-
-    // clear lru tree on reset
-    task clr_lru_tree();
-        integer s;
-        for(s = 0; s < 4; s = s + 1) lru_tree[s] <= 3'b000;
-    endtask
 
 endmodule
