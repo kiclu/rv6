@@ -1,11 +1,11 @@
 `ifdef __ICARUS__
-    `define program_hex_path "test/c/default/default.hex"
-    `define mem_final_path   "test/out/tb_hart_mem.hex"
-    `define finish $finish
+    `define program_hex_path "test/c/fib/fib.hex"
+    `define mem_final_path   "test/out/tb_hart_fib_mem.hex"
+    `define finish(X) $finish(X)
 `else
-    `define program_hex_path "../test/c/default/default.hex"
-    `define mem_final_path   "../test/out/tb_hart_mem.hex"
-    `define finish $stop
+    `define program_hex_path "../test/c/fib/fib.hex"
+    `define mem_final_path   "../test/out/tb_hart_fib_mem.hex"
+    `define finish(X) $stop(X)
 `endif
 
 `timescale 1ns/1ps

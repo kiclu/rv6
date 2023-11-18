@@ -1,38 +1,75 @@
+# Simulation / Synthesis source files & targets
 VC = iverilog
 VS = vvp
 
-TOPMODULE = rv64g
-
 DIR_SYN   = hdl
 DIR_SIM   = test
-DIR_BUILD = build
+
 DIR_VCD	  = vcd
+DIR_VVP	  = vvp
 
-SOURCES_SYN = $(shell find ${DIR_SYN} -name "*.v" -printf "%P ")
-SOURCES_SIM = $(shell find ${DIR_SIM} -name "*.sv" -printf "%P ")
+SOURCES_SYN = $(addprefix ${DIR_SYN}/,$(shell find ${DIR_SYN} -name "*.v" -printf "%P "))
+SOURCES_SIM = $(addprefix ${DIR_SIM}/,$(shell find ${DIR_SIM} -name "*.sv" -printf "%P "))
 
-OBJECTS		= $(addprefix ${DIR_BUILD}/,${SOURCES_SIM:.sv=.o})
-SIMULATIONS = $(addprefix ${DIR_VCD}/,${SOURCES_SIM:.sv=.vcd})
+VVP	  = $(addprefix ${DIR_VVP}/,${SOURCES_SIM:.sv=.vvp})
+VCD   = $(addprefix ${DIR_VCD}/,${SOURCES_SIM:.sv=.vcd})
 
-VCFLAGS     = -g2012 -Dvcicarus
+V_FLAGS		= -g2001 -Wall -tnull
+SV_FLAGS    = -g2012
 
-all: ${OBJECTS} ${SIMULATIONS}
+# Generate program hex files for testbench inputs
+DIR_C = test/c
 
-${DIR_BUILD}/%.o: ${DIR_SIM}/%.sv ${DIR_SYN} | ${DIR_BUILD} program
-	${VC} ${VCFLAGS} -o ${@} ${<} $(addprefix ${DIR_SYN}/,${SOURCES_SYN})
+HEX_MAKEFILES = $(addprefix ${DIR_C}/,$(shell find ${DIR_C} -name "Makefile" -printf "%P "))
+HEX_TARGETS   = $(join $(dir ${HEX_MAKEFILES}),$(notdir ${HEX_MAKEFILES:/Makefile=.hex}))
+HEX_DIRS      = $(dir ${HEX_MAKEFILES})
 
-${DIR_VCD}/%.vcd: ${DIR_BUILD}/%.o | ${DIR_VCD}
+hex_all: ${HEX_TARGETS}
+	@echo "Makefile: Compiling hex targets finished successfully\n"
+
+%.hex:
+	@echo "Makefile: Compiling ${@}"
+	@cd $(dir ${@}) && make all
+	@echo "Makefile: Compiled ${@} successfully\n"
+
+# Generate testbenches and run them
+all: ${SOURCES_SYN} ${VVP} ${VCD}
+
+${DIR_VVP}/%.vvp: %.sv | ${DIR_VVP} hex_all syncheck
+	@echo "Makefile: Compiling testbench ${<}"
+	@mkdir -p $(dir ${@})
+	${VC} ${SV_FLAGS} -o ${@} ${<} ${SOURCES_SYN}
+	@echo "Makefile: Compiled ${@} successfully\n"
+
+${DIR_VVP}:
+	@mkdir -p ${DIR_VVP}
+
+${DIR_VCD}/%.vcd: ${DIR_VVP}/%.vvp | ${DIR_VCD}
+	@echo "Makefile: Simulating testbench ${<}"
+	@mkdir -p $(dir ${@})
 	${VS} ${<}
-
-${DIR_BUILD}:
-	@mkdir -p ${DIR_BUILD}
+	@echo "Makefile: Testbench ${<} simulation finished\n"
 
 ${DIR_VCD}:
 	@mkdir -p ${DIR_VCD}
+	@mkdir -p test/out/
 
-program:
-	cd test/program/ && make all
+# Compile all synthesis source files with verbose flag
+syncheck: ${SOURCES_SYN}
+	@echo "Makefile: Compiling synthesis modules"
+	${VC} ${V_FLAGS} ${^}
+	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
-clean:
-	rm -rf ${DIR_BUILD}
-	cd test/program/ && make clean
+# Recursive clean
+CLEAN_C = $(addsuffix clean,${HEX_DIRS})
+
+%clean: %
+	@echo "Makefile: clean: ${<}"
+	@cd ${<} && make clean
+	@echo ""
+
+# Clean all
+clean: ${CLEAN_C}
+	@echo "Makefile: clean"
+	rm -rf ${DIR_VVP} ${DIR_VCD}
+	@echo ""
