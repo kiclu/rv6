@@ -9,7 +9,7 @@
 `endif
 
 `timescale 1ns/1ps
-module tb_hart();
+module tb_hart_fib();
 
     wire [  63:0] b_addr_i;
     reg  [1023:0] b_data_i;
