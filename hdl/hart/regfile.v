@@ -37,4 +37,9 @@ module regfile(
 
     always @(posedge clk) if(wr && rd) register[rd] <= d;
 
+    // debug only, initialize registers to 0
+    `ifdef DEBUG
+    initial for(integer i = 1; i < 32; i++) register[i] <= 0;
+    `endif
+
 endmodule

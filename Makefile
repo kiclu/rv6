@@ -15,7 +15,7 @@ VVP	  = $(addprefix ${DIR_VVP}/,${SOURCES_SIM:.sv=.vvp})
 VCD   = $(addprefix ${DIR_VCD}/,${SOURCES_SIM:.sv=.vcd})
 
 V_FLAGS		= -g2001 -Wall -tnull
-SV_FLAGS    = -g2012
+SV_FLAGS    = -g2012 -DDEBUG
 
 # Generate program hex files for testbench inputs
 DIR_C = test/c
