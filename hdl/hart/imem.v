@@ -16,18 +16,24 @@
  * external case of any product you make using this documentation.
  */
 
+/*
+ * Configurable L1 instruction cache
+ */
+
+`include "../config.v"
+
 module imem(
-    input      [  63:0] pc,
+    input            [63:0] pc,
 
-    output     [  31:0] ir,
+    output           [31:0] ir,
 
-    input      [1023:0] b_data,
-    output              b_rd,
-    input               b_dv,
+    input  [`imem_line-1:0] b_data,
+    output                  b_rd,
+    input                   b_dv,
 
-    input               clr_n,
+    input                   clr_n,
 
-    input               clk
+    input                   clk
 );
 
     wire [  54:0] addr_tag  = pc[63:9];
