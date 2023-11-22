@@ -16,100 +16,108 @@
  * external case of any product you make using this documentation.
  */
 
+/*
+ * Configurable L1 instruction cache
+ */
+
+`include "../config.v"
+
 module imem(
-    input      [  63:0] pc,
+    input            [63:0] pc,
 
-    output     [  31:0] ir,
+    output           [31:0] ir,
 
-    input      [1023:0] b_data,
-    output              b_rd,
-    input               b_dv,
+    input  [`imem_line-1:0] b_data,
+    output                  b_rd,
+    input                   b_dv,
 
-    input               clr_n,
+    input                   clr_n,
 
-    input               clk
+    input                   clk
 );
 
-    wire [  54:0] addr_tag  = pc[63:9];
-    wire [   1:0] addr_set  = pc[8:7];
-    wire [   6:0] addr_offs = pc[6:0];
+    wire [ `imem_tag_len-1:0] addr_tag  = pc[63:64-`imem_tag_len];
+    wire [ `imem_set_len-1:0] addr_set  = pc[`imem_set_len+`imem_offs_len-1:`imem_offs_len];
+    wire [`imem_offs_len-1:0] addr_offs = pc[`imem_offs_len-1:0];
 
-    reg  [1023:0] data [0:3][0:3];
-    reg  [  54:0] tag  [0:3][0:3];
-    reg           v    [0:3][0:3];
+    reg  [    `imem_line-1:0] data [0:`imem_sets-1][0:`imem_ways-1];
+    reg  [ `imem_tag_len-1:0] tag  [0:`imem_sets-1][0:`imem_ways-1];
+    reg                       v    [0:`imem_sets-1][0:`imem_ways-1];
 
-    reg [1:0] set_mux [0:3];
-    assign ir = data[addr_set][set_mux[addr_set]][8*addr_offs +: 32];
+    reg [`imem_way_len-1:0] way;
+    assign ir = data[addr_set][way][8*addr_offs +: 32];
 
-    // check for cache hit and set mux
+    /* HIT DETECTION */
+
     reg hit;
     always @(*) begin : imem_cache_hit_check
-        integer e;
-        hit <= 1'b0;
-        for(e = 0; e < 4; e = e + 1) begin
-            set_mux[e] <= 2'b0;
-            if(tag[addr_set][e] == addr_tag && v[addr_set][e]) begin
-                set_mux[addr_set] <= e[1:0];
-                hit <= 1'b1;
+        integer i;
+        hit <= 0;
+        way <= 0;
+        for(i = 0; i < `imem_ways; i = i + 1) begin
+            if((tag[addr_set][i] == addr_tag) && v[addr_set][i]) begin
+                way <= i;
+                hit <= 1;
             end
         end
     end
 
-    assign b_rd = ~hit;
+    /* REPLACEMENT POLICY */
 
-    // update lru tree on hit
-    reg [2:0] lru_tree [0:3];
+    // LRU tree
+    localparam lru_size = `imem_ways - 1;
+    reg [lru_size-1:0] lru_tree [0:`imem_sets-1];
+
+    // replacement entry
+    reg [`imem_way_len-1:0] re;
+
+    // find replacement entry and update LRU tree
     always @(posedge clk) begin
-        if(!clr_n) begin : imem_clr_lru_tree
-            integer s;
-            for(s = 0; s < 4; s = s + 1) lru_tree[s] <= 3'b000;
+        if(!clr_n) begin : imem_clr_lru
+            integer i;
+            for(i = 0; i < `imem_sets; i = i + 1) begin
+                lru_tree[i] <= {lru_size{1'b0}};
+            end
+            re <= 0;
         end
-        else if(hit) begin
-            case(set_mux[addr_set])
-                2'b00: lru_tree[addr_set] <= lru_tree[addr_set] & 3'b001 | 3'b000;
-                2'b01: lru_tree[addr_set] <= lru_tree[addr_set] & 3'b001 | 3'b010;
-                3'b10: lru_tree[addr_set] <= lru_tree[addr_set] & 3'b010 | 3'b100;
-                3'b11: lru_tree[addr_set] <= lru_tree[addr_set] & 3'b010 | 3'b101;
-            endcase
+        else if(hit) begin : imem_lru_update
+            integer i, l, i_parent;
+            i = way + lru_size;
+            for(l = 0; l < $clog2(`imem_ways); l = l + 1) begin
+                i_parent = i[0] ? (i-1)/2 : (i-2)/2;
+                lru_tree[addr_set][i_parent] = !i[0];
+                i = i_parent;
+            end
+
+            for(l = 0; l < $clog2(`imem_ways); l = l + 1) begin
+                i = lru_tree[addr_set][i] ? 2*i+1 : 2*i+2;
+            end
+            re = i - `imem_ways + 1;
         end
     end
 
-    // load on miss
+    /* CACHE DATA UPDATE */
+
     always @(posedge clk) begin
         if(!clr_n) begin : imem_clr_v
             integer s, e;
-            for(s = 0; s < 4; s = s + 1) begin
-                for(e = 0; e < 4; e = e + 1) begin
+            for(s = 0; s < `imem_sets; s = s + 1) begin
+                for(e = 0; e < `imem_ways; e = e + 1) begin
                     v[s][e] = 0;
                 end
             end
         end
-        else if(!hit && b_dv) begin
-            if(lru_tree[addr_set][2]) begin
-                if(lru_tree[addr_set][1]) begin
-                    tag[addr_set][0]  <= addr_tag;
-                    data[addr_set][0] <= b_data;
-                    v[addr_set][0]    <= 1'b1;
-                end
-                else begin
-                    tag[addr_set][1]  <= addr_tag;
-                    data[addr_set][1] <= b_data;
-                    v[addr_set][1]    <= 1'b1;
-                end
-            end
-            else begin
-                if(lru_tree[addr_set][0]) begin
-                    tag[addr_set][2]  <= addr_tag;
-                    data[addr_set][2] <= b_data;
-                    v[addr_set][2]    <= 1'b1;
-                end
-                else begin
-                    tag[addr_set][3]  <= addr_tag;
-                    data[addr_set][3] <= b_data;
-                    v[addr_set][3]    <= 1'b1;
-                end
-            end
+        // cache miss, load data into cache line on valid data bus
+        else if(!hit && b_dv) begin : imem_cache_miss
+            // load data into cache
+            v[addr_set][re]    <= 1'b1;
+            tag[addr_set][re]  <= addr_tag;
+            data[addr_set][re] <= b_data;
         end
     end
+
+    /* BUS CONTROL SIGNALS */
+
+    assign b_rd = ~hit;
 
 endmodule

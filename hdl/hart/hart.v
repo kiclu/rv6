@@ -16,28 +16,30 @@
  * external case of any product you make using this documentation.
  */
 
-module hart(
+`include "../config.v"
+
+module hart #(parameter HART_ID = 0) (
     // instruction bus
-    output [  63:0] b_addr_i,
-    input  [1023:0] b_data_i,
-    output          b_rd_i,
-    input           b_dv_i,
+    output           [63:0] b_addr_i,
+    input  [`imem_line-1:0] b_data_i,
+    output                  b_rd_i,
+    input                   b_dv_i,
 
     // data bus common
-    output [  63:0] b_addr,
+    output           [63:0] b_addr,
 
     // data bus in
-    input  [1023:0] b_data_in,
-    output          b_rd,
-    input           b_dv,
+    input  [`dmem_line-1:0] b_data_in,
+    output                  b_rd,
+    input                   b_dv,
 
     // data bus out
-    output [1023:0] b_data_out,
-    output          b_wr,
+    output [`dmem_line-1:0] b_data_out,
+    output                  b_wr,
 
-    input           rst_n,
+    input                   rst_n,
 
-    input           clk
+    input                   clk
 );
 
     wire flush_n;
@@ -109,7 +111,7 @@ module hart(
         .clk(clk)
     );
 
-    assign b_addr_i = {pc[63:7], 7'b0};
+    assign b_addr_i = {pc[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
 
     reg [63:0] bfp_pc;
     reg [31:0] bfp_ir;
@@ -206,7 +208,7 @@ module hart(
         .pr_taken(bpd_pr_taken)
     );
 
-    assign flush_n = rst_n & !pr_miss & !jalr_taken;
+    assign flush_n = rst_n && !pr_miss && !jalr_taken;
 
     // immediate format mux
     wire [63:0] mux_imm [0:3];
@@ -352,7 +354,7 @@ module hart(
     wire [63:0] wb_mux [0:1];
     assign wb_mux[0] = bmw_alu_out;
     assign wb_mux[1] = bmw_dmem_out;
-    wire s_wb_mux = (bxm_ir[6:0] == 7'b0000011);
+    wire s_wb_mux = (bmw_ir[6:0] == 7'b0000011);
 
     assign rd = bmw_ir[11:7];
     assign d  = wb_mux[s_wb_mux];

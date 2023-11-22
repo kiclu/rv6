@@ -20,7 +20,6 @@ module pd(
     input      [63:0] pc_in,
     input      [31:0] ir_in,
 
-    output reg [63:0] pc_out,
     output reg [31:0] ir_out,
 
     input             stall,
@@ -32,7 +31,6 @@ module pd(
         if(!stall) begin
             casez(ir_in)
                 default: begin
-                    pc_out <= pc_in;
                     ir_out <= ir_in;
                 end
             endcase
