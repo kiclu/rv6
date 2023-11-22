@@ -197,6 +197,6 @@ module dmem(
     end
 
     // read from L2 cache if L1 cache miss
-    assign b_rd = (~hit && (rd || wr)) || b_dv;
+    assign b_rd = ~hit && (rd || wr);
 
 endmodule

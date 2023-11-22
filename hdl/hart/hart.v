@@ -275,7 +275,7 @@ module hart #(parameter HART_ID = 0) (
     wire [1:0] s_alu_mx_b;
 
     assign s_alu_mx_b[1] = 1'b0;
-    assign s_alu_mx_b[0] = (bdx_ir[6:0] == 7'b0110011);
+    assign s_alu_mx_b[0] = (bdx_ir[6:0] == 7'b0110011 || bdx_ir[6:0] == 7'b0111011);
 
     wire [63:0] alu_out;
 
@@ -359,7 +359,8 @@ module hart #(parameter HART_ID = 0) (
     assign rd = bmw_ir[11:7];
     assign d  = wb_mux[s_wb_mux];
 
-    assign wr = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011);
+    wire stall_wb;
+    assign wr = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011) && !stall_wb;
 
     /* CONTROL UNIT */
 
@@ -381,6 +382,7 @@ module hart #(parameter HART_ID = 0) (
         .stall_id(stall_id),
         .stall_ex(stall_ex),
         .stall_mem(stall_mem),
+        .stall_wb(stall_wb),
 
         .flush_ex_n(flush_ex_n),
 
