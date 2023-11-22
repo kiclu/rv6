@@ -46,7 +46,7 @@ module dmem(
     input                       clk
 );
 
-    wire [ `dmem_tag_len-1:0] addr_tag  = addr[63:63-`dmem_tag_len];
+    wire [ `dmem_tag_len-1:0] addr_tag  = addr[63:64-`dmem_tag_len];
     wire [ `dmem_set_len-1:0] addr_set  = addr[`dmem_set_len+`dmem_offs_len-1:`dmem_offs_len];
     wire [`dmem_offs_len-1:0] addr_offs = addr[`dmem_offs_len-1:0];
 
@@ -54,7 +54,7 @@ module dmem(
     reg  [ `dmem_tag_len-1:0] tag  [0:`dmem_sets-1][0:`dmem_ways-1];
     reg                       v    [0:`dmem_sets-1][0:`dmem_ways-1];
 
-    /* CACHE HIT DETECTION / MUX SELECTION */
+    /* MUX SELECTION */
 
     reg [`dmem_way_len-1:0] way;
     wire [63:0] data_mux [0:6];
@@ -67,16 +67,17 @@ module dmem(
     assign data_mux[6] = $unsigned(data[addr_set][way][8*addr_offs +: 32]);   // unsigned word
     assign data_out = data_mux[len];
 
+    /* HIT DETECTION */
 
     reg hit;
     always @(*) begin : dmem_cache_hit_check
         integer i;
-        hit <= 1'b0;
-        for(i = 0; i < `dmem_sets; i = i + 1) begin
-            way <= {`dmem_way_len{1'b0}};
+        hit <= 0;
+        way <= 0;
+        for(i = 0; i < `dmem_ways; i = i + 1) begin
             if((tag[addr_set][i] == addr_tag) && v[addr_set][i]) begin
-                way <= i[`dmem_way_len-1:0];
-                hit <= 1'b1;
+                way <= i;
+                hit <= 1;
             end
         end
     end
@@ -102,12 +103,13 @@ module dmem(
     always @(posedge clk) begin
         if(!clr_n) begin : dmem_clr_lru
             integer i;
-            for(i = 0; i < lru_size; i = i + 1) begin
+            for(i = 0; i < `dmem_sets; i = i + 1) begin
                 lru_tree[i] <= {lru_size{1'b0}};
             end
+            re <= 0;
         end
         else if(lru_update) begin : dmem_lru_update
-            integer i, l;
+            integer i, l, i_parent;
             // write update
             if(wr) begin
                 i = 0;
@@ -124,8 +126,18 @@ module dmem(
                 re = i - `dmem_ways + 1;
             end
             // read update
-            else begin
-                // TODO
+            else if(hit) begin
+                i = way + lru_size;
+                for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
+                    i_parent = i[0] ? (i-1)/2 : (i-2)/2;
+                    lru_tree[addr_set][i_parent] = !i[0];
+                    i = i_parent;
+                end
+
+                for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
+                    i = lru_tree[addr_set][i] ? 2*i+1 : 2*i+2;
+                end
+                re = i - `dmem_ways + 1;
             end
         end
     end

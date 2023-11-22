@@ -59,7 +59,7 @@ module tb_hart_fib();
     initial begin
         #40
         rst_n = 1'b1;
-        #10000
+        #20000
         $writememh(`mem_final_path, ram, 0);
         `finish();
     end

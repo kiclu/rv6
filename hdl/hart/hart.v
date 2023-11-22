@@ -111,7 +111,7 @@ module hart #(parameter HART_ID = 0) (
         .clk(clk)
     );
 
-    assign b_addr_i = {pc[63:7], 7'b0};
+    assign b_addr_i = {pc[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
 
     reg [63:0] bfp_pc;
     reg [31:0] bfp_ir;
@@ -208,7 +208,7 @@ module hart #(parameter HART_ID = 0) (
         .pr_taken(bpd_pr_taken)
     );
 
-    assign flush_n = rst_n & !pr_miss & !jalr_taken;
+    assign flush_n = rst_n && !pr_miss && !jalr_taken;
 
     // immediate format mux
     wire [63:0] mux_imm [0:3];
