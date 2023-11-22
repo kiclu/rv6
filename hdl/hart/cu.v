@@ -59,8 +59,8 @@ module cu(
 
     // in order for a data hazard to occur, following needs to be true:
     // 1. instruction in ID stage depends on register result of instructions in either EX, MEM or WB
-    // 2. EX, MEM or WB register result must not be zero register (fake dependency 1)
-    // 3. EX, MEM or WB instruction must update register (fake dependency 2)
+    // 2. EX, MEM or WB register result must not be zero register (result discarded fake dependency)
+    // 3. EX, MEM or WB instruction must update register (RAR fake dependency)
     wire dh_ex  = (rd_ex  == rs1 || rd_ex  == rs2) && rd_ex  && wr_ex;
     wire dh_mem = (rd_mem == rs1 || rd_mem == rs2) && rd_mem && wr_mem;
     wire dh_wb  = (rd_wb  == rs1 || rd_wb  == rs2) && rd_wb  && wr_wb;

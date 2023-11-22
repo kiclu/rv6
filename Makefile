@@ -14,8 +14,8 @@ SOURCES_SIM = $(addprefix ${DIR_SIM}/,$(shell find ${DIR_SIM} -name "*.sv" -prin
 VVP	  = $(addprefix ${DIR_VVP}/,${SOURCES_SIM:.sv=.vvp})
 VCD   = $(addprefix ${DIR_VCD}/,${SOURCES_SIM:.sv=.vcd})
 
-V_FLAGS		= -g2001 -Wall -tnull
-SV_FLAGS    = -g2012 -DDEBUG
+V_FLAGS		= -g2001 -Wall -tnull -Ihdl/hart/
+SV_FLAGS    = -g2012 -DDEBUG -Ihdl/hart/
 
 # Generate program hex files for testbench inputs
 DIR_C = test/c
