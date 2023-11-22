@@ -57,12 +57,12 @@ module alu(
         end
         else if(`op_rtype_w || `op_itype_w) begin
             case(op_ir[9:7])
-                3'b000:  alu_out[31:0] <= `op_rtype_w && op_ir[10] ? `wa - `wb : `wa + `wb;
-                3'b001:  alu_out[31:0] <= `wa << b[4:0];
-                3'b101:  alu_out[31:0] <= op_ir[10] ? `swa >>> b[4:0] : `wa >> b[4:0];
-                default: alu_out[31:0] <= `wa + `wb;
+                3'b000:  alu_out[31:0] = `op_rtype_w && op_ir[10] ? `wa - `wb : `wa + `wb;
+                3'b001:  alu_out[31:0] = `wa << b[4:0];
+                3'b101:  alu_out[31:0] = op_ir[10] ? `swa >>> b[4:0] : `wa >> b[4:0];
+                default: alu_out[31:0] = `wa + `wb;
             endcase
-            alu_out[63:32] <= 32'b0;
+            alu_out[63:32] <= {32{alu_out[31]}};
         end
     end
 
