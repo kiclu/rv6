@@ -36,27 +36,122 @@ module cu(
     output            stall_mem,
     output            stall_wb,
 
-    output            flush_ex_n,
+    output reg [ 1:0] s_mx_a_fw,
+    output reg        a_fw,
+
+    output reg [ 1:0] s_mx_b_fw,
+    output reg        b_fw,
 
     input             rst_n,
 
     input             clk
 );
 
+    wire stall_all = !rst_n || b_rd_i || b_rd;
+
     /* PIPELINE DATA HAZARD */
+    `define op_lui      7'b0110111
+    `define op_auipc    7'b0010111
+    `define op_jal      7'b1101111
+    `define op_jalr     7'b1100111
+
+    `define op_load     7'b0000011
+    `define op_store    7'b0100011
+
+    `define op_itype    7'b0010011
+    `define op_itype_w  7'b0011011
+
+    `define op_rtype    7'b0110011
+    `define op_rtype_w  7'b0111011
+
+    `define op_branch   7'b1100011
+
+    wire rs1_pc  =
+        ir_id[6:0] == `op_lui   ||
+        ir_id[6:0] == `op_auipc ||
+        ir_id[6:0] == `op_jal;
+
+    wire rs2_imm =
+        ir_id[6:0] != `op_rtype &&
+        ir_id[6:0] != `op_rtype_w;
 
     wire [4:0] rs1 = ir_id[19:15];
     wire [4:0] rs2 = ir_id[24:20];
 
-    wire [4:0] rd_ex  = stall_ex  ? 5'b0 : ir_ex [11:7];
-    wire [4:0] rd_mem = stall_mem ? 5'b0 : ir_mem[11:7];
-    wire [4:0] rd_wb  = stall_wb  ? 5'b0 : ir_wb [11:7];
+    wire [4:0] rd_ex  = ir_ex [11:7];
+    wire [4:0] rd_mem = ir_mem[11:7];
+    wire [4:0] rd_wb  = ir_wb [11:7];
 
-    wire wr_ex  = (ir_ex [6:0] != 7'b1100011) && (ir_ex [6:0] != 7'b0100011);
-    wire wr_mem = (ir_mem[6:0] != 7'b1100011) && (ir_mem[6:0] != 7'b0100011);
-    wire wr_wb  = (ir_wb [6:0] != 7'b1100011) && (ir_wb [6:0] != 7'b0100011);
+    wire wr_ex  = ir_ex [6:0] != `op_branch && ir_ex [6:0] != `op_store;
+    wire wr_mem = ir_mem[6:0] != `op_branch && ir_mem[6:0] != `op_store;
+    wire wr_wb  = ir_wb [6:0] != `op_branch && ir_wb [6:0] != `op_store;
 
-    wire stall_all = !rst_n || b_rd_i || b_rd || b_wr;
+    /* DATA HAZARD DETECTION */
+
+    // in order for a data hazard to occur, following needs to be true:
+    // 1. instruction in ID stage depends on register result of instructions in either EX, MEM or WB
+    // 2. EX, MEM or WB register result must not be zero register (result discarded false dependency)
+    // 3. EX, MEM or WB instruction must update register (RAR false dependency)
+
+    wire dh_ex  = ((rd_ex  == rs1 && !rs1_pc) || (rd_ex  == rs2 /*&& !rs2_imm*/)) && rd_ex  && wr_ex  && !stall_ex;
+    wire dh_mem = ((rd_mem == rs1 && !rs1_pc) || (rd_mem == rs2 /*&& !rs2_imm*/)) && rd_mem && wr_mem && !stall_mem;
+    wire dh_wb  = ((rd_wb  == rs1 && !rs1_pc) || (rd_wb  == rs2 /*&& !rs2_imm*/)) && rd_wb  && wr_wb  && !stall_wb;
+
+    /* FORWARDING */
+
+    wire a_fw_ex  = rd_ex  == rs1 && !rs1_pc  && rd_ex  && wr_ex;
+    wire a_fw_mem = rd_mem == rs1 && !rs1_pc  && rd_mem && wr_mem;
+    wire a_fw_wb  = rd_wb  == rs1 && !rs1_pc  && rd_wb  && wr_wb;
+
+    always @(posedge clk) begin
+        a_fw <= 0;
+        if(!stall_all) begin
+            if(a_fw_ex) begin
+                a_fw <= ir_ex[6:0] != `op_load;
+                s_mx_a_fw <= 0;
+            end
+            else if(a_fw_mem) begin 
+                a_fw <= ir_mem[6:0] != `op_load;
+                s_mx_a_fw <= 1;
+            end
+            else if(a_fw_wb) begin
+                a_fw <= 1;
+                s_mx_a_fw <= 2;
+            end
+        end
+    end
+
+    wire b_fw_ex  = rd_ex  == rs2 && !rs2_imm && rd_ex  && wr_ex;
+    wire b_fw_mem = rd_mem == rs2 && !rs2_imm && rd_mem && wr_mem;
+    wire b_fw_wb  = rd_wb  == rs2 && !rs2_imm && rd_wb  && wr_wb;
+
+    always @(posedge clk) begin
+        b_fw <= 0;
+        if(!stall_all) begin
+            if(b_fw_ex) begin
+                b_fw <= ir_ex[6:0] != `op_load;
+                s_mx_b_fw <= 0;
+            end
+            else if(b_fw_mem) begin
+                b_fw <= ir_ex[6:0] != `op_load;
+                s_mx_b_fw <= 1;
+            end
+            else if(b_fw_wb) begin
+                b_fw <= 1;
+                s_mx_b_fw <= 2;
+            end
+        end
+    end
+
+    reg fw;
+    always @(*) begin
+        fw <= 0;
+        if(a_fw_ex || b_fw_ex) fw <= ir_ex[6:0] != `op_load;
+        else if(a_fw_mem || b_fw_mem) fw <= ir_mem[6:0] != `op_load;
+        else if(a_fw_wb || b_fw_wb) fw <= 1;
+    end
+
+    /* STALL */
 
     // front end stall counter
     reg  [1:0] stall_c;
@@ -64,22 +159,18 @@ module cu(
     // back end stall counter
     reg  [4:0] stall_d;
 
-    // in order for a data hazard to occur, following needs to be true:
-    // 1. instruction in ID stage depends on register result of instructions in either EX, MEM or WB
-    // 2. EX, MEM or WB register result must not be zero register (result discarded false dependency)
-    // 3. EX, MEM or WB instruction must update register (RAR false dependency)
-    wire dh_ex  = (rd_ex  == rs1 || rd_ex  == rs2) && rd_ex  && wr_ex;
-    wire dh_mem = (rd_mem == rs1 || rd_mem == rs2) && rd_mem && wr_mem;
-    wire dh_wb  = (rd_wb  == rs1 || rd_wb  == rs2) && rd_wb  && wr_wb;
+    wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c &&
+        (!fw || ir_id[6:0] == `op_branch || ir_id[6:0] == `op_jalr || ir_id[6:0] == `op_store);
 
-    wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
+    // disable forwarding
+    //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
 
-    // front end
+    // front end stall signals
     assign stall_if  = stall_all || stall_c || dh;
     assign stall_pd  = stall_all || stall_c || dh;
     assign stall_id  = stall_all || stall_c || dh;
 
-    // back end
+    // back end stall signals
     assign stall_ex  = stall_all || stall_d[2];
     assign stall_mem = stall_all || stall_d[3];
     assign stall_wb  = stall_all || stall_d[4];
@@ -108,10 +199,5 @@ module cu(
             stall_d <= stall_d << 1;
         end
     end
-
-    // TODO: check if correct
-    //assign flush_ex_n = !(stall_c != 2 && dh_ex && !stall_all);
-    //assign flush_ex_n = !(stall_c != 2 && dh && !stall_all);
-    assign flush_ex_n = 1;
 
 endmodule
