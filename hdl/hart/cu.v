@@ -110,7 +110,7 @@ module cu(
                 a_fw <= ir_ex[6:0] != `op_load;
                 s_mx_a_fw <= 0;
             end
-            else if(a_fw_mem) begin 
+            else if(a_fw_mem) begin
                 a_fw <= ir_mem[6:0] != `op_load;
                 s_mx_a_fw <= 1;
             end
