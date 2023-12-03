@@ -242,10 +242,8 @@ module hart #(parameter HART_ID = 0) (
 
     wire stall_id;
 
-    wire flush_ex_n;
-
     always @(posedge clk) begin
-        if(!rst_n || !flush_ex_n) bdx_ir <= 32'h13;
+        if(!rst_n) bdx_ir <= 32'h13;
         else if(!stall_id) begin
             bdx_pc <= bpd_pc;
             bdx_ir <= bpd_ir;
@@ -259,23 +257,31 @@ module hart #(parameter HART_ID = 0) (
 
     /* EX */
 
-    // TODO: add forwarding
-    wire [63:0] alu_mx_a [0:1];
+    wire [63:0] mx_a_fw [0:2];
+    wire [ 1:0] s_mx_a_fw;
+    wire a_fw;
+
+    wire [63:0] mx_b_fw [0:2];
+    wire [ 1:0] s_mx_b_fw;
+    wire b_fw;
+
+    wire [63:0] alu_mx_a [0:3];
     assign alu_mx_a[0] = bdx_r1;
     assign alu_mx_a[1] = bdx_pc;
+    assign alu_mx_a[2] = mx_a_fw[s_mx_a_fw];
     wire [1:0] s_alu_mx_a;
 
-    assign s_alu_mx_a[1] = 1'b0;
-    assign s_alu_mx_a[0] = (bdx_ir[6:0] == 7'b1101111) || (bdx_ir[6:0] == 7'b1100111);
+    assign s_alu_mx_a[1] = a_fw;
+    assign s_alu_mx_a[0] = bdx_ir[6:0] == 7'b1101111 || bdx_ir[6:0] == 7'b1100111 || bdx_ir[6:0] == 7'b0010111;
 
-    // TODO: add forwarding
-    wire [63:0] alu_mx_b [0:1];
+    wire [63:0] alu_mx_b [0:3];
     assign alu_mx_b[0] = bdx_imm;
     assign alu_mx_b[1] = bdx_r2;
+    assign alu_mx_b[3] = mx_b_fw[s_mx_b_fw];
     wire [1:0] s_alu_mx_b;
 
-    assign s_alu_mx_b[1] = 1'b0;
-    assign s_alu_mx_b[0] = (bdx_ir[6:0] == 7'b0110011 || bdx_ir[6:0] == 7'b0111011);
+    assign s_alu_mx_b[1] = b_fw;
+    assign s_alu_mx_b[0] = bdx_ir[6:0] == 7'b0110011 || bdx_ir[6:0] == 7'b0111011;
 
     wire [63:0] alu_out;
 
@@ -360,7 +366,21 @@ module hart #(parameter HART_ID = 0) (
     assign d  = wb_mux[s_wb_mux];
 
     wire stall_wb;
-    assign wr = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011) && !stall_wb;
+    assign wr = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011);
+
+    /* FORWARDING */
+
+    // wb forward register
+    reg [63:0] wb_fw;
+    always @(posedge clk) if(!stall_wb) wb_fw <= wb_mux[s_wb_mux];
+
+    assign mx_a_fw[0] = bxm_alu_out;
+    assign mx_a_fw[1] = bmw_alu_out;
+    assign mx_a_fw[2] = wb_fw;
+
+    assign mx_b_fw[0] = bxm_alu_out;
+    assign mx_b_fw[1] = bmw_alu_out;
+    assign mx_b_fw[2] = wb_fw;
 
     /* CONTROL UNIT */
 
@@ -384,7 +404,11 @@ module hart #(parameter HART_ID = 0) (
         .stall_mem(stall_mem),
         .stall_wb(stall_wb),
 
-        .flush_ex_n(flush_ex_n),
+        .s_mx_a_fw(s_mx_a_fw),
+        .a_fw(a_fw),
+
+        .s_mx_b_fw(s_mx_b_fw),
+        .b_fw(b_fw),
 
         .rst_n(rst_n),
 

@@ -37,7 +37,7 @@ module rv6(
     wire [63:0] b_addr_i;
     wire b_rd_i;
     wire b_dv_i = dbv && b_rd_i;
-    
+
     wire [63:0] b_addr;
 
     wire b_rd;
@@ -66,7 +66,7 @@ module rv6(
         .b_wr(b_wr),
 
         .rst_n(rst_n),
-        
+
         .clk(clk)
     );
 
@@ -94,6 +94,6 @@ module rv6(
     //        );
     //    end
     //endgenerate
-    
+
 
 endmodule

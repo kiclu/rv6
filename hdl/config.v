@@ -16,7 +16,7 @@
     // Ways per set
     `define imem_ways 2
     `define imem_way_len $clog2(`imem_ways)
-    
+
     `define imem_tag_len (64 - `imem_set_len - `imem_offs_len)
 `endif
 
@@ -38,6 +38,6 @@
     // Ways per set
     `define dmem_ways 4
     `define dmem_way_len $clog2(`dmem_ways)
-    
+
     `define dmem_tag_len (64 - `dmem_set_len - `dmem_offs_len)
 `endif
