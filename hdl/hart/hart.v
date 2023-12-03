@@ -80,7 +80,7 @@ module hart #(parameter HART_ID = 0) (
 
         .stall(stall_if),
 
-        .clr_n(rst_n),
+        .rst_n(rst_n),
 
         .clk(clk)
     );
@@ -93,7 +93,7 @@ module hart #(parameter HART_ID = 0) (
         .jal_addr(jal_addr),
         .pr_taken(pr_taken),
         .pr_offs(pr_offs),
-        .clr_n(rst_n)
+        .rst_n(rst_n)
     );
 
     // instruction memory / L1i cache
@@ -106,7 +106,7 @@ module hart #(parameter HART_ID = 0) (
         .b_rd(b_rd_i),
         .b_dv(b_dv_i),
 
-        .clr_n(rst_n),
+        .rst_n(rst_n),
 
         .clk(clk)
     );
@@ -333,7 +333,7 @@ module hart #(parameter HART_ID = 0) (
         .b_data_out(b_data_out),
         .b_wr(b_wr),
 
-        .clr_n(rst_n),
+        .rst_n(rst_n),
 
         .clk(clk)
     );

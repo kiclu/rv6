@@ -26,7 +26,7 @@ module bpu(
     output            pr_taken,
     output     [12:0] pr_offs,
 
-    input             clr_n
+    input             rst_n
 );
 
     // static branch prediction

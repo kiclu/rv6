@@ -41,7 +41,10 @@ module dmem(
     output reg [`dmem_line-1:0] b_data_out,
     output reg                  b_wr,
 
-    input                       clr_n,
+    input                [63:0] inv_addr,
+    input                       inv,
+
+    input                       rst_n,
 
     input                       clk
 );
@@ -101,7 +104,7 @@ module dmem(
 
     // find replacement entry and update LRU tree
     always @(posedge clk) begin
-        if(!clr_n) begin : dmem_clr_lru
+        if(!rst_n) begin : dmem_clr_lru
             integer i;
             for(i = 0; i < `dmem_sets; i = i + 1) begin
                 lru_tree[i] <= {lru_size{1'b0}};
@@ -145,7 +148,7 @@ module dmem(
     /* CACHE DATA UPDATE */
 
     always @(posedge clk) begin
-        if(!clr_n) begin : dmem_clr_v
+        if(!rst_n) begin : dmem_clr_v
             integer s, e;
             for(s = 0; s < `dmem_sets; s = s + 1) begin
                 for(e = 0; e < `dmem_ways; e = e + 1) begin
