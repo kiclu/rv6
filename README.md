@@ -1,10 +1,15 @@
 # RV6
 Multi-core RISC-V application processor.
 
-# Hart Architecture
+## Table of Contents
+- [Hart Architecture](https://github.com/kiclu/rv6#hart-architecture)
+- [Project Structure](https://github.com/kiclu/rv6#project-structure)
+- [License](https://github.com/kiclu/rv6#license)
+
+## Hart Architecture
 <img src="./doc/hart-schematic.png">
 
-# Project Structure
+## Project Structure
 ```
 .
 ├─ doc/             # Documentation files
