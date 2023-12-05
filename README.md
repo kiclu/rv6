@@ -24,7 +24,42 @@ RV6 core is compatible with following RISC-V Foundation specifications:
 - [RISC-V Instruction Set Manual - Volume II: Privileged Architecture](https://github.com/kiclu/rv6/blob/master/doc/riscv-privileged-isa.pdf), version 20211203
 
 ## Hart Architecture
+Pipeline is split into 6 stages:
+- Instruction Fetch (IF)
+- Instruction Pre-Decode (PD)
+- Instruction Decode (ID)
+- Execute (EX)
+- Memory (MEM)
+- Write Back (WB)
+
 <img src="./doc/hart-schematic.png">
+
+### Instruction Fetch (IF)
+During the Instruction Fetch stage one instruction is fetched from instruction memory and the program counter is updated.<br>
+If fetched instruction is JAL, next PC is immediately calculated and updated.<br>
+If fetched instruction is a branch instruction, Branch Prediction Unit (BPU) predicts if branch is taken, updates PC if prediction is positive and passes the prediction to following stages.
+
+### Instruction Pre-Decode (PD)
+In the Instruction Pre-Decode stage multi-cycle, atomic and compressed instructions are pre-decoded.<br>
+Multi-cycle instructions are broken down into multiple single-cycle instructions.<br>
+Atomic instructions are, after receiving a handshake from Central Control Unit (CCU), broken-down into multiple single-cycle instructions.
+Handshake is mandatory to ensure atomicty, i.e. ensure that only one core is accessing and modifying data.<br>
+Compressed instructions are expanded into their non-compressed form.
+
+### Instruction Decode (ID)
+During the Instruction Decode stage registers are accessed and/or immediate is multiplexed and sign-extended.<br>
+After registers are decoded, Branch ALU checks if branch prediction from IF is valid and generates branch miss signal if it isn't.<br>
+Also, during this stage, JALR control transfer instruction updates the Program Counter.
+
+### Execute (EX)
+During the Execute stage, result is calculated for ALU instructions, memory address is calculated for Load / Store instructions and
+return address is calculated for control transfer instructions.
+
+### Memory (MEM)
+During the Memory stage, Data Memory is accessed for Load and Store instructions, as well as Control & Status Registers for CSR instructions.
+
+### Write Back (WB)
+During the Write Back stage, the result from previous stages is written back into the Register File.
 
 ## Project Structure
 ```
