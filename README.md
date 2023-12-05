@@ -35,7 +35,7 @@ Multi-core RISC-V application processor.
 │   │  ├─ default/          # Template verification program
 │   │  └─ fib/              # Fibonacci sequence calculator
 │   ├─ tb_hart.sv       # Hart verification template
-│   ├─ tb_hart_fib.sv   # Fibonacci sequence calculator testbench
+│   └─ tb_hart_fib.sv   # Fibonacci sequence calculator testbench
 ├─ LICENSE
 ├─ Makefile
 └─ README.md
