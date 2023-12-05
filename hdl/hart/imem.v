@@ -31,7 +31,8 @@ module imem(
     output                  b_rd,
     input                   b_dv,
 
-    input                   clr_n,
+    // control signals
+    input                   rst_n,
 
     input                   clk
 );
@@ -73,7 +74,7 @@ module imem(
 
     // find replacement entry and update LRU tree
     always @(posedge clk) begin
-        if(!clr_n) begin : imem_clr_lru
+        if(!rst_n) begin : imem_clr_lru
             integer i;
             for(i = 0; i < `imem_sets; i = i + 1) begin
                 lru_tree[i] <= {lru_size{1'b0}};
@@ -99,7 +100,7 @@ module imem(
     /* CACHE DATA UPDATE */
 
     always @(posedge clk) begin
-        if(!clr_n) begin : imem_clr_v
+        if(!rst_n) begin : imem_clr_v
             integer s, e;
             for(s = 0; s < `imem_sets; s = s + 1) begin
                 for(e = 0; e < `imem_ways; e = e + 1) begin

@@ -32,16 +32,20 @@ module dmem(
     input                [63:0] data_in,
     input                       wr,
 
-    output reg           [63:0] b_addr,
+    output reg           [63:0] b_addr_d,
 
-    input      [`dmem_line-1:0] b_data_in,
-    output                      b_rd,
-    input                       b_dv,
+    input      [`dmem_line-1:0] b_data_in_d,
+    output                      b_rd_d,
+    input                       b_dv_d,
 
-    output reg [`dmem_line-1:0] b_data_out,
-    output reg                  b_wr,
+    output reg [`dmem_line-1:0] b_data_out_d,
+    output reg                  b_wr_d,
 
-    input                       clr_n,
+    // control signals
+    input                [63:0] inv_addr,
+    input                       inv,
+
+    input                       rst_n,
 
     input                       clk
 );
@@ -75,7 +79,7 @@ module dmem(
         hit <= 0;
         way <= 0;
         for(i = 0; i < `dmem_ways; i = i + 1) begin
-            if((tag[addr_set][i] == addr_tag) && v[addr_set][i]) begin
+            if(tag[addr_set][i] == addr_tag && v[addr_set][i]) begin
                 way <= i;
                 hit <= 1;
             end
@@ -95,13 +99,11 @@ module dmem(
     wire dmem_op = rd || wr;
     reg  dmem_op_d;
     wire lru_update = !dmem_op_d && dmem_op;
-    always @(posedge clk) begin
-        dmem_op_d <= dmem_op;
-    end
+    always @(posedge clk) dmem_op_d <= dmem_op;
 
     // find replacement entry and update LRU tree
     always @(posedge clk) begin
-        if(!clr_n) begin : dmem_clr_lru
+        if(!rst_n) begin : dmem_clr_lru
             integer i;
             for(i = 0; i < `dmem_sets; i = i + 1) begin
                 lru_tree[i] <= {lru_size{1'b0}};
@@ -116,11 +118,11 @@ module dmem(
                 for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
                     if(lru_tree[addr_set][i]) begin
                         lru_tree[addr_set][i] = 1'b0;
-                        i = 2*i + 1;
+                        i = i<<1 + 1;
                     end
                     else begin
                         lru_tree[addr_set][i] = 1'b1;
-                        i = 2*i + 2;
+                        i = i<<1 + 2;
                     end
                 end
                 re = i - `dmem_ways + 1;
@@ -129,13 +131,13 @@ module dmem(
             else if(hit) begin
                 i = way + lru_size;
                 for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                    i_parent = i[0] ? (i-1)/2 : (i-2)/2;
+                    i_parent = (i[0] ? i-1 : i-2) >> 1;
                     lru_tree[addr_set][i_parent] = !i[0];
                     i = i_parent;
                 end
 
                 for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                    i = lru_tree[addr_set][i] ? 2*i+1 : 2*i+2;
+                    i = lru_tree[addr_set][i] ? i<<1 + 1 : i<<1 + 2;
                 end
                 re = i - `dmem_ways + 1;
             end
@@ -144,34 +146,36 @@ module dmem(
 
     /* CACHE DATA UPDATE */
 
+    wire [`dmem_tag_len-1:0] inv_tag = inv_addr[63:64-`dmem_tag_len];
+    wire [`dmem_set_len-1:0] inv_set = inv_addr[`dmem_set_len+`dmem_offs_len-1:`dmem_offs_len];
+
     always @(posedge clk) begin
-        if(!clr_n) begin : dmem_clr_v
-            integer s, e;
+        if(!rst_n) begin : dmem_clr_v
+            integer s, w;
             for(s = 0; s < `dmem_sets; s = s + 1) begin
-                for(e = 0; e < `dmem_ways; e = e + 1) begin
-                    v[s][e] = 0;
+                for(w = 0; w < `dmem_ways; w = w + 1) begin
+                    v[s][w] <= 0;
                 end
             end
         end
         // cache hit, write data to cache and write-through
         else if(hit && wr) begin
-            //$display("WRITE @ %t: addr=%h; data=%h; tag=%h; set=%h; offs=%h; way=%h; len=%b", $time(), addr, data_in, addr_tag, addr_set, addr_offs, way, len);
             case(len)
                 3'b000: data[addr_set][way][8*addr_offs +:  8] = data_in[ 7:0];
                 3'b001: data[addr_set][way][8*addr_offs +: 16] = data_in[15:0];
                 3'b010: data[addr_set][way][8*addr_offs +: 32] = data_in[31:0];
                 3'b011: data[addr_set][way][8*addr_offs +: 64] = data_in[63:0];
             endcase
-            b_data_out <= data[addr_set][way];
+            b_data_out_d <= data[addr_set][way];
         end
         // cache miss, load data into cache line on valid data bus
-        else if(!hit && b_dv) begin : dmem_cache_miss
+        else if(!hit && b_dv_d) begin : dmem_cache_miss
             // load data into cache
             v[addr_set][re]    <= 1'b1;
             tag[addr_set][re]  <= addr_tag;
-            data[addr_set][re]  = b_data_in;
+            data[addr_set][re]  = b_data_in_d;
 
-            // write-through
+            // write data
             if(wr) begin
                 case(len)
                     3'b000: data[addr_set][re][8*addr_offs +:  8] = data_in[ 7:0];
@@ -179,7 +183,15 @@ module dmem(
                     3'b010: data[addr_set][re][8*addr_offs +: 32] = data_in[31:0];
                     3'b011: data[addr_set][re][8*addr_offs +: 64] = data_in[63:0];
                 endcase
-                b_data_out <= data[addr_set][re];
+                // write-through
+                b_data_out_d <= data[addr_set][re];
+            end
+        end
+        // cache invalidation
+        if(inv) begin : dmem_inv
+            integer i;
+            for(i = 0; i < `dmem_ways; i = i + 1) begin
+                if(inv_tag == tag[inv_set][i]) v[inv_set][i] <= 0;
             end
         end
     end
@@ -187,16 +199,16 @@ module dmem(
     /* BUS CONTROL SIGNALS */
 
     always @(posedge clk) begin
-        b_addr <= {addr[63:`dmem_offs_len], {`dmem_offs_len{1'b0}}};
+        b_addr_d <= {addr[63:`dmem_offs_len], {`dmem_offs_len{1'b0}}};
     end
 
-    reg b_wr_d;
+    reg b_wr_dd;
     always @(posedge clk) begin
-        b_wr_d <= hit && wr;
-        b_wr <= !b_wr_d && hit && wr;
+        b_wr_dd <= hit && wr;
+        b_wr_d <= !b_wr_dd && hit && wr;
     end
 
     // read from L2 cache if L1 cache miss
-    assign b_rd = ~hit && (rd || wr);
+    assign b_rd_d = ~hit && (rd || wr);
 
 endmodule
