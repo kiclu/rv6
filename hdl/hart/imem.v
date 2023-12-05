@@ -31,6 +31,7 @@ module imem(
     output                  b_rd,
     input                   b_dv,
 
+    // control signals
     input                   rst_n,
 
     input                   clk

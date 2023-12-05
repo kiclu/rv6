@@ -19,23 +19,17 @@
 `include "../config.v"
 
 module hart #(parameter HART_ID = 0) (
-    // instruction bus
-    output           [63:0] b_addr_i,
-    input  [`imem_line-1:0] b_data_i,
-    output                  b_rd_i,
-    input                   b_dv_i,
+    output           [63:0] h_addr,
 
-    // data bus common
-    output           [63:0] b_addr,
+    input  [`hmem_line-1:0] h_data_in,
+    output                  h_rd,
+    input                   h_dv,
 
-    // data bus in
-    input  [`dmem_line-1:0] b_data_in,
-    output                  b_rd,
-    input                   b_dv,
+    output [`hmem_line-1:0] h_data_out,
+    output                  h_wr,
 
-    // data bus out
-    output [`dmem_line-1:0] b_data_out,
-    output                  b_wr,
+    input            [63:0] inv_addr,
+    input                   inv,
 
     input                   rst_n,
 
@@ -97,6 +91,12 @@ module hart #(parameter HART_ID = 0) (
     );
 
     // instruction memory / L1i cache
+    
+    wire [63:0] b_addr_i = {pc[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
+    wire [`imem_line-1:0] b_data_i;
+    wire b_rd_i;
+    wire b_dv_i;
+
     imem inst_imem(
         .pc(pc),
 
@@ -110,8 +110,6 @@ module hart #(parameter HART_ID = 0) (
 
         .clk(clk)
     );
-
-    assign b_addr_i = {pc[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
 
     reg [63:0] bfp_pc;
     reg [31:0] bfp_ir;
@@ -314,6 +312,14 @@ module hart #(parameter HART_ID = 0) (
     wire [63:0] dmem_out;
 
     // data memory / L1d cache
+    
+    wire [63:0] b_addr_d;
+    wire [`dmem_line-1:0] b_data_in_d;
+    wire b_rd_d;
+    wire b_dv_d;
+    wire [`dmem_line-1:0] b_data_out_d;
+    wire b_wr_d;
+
     dmem inst_dmem(
         .addr(bxm_alu_out),
         .len(bxm_ir[14:12]),
@@ -324,14 +330,14 @@ module hart #(parameter HART_ID = 0) (
         .data_in(bxm_r2),
         .wr(bxm_ir[6:0] == 7'b0100011),
 
-        .b_addr(b_addr),
+        .b_addr_d(b_addr_d),
 
-        .b_data_in(b_data_in),
-        .b_rd(b_rd),
-        .b_dv(b_dv),
+        .b_data_in_d(b_data_in_d),
+        .b_rd_d(b_rd_d),
+        .b_dv_d(b_dv_d),
 
-        .b_data_out(b_data_out),
-        .b_wr(b_wr),
+        .b_data_out_d(b_data_out_d),
+        .b_wr_d(b_wr_d),
 
         .rst_n(rst_n),
 
@@ -382,6 +388,40 @@ module hart #(parameter HART_ID = 0) (
     assign mx_b_fw[1] = bmw_alu_out;
     assign mx_b_fw[2] = wb_fw;
 
+    /* L2 CACHE */
+
+    hmem inst_hmem(
+        .b_addr_i(b_addr_i),
+        .b_data_i(b_data_i),
+        .b_rd_i(b_rd_i),
+        .b_dv_i(b_dv_i),
+
+        .b_addr_d(b_addr_d),
+
+        .b_data_in_d(b_data_in_d),
+        .b_rd_d(b_rd_d),
+        .b_dv_d(b_dv_d),
+
+        .b_data_out_d(b_data_out_d),
+        .b_wr_d(b_wr_d),
+
+        .h_addr(h_addr),
+
+        .h_data_in(h_data_in),
+        .h_rd(h_rd),
+        .h_dv(h_dv),
+
+        .h_data_out(h_data_out),
+        .h_wr(h_wr),
+
+        .inv_addr(inv_addr),
+        .inv(inv),
+
+        .rst_n(rst_n),
+
+        .clk(clk)
+    );
+
     /* CONTROL UNIT */
 
     cu inst_cu(
@@ -394,8 +434,8 @@ module hart #(parameter HART_ID = 0) (
 
         .b_rd_i(b_rd_i),
 
-        .b_rd(b_rd),
-        .b_wr(b_wr),
+        .b_rd(b_rd_d),
+        .b_wr(b_wr_d),
 
         .stall_if(stall_if),
         .stall_pd(stall_pd),
