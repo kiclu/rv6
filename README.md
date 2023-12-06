@@ -108,6 +108,9 @@ During the Write Back stage, the result from previous stages is written back int
 | `hmem_line`                                                           	| integer 	| Hart memory (L2 cache) line size in bits         	|
 | `hmem_sets`                                                           	| integer 	| Hart memory (L2 cache) set count                 	|
 | `hmem_ways`                                                           	| integer 	| Hart memory (L2 cache) ways per set              	|
+| `bpu_static_taken`                                                        |           | Branch predict static taken                       |
+| `bpu_static_ntaken`                                                       |           | Branch predict static not taken                   |
+| `bpu_static_btaken`                                                       |           | Branch predict static backward taken              |
 
 ## License
 The hardware is licensed under the [CERN Open Hardware Licence Version 2 - Strongly Reciprocal](https://ohwr.org/cern_ohl_s_v2.txt).
