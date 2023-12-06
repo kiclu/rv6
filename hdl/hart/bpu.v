@@ -16,6 +16,8 @@
  * external case of any product you make using this documentation.
  */
 
+`include "../config.v"
+
 module bpu(
     input      [63:0] pc,
     input      [31:0] ir,
@@ -29,14 +31,24 @@ module bpu(
     input             rst_n
 );
 
-    // static branch prediction
-    // backward jumps taken
-    // forward jumps not taken
+`ifdef bpu_static_taken
+    // static branch prediction, all jumps taken
+    assign pr_taken = ir[6:0] == 7'b1100011;
+`endif
+
+`ifdef bpu_static_ntaken
+    // static branch prediction, all jumps not taken
+    assign pr_taken = 0;
+`endif
+
+`ifdef bpu_static_btaken
+    // static branch prediction, backward jumps taken, forward jumps not taken
+    assign pr_taken = ir[6:0] == 7'b1100011 && ir[31];
+`endif
 
     assign jal_taken = ir[6:0] == 7'b1101111;
     assign jal_addr  = pc + {{43{ir[31]}}, ir[31], ir[19:12], ir[20], ir[30:21], 1'b0};
 
-    assign pr_taken = ir[6:0] == 7'b1100011 && ir[31];
     assign pr_offs  = {ir[31], ir[7], ir[30:25], ir[11:8], 1'b0};
 
 endmodule
