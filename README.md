@@ -67,17 +67,17 @@ During the Write Back stage, the result from previous stages is written back int
 ├─ doc/             # Documentation files
 ├─ hdl/             # Synthesis source files
 │   ├─ hart/            # Hart top-level & submodules
-│   │   ├─ alu.v                # Integer ALU
-│   │   ├─ bpu.v                # Branch Prediction Unit
-│   │   ├─ br_alu.v             # Branch ALU
-│   │   ├─ cu.v                 # Control Unit
-│   │   ├─ dmem.v               # Data Memory (L1d cache)
-│   │   ├─ hart.v               # Core top-level module
-│   │   ├─ hmem.v               # Hart Memory (L2 cache)
-│   │   ├─ imem.v               # Instruction Memory (L1i cache)
-│   │   ├─ pc.v                 # Program Counter
-│   │   ├─ pd.v                 # Instruction Pre-Decoder
-│   │   └─ regfile.v            # Register File
+│   │   ├─ alu.v            # Integer ALU
+│   │   ├─ bpu.v            # Branch Prediction Unit
+│   │   ├─ br_alu.v         # Branch ALU
+│   │   ├─ cu.v             # Control Unit
+│   │   ├─ dmem.v           # Data Memory (L1d cache)
+│   │   ├─ hart.v           # Core top-level module
+│   │   ├─ hmem.v           # Hart Memory (L2 cache)
+│   │   ├─ imem.v           # Instruction Memory (L1i cache)
+│   │   ├─ pc.v             # Program Counter
+│   │   ├─ pd.v             # Instruction Pre-Decoder
+│   │   └─ regfile.v        # Register File
 │   ├─ config.v         # Configuration include file
 │   └─ rv6.v            # Top-level CPU module
 ├─ simulation/      # ModelSim project files
