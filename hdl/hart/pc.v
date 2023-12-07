@@ -33,13 +33,13 @@ module pc(
 
     input             stall,
 
-    input             clr_n,
+    input             rst_n,
 
     input             clk
 );
 
-    always @(posedge clk, negedge clr_n) begin
-        if(!clr_n) pc <= 64'h80000000;
+    always @(posedge clk, negedge rst_n) begin
+        if(!rst_n) pc <= 64'h80000000;
         else if(!stall) begin
             if(pr_miss) pc <= br_addr;
             else if(jalr_taken) pc <= jalr_addr;

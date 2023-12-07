@@ -16,28 +16,24 @@
  * external case of any product you make using this documentation.
  */
 
-module hart(
-    // instruction bus
-    output [  63:0] b_addr_i,
-    input  [1023:0] b_data_i,
-    output          b_rd_i,
-    input           b_dv_i,
+`include "../config.v"
 
-    // data bus common
-    output [  63:0] b_addr,
+module hart #(parameter HART_ID = 0) (
+    output           [63:0] h_addr,
 
-    // data bus in
-    input  [1023:0] b_data_in,
-    output          b_rd,
-    input           b_dv,
+    input  [`hmem_line-1:0] h_data_in,
+    output                  h_rd,
+    input                   h_dv,
 
-    // data bus out
-    output [1023:0] b_data_out,
-    output          b_wr,
+    output [`hmem_line-1:0] h_data_out,
+    output                  h_wr,
 
-    input           rst_n,
+    input            [63:0] inv_addr,
+    input                   inv,
 
-    input           clk
+    input                   rst_n,
+
+    input                   clk
 );
 
     wire flush_n;
@@ -78,7 +74,7 @@ module hart(
 
         .stall(stall_if),
 
-        .clr_n(rst_n),
+        .rst_n(rst_n),
 
         .clk(clk)
     );
@@ -91,10 +87,16 @@ module hart(
         .jal_addr(jal_addr),
         .pr_taken(pr_taken),
         .pr_offs(pr_offs),
-        .clr_n(rst_n)
+        .rst_n(rst_n)
     );
 
     // instruction memory / L1i cache
+    
+    wire [63:0] b_addr_i = {pc[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
+    wire [`imem_line-1:0] b_data_i;
+    wire b_rd_i;
+    wire b_dv_i;
+
     imem inst_imem(
         .pc(pc),
 
@@ -104,12 +106,10 @@ module hart(
         .b_rd(b_rd_i),
         .b_dv(b_dv_i),
 
-        .clr_n(rst_n),
+        .rst_n(rst_n),
 
         .clk(clk)
     );
-
-    assign b_addr_i = {pc[63:7], 7'b0};
 
     reg [63:0] bfp_pc;
     reg [31:0] bfp_ir;
@@ -206,7 +206,7 @@ module hart(
         .pr_taken(bpd_pr_taken)
     );
 
-    assign flush_n = rst_n & !pr_miss & !jalr_taken;
+    assign flush_n = rst_n && !pr_miss && !jalr_taken;
 
     // immediate format mux
     wire [63:0] mux_imm [0:3];
@@ -240,10 +240,8 @@ module hart(
 
     wire stall_id;
 
-    wire flush_ex_n;
-
     always @(posedge clk) begin
-        if(!rst_n || !flush_ex_n) bdx_ir <= 32'h13;
+        if(!rst_n) bdx_ir <= 32'h13;
         else if(!stall_id) begin
             bdx_pc <= bpd_pc;
             bdx_ir <= bpd_ir;
@@ -257,23 +255,31 @@ module hart(
 
     /* EX */
 
-    // TODO: add forwarding
-    wire [63:0] alu_mx_a [0:1];
+    wire [63:0] mx_a_fw [0:2];
+    wire [ 1:0] s_mx_a_fw;
+    wire a_fw;
+
+    wire [63:0] mx_b_fw [0:2];
+    wire [ 1:0] s_mx_b_fw;
+    wire b_fw;
+
+    wire [63:0] alu_mx_a [0:3];
     assign alu_mx_a[0] = bdx_r1;
     assign alu_mx_a[1] = bdx_pc;
+    assign alu_mx_a[2] = mx_a_fw[s_mx_a_fw];
     wire [1:0] s_alu_mx_a;
 
-    assign s_alu_mx_a[1] = 1'b0;
-    assign s_alu_mx_a[0] = (bdx_ir[6:0] == 7'b1101111) || (bdx_ir[6:0] == 7'b1100111);
+    assign s_alu_mx_a[1] = a_fw;
+    assign s_alu_mx_a[0] = bdx_ir[6:0] == 7'b1101111 || bdx_ir[6:0] == 7'b1100111 || bdx_ir[6:0] == 7'b0010111;
 
-    // TODO: add forwarding
-    wire [63:0] alu_mx_b [0:1];
+    wire [63:0] alu_mx_b [0:3];
     assign alu_mx_b[0] = bdx_imm;
     assign alu_mx_b[1] = bdx_r2;
+    assign alu_mx_b[3] = mx_b_fw[s_mx_b_fw];
     wire [1:0] s_alu_mx_b;
 
-    assign s_alu_mx_b[1] = 1'b0;
-    assign s_alu_mx_b[0] = (bdx_ir[6:0] == 7'b0110011);
+    assign s_alu_mx_b[1] = b_fw;
+    assign s_alu_mx_b[0] = bdx_ir[6:0] == 7'b0110011 || bdx_ir[6:0] == 7'b0111011;
 
     wire [63:0] alu_out;
 
@@ -306,6 +312,14 @@ module hart(
     wire [63:0] dmem_out;
 
     // data memory / L1d cache
+    
+    wire [63:0] b_addr_d;
+    wire [`dmem_line-1:0] b_data_in_d;
+    wire b_rd_d;
+    wire b_dv_d;
+    wire [`dmem_line-1:0] b_data_out_d;
+    wire b_wr_d;
+
     dmem inst_dmem(
         .addr(bxm_alu_out),
         .len(bxm_ir[14:12]),
@@ -316,16 +330,16 @@ module hart(
         .data_in(bxm_r2),
         .wr(bxm_ir[6:0] == 7'b0100011),
 
-        .b_addr(b_addr),
+        .b_addr_d(b_addr_d),
 
-        .b_data_in(b_data_in),
-        .b_rd(b_rd),
-        .b_dv(b_dv),
+        .b_data_in_d(b_data_in_d),
+        .b_rd_d(b_rd_d),
+        .b_dv_d(b_dv_d),
 
-        .b_data_out(b_data_out),
-        .b_wr(b_wr),
+        .b_data_out_d(b_data_out_d),
+        .b_wr_d(b_wr_d),
 
-        .clr_n(rst_n),
+        .rst_n(rst_n),
 
         .clk(clk)
     );
@@ -352,12 +366,61 @@ module hart(
     wire [63:0] wb_mux [0:1];
     assign wb_mux[0] = bmw_alu_out;
     assign wb_mux[1] = bmw_dmem_out;
-    wire s_wb_mux = (bxm_ir[6:0] == 7'b0000011);
+    wire s_wb_mux = (bmw_ir[6:0] == 7'b0000011);
 
     assign rd = bmw_ir[11:7];
     assign d  = wb_mux[s_wb_mux];
 
+    wire stall_wb;
     assign wr = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011);
+
+    /* FORWARDING */
+
+    // wb forward register
+    reg [63:0] wb_fw;
+    always @(posedge clk) if(!stall_wb) wb_fw <= wb_mux[s_wb_mux];
+
+    assign mx_a_fw[0] = bxm_alu_out;
+    assign mx_a_fw[1] = bmw_alu_out;
+    assign mx_a_fw[2] = wb_fw;
+
+    assign mx_b_fw[0] = bxm_alu_out;
+    assign mx_b_fw[1] = bmw_alu_out;
+    assign mx_b_fw[2] = wb_fw;
+
+    /* L2 CACHE */
+
+    hmem inst_hmem(
+        .b_addr_i(b_addr_i),
+        .b_data_i(b_data_i),
+        .b_rd_i(b_rd_i),
+        .b_dv_i(b_dv_i),
+
+        .b_addr_d(b_addr_d),
+
+        .b_data_in_d(b_data_in_d),
+        .b_rd_d(b_rd_d),
+        .b_dv_d(b_dv_d),
+
+        .b_data_out_d(b_data_out_d),
+        .b_wr_d(b_wr_d),
+
+        .h_addr(h_addr),
+
+        .h_data_in(h_data_in),
+        .h_rd(h_rd),
+        .h_dv(h_dv),
+
+        .h_data_out(h_data_out),
+        .h_wr(h_wr),
+
+        .inv_addr(inv_addr),
+        .inv(inv),
+
+        .rst_n(rst_n),
+
+        .clk(clk)
+    );
 
     /* CONTROL UNIT */
 
@@ -371,16 +434,21 @@ module hart(
 
         .b_rd_i(b_rd_i),
 
-        .b_rd(b_rd),
-        .b_wr(b_wr),
+        .b_rd(b_rd_d),
+        .b_wr(b_wr_d),
 
         .stall_if(stall_if),
         .stall_pd(stall_pd),
         .stall_id(stall_id),
         .stall_ex(stall_ex),
         .stall_mem(stall_mem),
+        .stall_wb(stall_wb),
 
-        .flush_ex_n(flush_ex_n),
+        .s_mx_a_fw(s_mx_a_fw),
+        .a_fw(a_fw),
+
+        .s_mx_b_fw(s_mx_b_fw),
+        .b_fw(b_fw),
 
         .rst_n(rst_n),
 
