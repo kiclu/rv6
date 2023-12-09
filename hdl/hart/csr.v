@@ -26,19 +26,22 @@
 //`define csr_mmp
 //`define csr_counter
 
-module csr(
+module csr #(parameter HART_ID = 0) (
     input      [11:0] csr_addr,
 
     input      [63:0] csr_in,
 
     output reg [63:0] csr_out,
 
-    input             csr_rd,
-    input             csr_wr,
+    input             csr_rw,
+    input             csr_rs,
+    input             csr_rc,
 
     output reg        csr_invalid,
     output            csr_wr_invalid,
     output            csr_pr_invalid,
+
+    output     [63:0] trap_addr,
 
     input             rst_n,
 
@@ -78,7 +81,7 @@ module csr(
     `define mie             12'h304
     `define mtvec           12'h305
     `define mcounteren      12'h306
-    
+
     // machine trap handling
     `define mscratch        12'h340
     `define mepc            12'h341
@@ -248,7 +251,7 @@ module csr(
     `define mhpmcounter29   12'hB1D
     `define mhpmcounter30   12'hB1E
     `define mhpmcounter31   12'hB1F
-    
+
     // machine counter setup
     `define mcountinhibit   12'hB20
     `define mhpmevent3      12'h323
@@ -286,9 +289,7 @@ module csr(
 
     reg [63:0] csr_reg [0:`csr_count-1];
 
-    initial $display(`csr_count);
-
-    always @(*) begin
+    always @(posedge clk) begin
         csr_invalid <= 0;
         case(csr_addr)
             `sstatus:       csr_out <= csr_reg[0];
@@ -342,7 +343,7 @@ module csr(
         `ifdef csr_counter
 
         `endif
-            
+
             default: csr_invalid <= 1;
         endcase
     end
@@ -352,54 +353,74 @@ module csr(
     wire wr = csr_wr && !csr_invalid && !csr_wr_invalid && !csr_pr_invalid;
 
     always @(posedge clk) begin
-        if(wr) begin
+        if(!rst_n) begin
+            // set privilege level to machine mode
+            privilege_level <= 2'b11;
+            // initialize CSR registers
+            // mvendorid
+            csr_reg[10] <= 64'h0000000000000000;
+            // marchid
+            csr_reg[11] <= 64'h0000000000000000;
+            // mimpid
+            csr_reg[12] <= 64'h0000000000000000;
+            // mhartid
+            csr_reg[13] <= HART_ID;
+            // misa
+            csr_reg[16] <= 64'h8000000000141105;
+        end
+        else if(wr) begin
             case(csr_addr)
-                `sstatus:        csr_reg[0]  <= csr_out;
-                `sie:            csr_reg[1]  <= csr_out;
-                `stvec:          csr_reg[2]  <= csr_out;
-                `scounteren:     csr_reg[3]  <= csr_out;
+                `sstatus:        csr_reg[0]  <= csr_in;
+                `sie:            csr_reg[1]  <= csr_in;
+                `stvec:          csr_reg[2]  <= csr_in;
+                `scounteren:     csr_reg[3]  <= csr_in;
 
-                `sscratch:       csr_reg[4]  <= csr_out;
-                `sepc:           csr_reg[5]  <= csr_out;
-                `scause:         csr_reg[6]  <= csr_out;
-                `stval:          csr_reg[7]  <= csr_out;
-                `sip:            csr_reg[8]  <= csr_out;
+                `sscratch:       csr_reg[4]  <= csr_in;
+                `sepc:           csr_reg[5]  <= csr_in;
+                `scause:         csr_reg[6]  <= csr_in;
+                `stval:          csr_reg[7]  <= csr_in;
+                `sip:            csr_reg[8]  <= csr_in;
 
-                `satp:           csr_reg[9]  <= csr_out;
-                                                   
-                `mvendorid:      csr_reg[10] <= csr_out;
-                `marchid:        csr_reg[11] <= csr_out;
-                `mimpid:         csr_reg[12] <= csr_out;
-                `mhartid:        csr_reg[13] <= csr_out;
-                `mconfigptr:     csr_reg[14] <= csr_out;
+                `satp:           csr_reg[9]  <= csr_in;
 
-                `mstatus:        csr_reg[15] <= csr_out;
-                `misa:           csr_reg[16] <= csr_out;
-                `medeleg:        csr_reg[17] <= csr_out;
-                `mideleg:        csr_reg[18] <= csr_out;
-                `mie:            csr_reg[19] <= csr_out;
-                `mtvec:          csr_reg[20] <= csr_out;
-                `mcounteren:     csr_reg[21] <= csr_out;
+                //`mvendorid:      csr_reg[10] <= csr_in;
+                //`marchid:        csr_reg[11] <= csr_in;
+                //`mimpid:         csr_reg[12] <= csr_in;
+                //`mhartid:        csr_reg[13] <= csr_in;
+                `mconfigptr:     csr_reg[14] <= csr_in;
 
-                `mscratch:       csr_reg[22] <= csr_out;
-                `mepc:           csr_reg[23] <= csr_out;
-                `mcause:         csr_reg[24] <= csr_out;
-                `mtval:          csr_reg[25] <= csr_out;
-                `mip:            csr_reg[26] <= csr_out;
-                `mtinst:         csr_reg[27] <= csr_out;
-                `mtval2:         csr_reg[28] <= csr_out;
+                `mstatus:        csr_reg[15] <= csr_in;
+                `misa:           csr_reg[16] <= csr_in;
+                `medeleg:        csr_reg[17] <= csr_in;
+                `mideleg:        csr_reg[18] <= csr_in;
+                `mie:            csr_reg[19] <= csr_in;
+                `mtvec:          csr_reg[20] <= csr_in;
+                `mcounteren:     csr_reg[21] <= csr_in;
 
-                `menvcfg:        csr_reg[29] <= csr_out;
-                `mseccfg:        csr_reg[30] <= csr_out;
+                `mscratch:       csr_reg[22] <= csr_in;
+                `mepc:           csr_reg[23] <= csr_in;
+                `mcause:         csr_reg[24] <= csr_in;
+                `mtval:          csr_reg[25] <= csr_in;
+                `mip:            csr_reg[26] <= csr_in;
+                `mtinst:         csr_reg[27] <= csr_in;
+                `mtval2:         csr_reg[28] <= csr_in;
+
+                `menvcfg:        csr_reg[29] <= csr_in;
+                `mseccfg:        csr_reg[30] <= csr_in;
 
             `ifdef csr_fp
-                `fflags:         csr_reg[31] <= csr_out;
-                `frm:            csr_reg[32] <= csr_out;
-                `fcsr:           csr_reg[33] <= csr_out;
+                `fflags:         csr_reg[31] <= csr_in;
+                `frm:            csr_reg[32] <= csr_in;
+                `fcsr:           csr_reg[33] <= csr_in;
             `endif
 
             endcase
         end
     end
+
+
+    wire cause;
+
+    assign trap_addr = {stvec[63:2], 2'b0} + (stvec[0] ? cause<<2 : 0);
 
 endmodule

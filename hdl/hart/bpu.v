@@ -46,9 +46,16 @@ module bpu(
     assign pr_taken = ir[6:0] == 7'b1100011 && ir[31];
 `endif
 
-    assign jal_taken = ir[6:0] == 7'b1101111;
-    assign jal_addr  = pc + {{43{ir[31]}}, ir[31], ir[19:12], ir[20], ir[30:21], 1'b0};
 
     assign pr_offs  = {ir[31], ir[7], ir[30:25], ir[11:8], 1'b0};
+
+    wire        j_taken   = ir[6:0] == 7'b1101111;
+    wire        j_taken_c = ir[15:13] == 3'b101 && ir[1:0] == 2'b01;
+
+    wire [63:0] j_addr    = pc + {{43{ir[31]}}, ir[31], ir[19:12], ir[20], ir[30:21], 1'b0};
+    wire [63:0] j_addr_c  = pc + {{52{ir[12]}}, ir[12], ir[8], ir[10:9], ir[6], ir[7], ir[2], ir[11], ir[5:3], 1'b0};
+
+    assign jal_taken = j_taken | j_taken_c;
+    assign jal_addr  = j_taken ? j_addr : j_addr_c;
 
 endmodule

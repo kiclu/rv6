@@ -24,7 +24,6 @@
 
 module imem(
     input            [63:0] pc,
-
     output           [31:0] ir,
 
     input  [`imem_line-1:0] b_data,

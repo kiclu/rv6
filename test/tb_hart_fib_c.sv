@@ -1,17 +1,17 @@
 `ifdef __ICARUS__
-    `define program_hex_path "test/c/fib/fib.hex"
-    `define mem_final_path   "test/out/tb_hart_fib_mem.hex"
+    `define program_hex_path "test/c/fib/fib_c.hex"
+    `define mem_final_path   "test/out/tb_hart_fib_c_mem.hex"
     `define finish(X) $finish(X)
 `else
-    `define program_hex_path "../test/c/fib/fib.hex"
-    `define mem_final_path   "../test/out/tb_hart_fib_mem.hex"
+    `define program_hex_path "../test/c/fib_c/fib.hex"
+    `define mem_final_path   "../test/out/tb_hart_fib_c_mem.hex"
     `define finish(X) $stop(X)
 `endif
 
 `include "../hdl/config.v"
 
 `timescale 1ns/1ps
-module tb_hart_fib();
+module tb_hart_fib_c();
 
     wire [63:0] h_addr;
 
@@ -24,6 +24,9 @@ module tb_hart_fib();
 
     reg [63:0] inv_addr;
     reg inv;
+
+    wire amo_req;
+    reg  amo_ack;
 
     reg rst_n;
     reg clk;
@@ -42,6 +45,8 @@ module tb_hart_fib();
 
         clk       = 1'b1;
 
+        amo_ack   = 1'b0;
+
         forever #10 clk = ~clk;
     end
 
@@ -57,7 +62,7 @@ module tb_hart_fib();
     initial begin
         #40
         rst_n = 1'b1;
-        #20000
+        #50000
         $writememh(`mem_final_path, ram, 0);
         `finish();
     end
@@ -87,7 +92,12 @@ module tb_hart_fib();
         end
     end
 
-    hart dut(
+    always @(posedge clk) begin
+        if(amo_req) #80 amo_ack = 1'b1;
+        else amo_ack = 1'b0;
+    end
+
+    hart #(.HART_ID(0)) dut (
         .h_addr(h_addr),
 
         .h_data_in(h_data_in),
@@ -99,6 +109,9 @@ module tb_hart_fib();
 
         .inv_addr(inv_addr),
         .inv(inv),
+
+        .amo_req(amo_req),
+        .amo_ack(amo_ack),
 
         .rst_n(rst_n),
 

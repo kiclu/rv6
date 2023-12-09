@@ -24,11 +24,7 @@ module cu(
     input      [31:0] ir_mem,
     input      [31:0] ir_wb,
 
-    input             b_rd_i,
-
-    input             b_rd,
-    input             b_wr,
-
+    // stage stall signals
     output            stall_if,
     output            stall_pd,
     output            stall_id,
@@ -36,6 +32,15 @@ module cu(
     output            stall_mem,
     output            stall_wb,
 
+    // atomic instruction signals
+    input             amo_req,
+    input             amo_ack,
+
+    // instruction/data bus signals
+    input             b_rd_i,
+    input             b_rd_d,
+
+    // forwarding signals
     output reg [ 1:0] s_mx_a_fw,
     output reg        a_fw,
 
@@ -47,7 +52,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd;
+    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
     `define op_lui      7'b0110111
@@ -166,7 +171,7 @@ module cu(
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
 
     // front end stall signals
-    assign stall_if  = stall_all || stall_c || dh;
+    assign stall_if  = stall_all || stall_c || dh || amo_req;
     assign stall_pd  = stall_all || stall_c || dh;
     assign stall_id  = stall_all || stall_c || dh;
 
