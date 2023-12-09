@@ -17,8 +17,8 @@ OBJDUMP = ${TOOLPREFIX}objdump
 
 LDSCRIPT = ldscript.ld
 
-ASFLAGS = -march=rv64ia -mabi=lp64
-CFLAGS  = -march=rv64ia -mabi=lp64 -mcmodel=medany -MMD -MP -MF"${@:%.o=%.d}" -O2
+ASFLAGS = -march=rv64ic -mabi=lp64
+CFLAGS  = -march=rv64ic -mabi=lp64 -mcmodel=medany -MMD -MP -MF"${@:%.o=%.d}" -O2
 
 SOURCES_S = $(shell find . -name "*.S" -printf "%P ")
 OBJECTS += $(addprefix ${DIR_BUILD}/,${SOURCES_S:.S=.o})

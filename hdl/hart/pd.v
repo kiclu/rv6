@@ -49,12 +49,12 @@ module pd(
         case({ir_in[31:27], ir_in[6:0]})
             // lr.w
             12'b00010_0101111: begin
-
+                // TODO
             end
 
             // sc.w
             12'b00011_0101111: begin
-
+                // TODO
             end
 
             // amoswap.w
@@ -145,22 +145,22 @@ module pd(
 
             // amomin.w
             12'b10000_0101111: begin
-
+                // TODO
             end
 
             // amomax.w
             12'b10100_0101111: begin
-
+                // TODO
             end
 
             // amominu.w
             12'b11000_0101111: begin
-
+                // TODO
             end
 
             // amomaxu.w
             12'b11100_0101111: begin
-
+                // TODO
             end
 
         endcase
@@ -305,7 +305,6 @@ module pd(
                 if(!ir_in[12]) begin
                     // c.jr
                     if(ir_in[6:2] == 5'b00000) begin
-                        $display("@ %t: c.jr", $time);
                         ir_out <= {12'b000000000000, ir_in[11:7], 3'b000, 5'b00000, 7'b1100111};
                     end
                     // c.mv

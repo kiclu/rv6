@@ -46,7 +46,6 @@ module bpu(
     assign pr_taken = ir[6:0] == 7'b1100011 && ir[31];
 `endif
 
-
     assign pr_offs  = {ir[31], ir[7], ir[30:25], ir[11:8], 1'b0};
 
     wire        j_taken   = ir[6:0] == 7'b1101111;

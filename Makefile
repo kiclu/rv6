@@ -24,7 +24,7 @@ HEX_MAKEFILES = $(addprefix ${DIR_C}/,$(shell find ${DIR_C} -name "Makefile" -pr
 HEX_TARGETS   = $(join $(dir ${HEX_MAKEFILES}),$(notdir ${HEX_MAKEFILES:/Makefile=.hex}))
 HEX_DIRS      = $(dir ${HEX_MAKEFILES})
 
-hex_all: ${HEX_TARGETS}
+hex: ${HEX_TARGETS}
 	@echo "Makefile: Compiling hex targets finished successfully\n"
 
 %.hex:
@@ -32,32 +32,18 @@ hex_all: ${HEX_TARGETS}
 	@cd $(dir ${@}) && make all
 	@echo "Makefile: Compiled ${@} successfully\n"
 
-# Generate testbenches and run them
-all: ${SOURCES_SYN} ${VVP} ${VCD}
+all: hex syn_all sim_all
 
-${DIR_VVP}/%.vvp: %.sv | ${DIR_VVP} hex_all syncheck
-	@echo "Makefile: Compiling testbench ${<}"
-	@mkdir -p $(dir ${@})
-	${VC} ${SV_FLAGS} -o ${@} ${<} ${SOURCES_SYN}
-	@echo "Makefile: Compiled ${@} successfully\n"
+# Run testbench simulation
+sim_all:
+	@echo "vsim: Running testbench simulation"
+	cd simulation/ && vsim -c tb_hart -do 'run -all; quit -f;'
+	@echo "vsim: Testbench simulation finished successfully\n"
 
-${DIR_VVP}:
-	@mkdir -p ${DIR_VVP}
-
-${DIR_VCD}/%.vcd: ${DIR_VVP}/%.vvp | ${DIR_VCD}
-	@echo "Makefile: Simulating testbench ${<}"
-	@mkdir -p $(dir ${@})
-	${VS} ${<}
-	@echo "Makefile: Testbench ${<} simulation finished\n"
-
-${DIR_VCD}:
-	@mkdir -p ${DIR_VCD}
-	@mkdir -p test/out/
-
-# Compile all synthesis source files with verbose flag
-syncheck: ${SOURCES_SYN}
+# Compile all source files
+syn_all: ${SOURCES_SYN}
 	@echo "Makefile: Compiling synthesis modules"
-	${VC} ${V_FLAGS} ${^}
+	cd simulation/ && vsim -c tb_hart -do 'quit -sim; project open rv6; project compileall; quit -f;'
 	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
 # Recursive clean
@@ -70,6 +56,3 @@ CLEAN_C = $(addsuffix clean,${HEX_DIRS})
 
 # Clean all
 clean: ${CLEAN_C}
-	@echo "Makefile: clean"
-	rm -rf ${DIR_VVP} ${DIR_VCD}
-	@echo ""

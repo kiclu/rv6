@@ -104,12 +104,12 @@ module cu(
 
     /* FORWARDING */
 
-    wire a_fw_ex  = rd_ex  == rs1 && !rs1_pc  && rd_ex  && wr_ex;
-    wire a_fw_mem = rd_mem == rs1 && !rs1_pc  && rd_mem && wr_mem;
-    wire a_fw_wb  = rd_wb  == rs1 && !rs1_pc  && rd_wb  && wr_wb;
+    wire a_fw_ex  = rd_ex  == rs1 && !rs1_pc && rd_ex  && wr_ex;
+    wire a_fw_mem = rd_mem == rs1 && !rs1_pc && rd_mem && wr_mem;
+    wire a_fw_wb  = rd_wb  == rs1 && !rs1_pc && rd_wb  && wr_wb;
 
     always @(posedge clk) begin
-        a_fw <= 0;
+        //a_fw <= 0;
         if(!stall_all) begin
             if(a_fw_ex) begin
                 a_fw <= ir_ex[6:0] != `op_load;
@@ -123,6 +123,7 @@ module cu(
                 a_fw <= 1;
                 s_mx_a_fw <= 2;
             end
+            else a_fw <= 0;
         end
     end
 
