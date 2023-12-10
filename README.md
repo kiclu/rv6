@@ -86,8 +86,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   ├─ c/               # C source files for verification purposes
 │   │  ├─ default/          # Template verification program
 │   │  └─ fib/              # Fibonacci sequence calculator
-│   ├─ tb_hart.sv       # Hart verification template
-│   └─ tb_hart_fib.sv   # Fibonacci sequence calculator testbench
+│   └─ tb_hart.sv       # Hart testbench module
 ├─ LICENSE
 ├─ Makefile
 └─ README.md
