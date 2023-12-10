@@ -43,7 +43,7 @@ sim_all: ${SIM_MODULES}
 	@echo "vsim: Testbench simulations finished successfully\n"
 
 sim_hart:
-	@cd test/auto/ && ./run_tests
+	@cd test/auto/ && ./run_hart_tests
 
 # Recursive clean
 CLEAN_C = $(addsuffix _clean,${HEX_DIRS})
