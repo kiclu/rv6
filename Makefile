@@ -23,7 +23,13 @@ hex: ${HEX_TARGETS}
 	@cd $(dir ${@}) && make all
 	@echo "Makefile: Compiled ${@} successfully\n"
 
-all: hex syn_all sim_all
+all: hex syn_all sim_all sim_hart
+
+# Compile all source files
+syn_all: ${SOURCES_SYN}
+	@echo "Makefile: Compiling synthesis modules"
+	cd simulation/ && vsim -c tb_hart -do 'quit -sim; project open rv6; project compileall; quit -f;'
+	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
 # Run testbench simulation
 %_sim: test/%.sv
@@ -36,11 +42,8 @@ SIM_MODULES = $(addsuffix _sim,$(basename $(shell find ${DIR_SIM} -name "*.sv" -
 sim_all: ${SIM_MODULES}
 	@echo "vsim: Testbench simulations finished successfully\n"
 
-# Compile all source files
-syn_all: ${SOURCES_SYN}
-	@echo "Makefile: Compiling synthesis modules"
-	cd simulation/ && vsim -c tb_hart -do 'quit -sim; project open rv6; project compileall; quit -f;'
-	@echo "Makefile: Compiled sysntesis modules successfully\n"
+sim_hart:
+	@cd test/auto/ && ./run_tests
 
 # Recursive clean
 CLEAN_C = $(addsuffix _clean,${HEX_DIRS})

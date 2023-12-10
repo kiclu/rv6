@@ -16,7 +16,10 @@
  * external case of any product you make using this documentation.
  */
 
+// default hex path
+`ifndef hex_path
 `define hex_path "../test/c/fib/fib.hex"
+`endif
 
 `define tb_mem_size  32'h0001_0000
 `define tb_mem_entry 32'h8000_0000
@@ -281,7 +284,10 @@ module tb_hart();
     endfunction
 
     task end_sim();
-        $display("t6=%d", dut.u_regfile.register[31]);
+        $display("hex_p=%s", `hex_path);
+        for(integer i = 1; i < 32; ++i) begin
+            $display("%0s=%0d", decode_r(i), dut.u_regfile.register[i]);
+        end
         $stop();
     endtask
 
