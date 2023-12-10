@@ -1,7 +1,4 @@
 # Simulation / Synthesis source files & targets
-VC = iverilog
-VS = vvp
-
 DIR_SYN   = hdl
 DIR_SIM   = test
 
@@ -10,12 +7,6 @@ DIR_VVP	  = vvp
 
 SOURCES_SYN = $(addprefix ${DIR_SYN}/,$(shell find ${DIR_SYN} -name "*.v" -printf "%P "))
 SOURCES_SIM = $(addprefix ${DIR_SIM}/,$(shell find ${DIR_SIM} -name "*.sv" -printf "%P "))
-
-VVP	  = $(addprefix ${DIR_VVP}/,${SOURCES_SIM:.sv=.vvp})
-VCD   = $(addprefix ${DIR_VCD}/,${SOURCES_SIM:.sv=.vcd})
-
-V_FLAGS		= -g2001 -Wall -tnull -Ihdl/hart/
-SV_FLAGS    = -g2012 -DDEBUG -Ihdl/hart/
 
 # Generate program hex files for testbench inputs
 DIR_C = test/c
@@ -35,10 +26,15 @@ hex: ${HEX_TARGETS}
 all: hex syn_all sim_all
 
 # Run testbench simulation
-sim_all:
-	@echo "vsim: Running testbench simulation"
-	cd simulation/ && vsim -c tb_hart -do 'run -all; quit -f;'
-	@echo "vsim: Testbench simulation finished successfully\n"
+%_sim: test/%.sv
+	@echo "vsim: Running testbench ${<} simulation"
+	cd simulation/ && vsim -c $(basename $(notdir ${<})) -do 'run -all; quit -f;'
+	@echo "vsim: Testbench ${<} simulation finished successfully\n"
+
+SIM_MODULES = $(addsuffix _sim,$(basename $(shell find ${DIR_SIM} -name "*.sv" -printf "%P ")))
+
+sim_all: ${SIM_MODULES}
+	@echo "vsim: Testbench simulations finished successfully\n"
 
 # Compile all source files
 syn_all: ${SOURCES_SYN}
@@ -47,9 +43,9 @@ syn_all: ${SOURCES_SYN}
 	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
 # Recursive clean
-CLEAN_C = $(addsuffix clean,${HEX_DIRS})
+CLEAN_C = $(addsuffix _clean,${HEX_DIRS})
 
-%clean: %
+%_clean: %
 	@echo "Makefile: clean: ${<}"
 	@cd ${<} && make clean
 	@echo ""

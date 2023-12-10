@@ -1,9 +1,9 @@
 `define hex_path "../test/c/fib/fib.hex"
 
-`include "../hdl/config.v"
+`define tb_mem_size  32'h0001_0000
+`define tb_mem_entry 32'h8000_0000
 
-`define tb_mem_size  64'h0001_0000
-`define tb_mem_entry 64'h8000_0000
+`include "../hdl/config.v"
 
 `timescale 1ns/1ps
 module tb_hart();
@@ -26,7 +26,7 @@ module tb_hart();
     reg                   h_rst_n;
     reg                   h_clk;
 
-    hart #(.HART_ID(0)) dut (
+    hart #(.HART_ID(0)) dut(
         .h_addr(h_addr),
 
         .h_data_in(h_data_in),

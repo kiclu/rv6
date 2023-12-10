@@ -4,10 +4,3 @@
 *.asm
 *.elf
 *.hex
-
-# Simulation output
-test/out/
-vcd/
-
-# Compilation output
-vvp/
