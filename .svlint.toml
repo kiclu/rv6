@@ -1,7 +1,7 @@
 [option]
 indent = 4
 [textrules]
-header_copyright = true
+header_copyright = false
 style_directives = false
 style_semicolon = true
 style_textwidth = false
@@ -66,7 +66,7 @@ generate_case_with_label = false
 generate_for_with_label = false
 generate_if_with_label = false
 lowercamelcase_interface = false
-lowewcamelcase_module = false
+lowercamelcase_module = false
 lowercamelcase_package = false
 prefix_inout = false
 prefix_input = false
