@@ -83,9 +83,11 @@ During the Write Back stage, the result from previous stages is written back int
 ├─ simulation/      # ModelSim project files
 ├─ synthesis/       # Vivado & Quartus II project files
 ├─ test/            # Testbench source files
+│   ├─ auto/            # Automated tests
 │   ├─ c/               # C source files for verification purposes
 │   │  ├─ default/          # Template verification program
-│   │  └─ fib/              # Fibonacci sequence calculator
+│   │  ├─ fib_c/            # Fibonacci sequence calculator (RV64IC)
+│   │  └─ fib/              # Fibonacci sequence calculator (RV64I)
 │   └─ tb_hart.sv       # Hart testbench module
 ├─ LICENSE
 ├─ Makefile
