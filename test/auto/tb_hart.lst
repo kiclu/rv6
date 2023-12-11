@@ -1,2 +1,4 @@
-"../test/c/fib/fib.hex" t6 75025
-"../test/c/fib_c/fib_c.hex" t5 75025
+"../test/c/fib/fib.hex"             a0  75025
+"../test/c/fib_c/fib_c.hex"         a0  75025
+"../test/c/mhartid/mhartid.hex"     a0  0
+"../test/c/deadbeef/deadbeef.hex"   a0  3735928559

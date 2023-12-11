@@ -14,11 +14,6 @@ SECTIONS {
         *(.text*)
     } > VMA
 
-    data : {
-        *(.data)
-        *(.data*)
-    } > VMA
-
     rodata : {
         *(.rodata)
         *(.rodata*)
@@ -28,6 +23,11 @@ SECTIONS {
         *(.bss)
         *(.bss*)
         *(COMMON)
+    } > VMA
+
+    data : {
+        *(.data)
+        *(.data*)
     } > VMA
 
     stack : {

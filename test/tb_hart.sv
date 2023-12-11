@@ -18,7 +18,7 @@
 
 // default hex path
 `ifndef hex_path
-`define hex_path "../test/c/fib/fib.hex"
+`define hex_path "../test/c/mhartid/mhartid.hex"
 `endif
 
 `define tb_mem_size  32'h0001_0000
@@ -166,7 +166,7 @@ module tb_hart();
         end
     end
 
-    function string decode_r(logic [4:0] r);
+    function automatic string decode_r(logic [4:0] r);
         case(r)
             5'd0:  return "zero";
             5'd1:  return "ra";
@@ -204,7 +204,7 @@ module tb_hart();
         endcase
     endfunction
 
-    function string decode_ir(logic [31:0] ir);
+    function automatic string decode_ir(logic [31:0] ir);
         priority casez(ir[6:0])
             7'b0110111: return "lui";
             7'b0010111: return "auipc";
