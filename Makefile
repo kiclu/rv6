@@ -14,11 +14,13 @@ DIR_C = test/c
 HEX_MAKEFILES = $(addprefix ${DIR_C}/,$(shell find ${DIR_C} -name "Makefile" -printf "%P "))
 HEX_TARGETS   = $(join $(dir ${HEX_MAKEFILES}),$(notdir ${HEX_MAKEFILES:/Makefile=.hex}))
 HEX_DIRS      = $(dir ${HEX_MAKEFILES})
+HEX_SOURCES_C = $(shell find ${DIR_C} -name "*.c")
+HEX_SOURCES_S = $(shell find ${DIR_C} -name "*.S")
 
-hex: ${HEX_TARGETS}
+hex: ${HEX_TARGETS} ${HEX_SOURCES_C} ${HEX_SOURCES_S}
 	@echo "Makefile: Compiling hex targets finished successfully\n"
 
-%.hex:
+%.hex: ${HEX_SOURCES_C} ${HEX_SOURCES_S}
 	@echo "Makefile: Compiling ${@}"
 	@cd $(dir ${@}) && make all
 	@echo "Makefile: Compiled ${@} successfully\n"
@@ -39,11 +41,17 @@ syn_all: ${SOURCES_SYN}
 
 SIM_MODULES = $(addsuffix _sim,$(basename $(shell find ${DIR_SIM} -name "*.sv" -printf "%P ")))
 
-sim_all: ${SIM_MODULES}
+sim_all: ${SIM_MODULES} | hex
 	@echo "vsim: Testbench simulations finished successfully\n"
 
-sim_hart:
+sim_hart: | hex
 	@cd test/auto/ && ./run_hart_tests
+
+cov_%: test/%.sv
+	@echo "vsim: Running coverage simulation for ${<}"
+	@cd simulation/ &&\
+	vsim -c rv6 -do 'quit -sim; vlog -coveropt 3 +cover +acc $(addprefix ../,${SOURCES_SYN}); vsim -coverage -vopt work.$(basename $(notdir $<)) -c -do "coverage same -onexit -directive -codeAll cov_$(basename $(notdir $<)).ucdb; run -all"; vcover report -html cov_$(basename $(notdir $<)).ucdb; quit -f'
+	@echo "vsim: Coverage simulation for ${<} successfully completed\n"
 
 # Recursive clean
 CLEAN_C = $(addsuffix _clean,${HEX_DIRS})
