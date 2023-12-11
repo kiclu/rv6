@@ -1,4 +1,4 @@
-"../test/c/fib/fib.hex"             a0  75025
-"../test/c/fib_c/fib_c.hex"         a0  75025
-"../test/c/mhartid/mhartid.hex"     a0  0
-"../test/c/deadbeef/deadbeef.hex"   a0  3735928559
+++define+hex_path="../test/c/fib/fib.hex"             a0  75025
+++define+hex_path="../test/c/fib_c/fib_c.hex"         a0  75025
+++define+hex_path="../test/c/mhartid/mhartid.hex"     a0  0
+++define+hex_path="../test/c/deadbeef/deadbeef.hex"   a0  3735928559

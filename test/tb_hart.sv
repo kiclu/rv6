@@ -18,7 +18,7 @@
 
 // default hex path
 `ifndef hex_path
-`define hex_path "../test/c/mhartid/mhartid.hex"
+`define hex_path "../test/c/fib/fib.hex"
 `endif
 
 `define tb_mem_size  32'h0001_0000

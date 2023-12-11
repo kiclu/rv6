@@ -45,7 +45,7 @@ sim_all: ${SIM_MODULES} | hex
 	@echo "vsim: Testbench simulations finished successfully\n"
 
 sim_hart: | hex
-	@cd test/auto/ && ./run_hart_tests
+	@cd test/auto/ && ./auto
 
 cov_%: test/%.sv
 	@echo "vsim: Running coverage simulation for ${<}"
