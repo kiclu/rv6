@@ -18,19 +18,15 @@ public:
         _var(var), _exp_val(exp_val) {}
 
     bool run(const std::vector<std::string>& command_output) {
-        bool passed = 0;
-
         for(auto& i : command_output) {
             std::string::size_type sp;
             if((sp = i.find(_var)) != std::string::npos) {
                 _val = i.substr(sp+_var.length()+1);
                 _val.erase(_val.find_last_not_of("\t\n\r\f\v ") + 1);
                 _val.erase(0, _val.find_first_not_of("\t\n\r\f\v "));
-                passed = _val == _exp_val;
             }
         }
-
-        return passed;
+        return _val == _exp_val;
     }
 
     std::string get_var() const { return _var; }
@@ -67,6 +63,24 @@ public:
         }
 
         return _passed;
+    }
+
+    void print(bool verbose = false) {
+        std::cout << "Test " << _test_id << ": ";
+        std::cout << (_passed ? "\e[1;32mpassed\e[0m" : "\e[1;31mfailed\e[0m");
+        if(verbose || !_passed) {
+            std::cout << ": {\n";
+            for(auto& i : _assertions) {
+                if(i.get_val() != i.get_exp_val() || verbose) {
+                    std::cout << "\tExpected: " << i.get_var() << "=" << i.get_exp_val() << ", ";
+                    std::cout << "Got: " << i.get_var() << "=" << i.get_val() << "\n";
+                }
+            }
+            std::cout << "}\n";
+        }
+        else {
+            std::cout << "\n";
+        }
     }
 
     // output test results
@@ -146,7 +160,7 @@ public:
             bool passed = i.run();
             _count_passed += passed;
             _count_failed += !passed;
-            if(verbose) std::cout << i << "\n";
+            if(verbose) i.print();
         }
         if(verbose) std::cout << "Testbench completed: \e[1;92m" << _count_passed << " passed\e[0m, \e[1;91m" << _count_failed << " failed\e[0m\n";
     }

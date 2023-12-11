@@ -286,7 +286,7 @@ module tb_hart();
     task end_sim();
         $display("hex_p=%s", `hex_path);
         for(integer i = 1; i < 32; ++i) begin
-            $display("%0s=%0d", decode_r(i), dut.u_regfile.register[i]);
+            $display("%0s=0x%0h", decode_r(i), dut.u_regfile.register[i]);
         end
         $stop();
     endtask
