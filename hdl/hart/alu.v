@@ -49,19 +49,10 @@ module alu(
         if(op_ir[6:0] == `op_lui) alu_out <= b;
         else if(op_ir[6:0] == `op_amo) begin
             case(op_ir[14:10])
-                // TODO
-
-                // amoswap
-                5'b00001: alu_out <= 0;
-                // amomin
-                5'b10000: alu_out <= 0;
-                // amomax
-                5'b10100: alu_out <= 0;
-                // amominu
-                5'b11000: alu_out <= 0;
-                // amomaxu
-                5'b11100: alu_out <= 0;
-
+                5'b10000: alu_out <= `sa < `sb ? a : b;
+                5'b10100: alu_out <= `sa > `sb ? a : b;
+                5'b11000: alu_out <= a < b ? a : b;
+                5'b11100: alu_out <= a > b ? a : b;
                 default:  alu_out <= 0;
             endcase
         end
@@ -85,10 +76,10 @@ module alu(
             case(op_ir[9:7])
                 3'b000:  alu_out[31:0] <= op_ir[6:0] == `op_rtype_w && op_ir[13] ? `wa - `wb : `wa + `wb;
                 3'b001:  alu_out[31:0] <= `wa << b[4:0];
-                3'b101:  alu_out[31:0] <= op_ir[13] ? `swa >>> b[4:0] : `wa >> b[4:0];
+                3'b101:  alu_out[31:0] <= op_ir[13] ? `swa >>> b[4:0] : `swa >> b[4:0];
                 default: alu_out[31:0] <= `wa + `wb;
             endcase
-            alu_out[63:32] <= {32{alu_out[31]}};
+            alu_out[63:32] <= (op_ir[9:7] == 3'b001 || op_ir[9:7] == 3'b101) ? 32'b0 : {32{alu_out[31]}};
         end
     end
 
