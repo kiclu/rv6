@@ -111,9 +111,9 @@ module tb_hart();
     end
 
     // amo handshake
-    always @(posedge clk) begin
-        if(h_amo_req) #160 h_amo_ack <= 1;
-        else h_amo_ack <= 0;
+    always @(*) begin
+        if(h_amo_req) h_amo_ack <= #160 1;
+        else h_amo_ack <= #0 0;
     end
 
     // print destination register and value on instruction retire

@@ -1,5 +1,5 @@
-++define+hex_path="../test/c/fib/fib.hex"             a0 0x12511
-++define+hex_path="../test/c/fib_c/fib_c.hex"         a0 0x12511
-++define+hex_path="../test/c/mhartid/mhartid.hex"     a0 0x0
-++define+hex_path="../test/c/deadbeef/deadbeef.hex"   a0 0xdeadbeef
-++define+hex_path="../test/c/shift/shift.hex"         a0 0xffffffffffffffff a1 0x8000000000000000 a2 0x7fffffffffffffff a3 0xffffffffffffff00 a4 0xffffffffffffff a5 0xffffffffffffffff a6 0x7fffffff a7 0xffffffff s2 0xffffff00
+++define+hex_path="../test/c/fib/fib.hex"           a0 0x12511
+++define+hex_path="../test/c/fib_c/fib_c.hex"       a0 0x12511
+++define+hex_path="../test/c/mhartid/mhartid.hex"   a0 0x0
+++define+hex_path="../test/c/deadbeef/deadbeef.hex" a0 0xdeadbeef
+++define+hex_path="../test/c/shift/shift.hex"       a0 0xffffffffffffffff a1 0x8000000000000000 a2 0x7fffffffffffffff a3 0xffffffffffffff00 a4 0xffffffffffffff a5 0xffffffffffffffff a6 0x7fffffff a7 0xffffffff s2 0xffffff00
