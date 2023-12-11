@@ -4,3 +4,6 @@
 *.asm
 *.elf
 *.hex
+
+# backup files
+*.bak
