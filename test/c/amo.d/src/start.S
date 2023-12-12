@@ -9,7 +9,34 @@ _reset_handler:
     # initialize stack pointer
     la sp, _main_stack_region_end
 
-    call main
+    add sp, sp, -0x40
+
+    li t0, 0xdeadbeefdeadbeef
+    sd t0, 0x00(sp)
+    sd t0, 0x08(sp)
+    sd t0, 0x10(sp)
+    sd t0, 0x18(sp)
+    sd t0, 0x20(sp)
+    sd t0, 0x28(sp)
+    sd t0, 0x30(sp)
+    sd t0, 0x38(sp)
+
+    amoadd.d  a0, s0, (sp)
+    add sp, sp, 8
+    amoxor.d  a1, s1, (sp)
+    add sp, sp, 8
+    amoand.d  a2, s2, (sp)
+    add sp, sp, 8
+    amoor.d   a3, s3, (sp)
+    add sp, sp, 8
+    amomin.d  a4, s4, (sp)
+    add sp, sp, 8
+    amomax.d  a5, s5, (sp)
+    add sp, sp, 8
+    amominu.d a6, s6, (sp)
+    add sp, sp, 8
+    amomaxu.d a7, s7, (sp)
+    add sp, sp, 8
 
     # return
     ret

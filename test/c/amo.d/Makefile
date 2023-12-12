@@ -2,9 +2,9 @@ DIR_SRC 	= src
 DIR_INCLUDE = include
 DIR_BUILD 	= build
 
-TARGET_ELF  = fib.elf
-TARGET_ASM  = fib.asm
-TARGET_HEX  = fib.hex
+TARGET_ELF  = amo.d.elf
+TARGET_ASM  = amo.d.asm
+TARGET_HEX  = amo.d.hex
 
 TOOLPREFIX = riscv64-unknown-elf-
 
@@ -17,8 +17,8 @@ OBJDUMP = ${TOOLPREFIX}objdump
 
 LDSCRIPT = ldscript.ld
 
-ASFLAGS = -march=rv64izicsr -mabi=lp64
-CFLAGS  = -march=rv64izicsr -mabi=lp64 -mcmodel=medany -MMD -MP -MF"${@:%.o=%.d}" -O2
+ASFLAGS = -march=rv64iazicsr -mabi=lp64
+CFLAGS  = -march=rv64iazicsr -mabi=lp64 -mcmodel=medany -MMD -MP -MF"${@:%.o=%.d}" -O2
 
 SOURCES_S = $(shell find . -name "*.S" -printf "%P ")
 OBJECTS += $(addprefix ${DIR_BUILD}/,${SOURCES_S:.S=.o})

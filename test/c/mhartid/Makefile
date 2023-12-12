@@ -2,9 +2,9 @@ DIR_SRC 	= src
 DIR_INCLUDE = include
 DIR_BUILD 	= build
 
-TARGET_ELF  = fib.elf
-TARGET_ASM  = fib.asm
-TARGET_HEX  = fib.hex
+TARGET_ELF  = mhartid.elf
+TARGET_ASM  = mhartid.asm
+TARGET_HEX  = mhartid.hex
 
 TOOLPREFIX = riscv64-unknown-elf-
 

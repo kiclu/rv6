@@ -9,8 +9,6 @@ _reset_handler:
     # initialize stack pointer
     la sp, _main_stack_region_end
 
-    call main
-
     # return
     ret
 

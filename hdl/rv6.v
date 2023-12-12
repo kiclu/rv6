@@ -16,84 +16,18 @@
  * external case of any product you make using this documentation.
  */
 
-`define core_count 6
-
 `define phy_addr 48
 
 module rv6(
     output [`phy_addr-1:0] addr,
-    input [15:0] data_in,
-    output [15:0] data_out,
+    input           [15:0] data_in,
+    output          [15:0] data_out,
+    output                 rd,
+    output                 wr,
+    input                  dbv,
 
-    output r,
-    output w,
-
-    input dbv,
-
-    input rst_n,
-    input clk
+    input                  rst_n,
+    input                  clk
 );
-
-    wire [63:0] b_addr_i;
-    wire b_rd_i;
-    wire b_dv_i = dbv && b_rd_i;
-
-    wire [63:0] b_addr;
-
-    wire b_rd;
-    wire b_dv = dbv && !b_rd_i;
-
-    wire [`phy_addr-1:0] b_data_out;
-    wire b_wr;
-
-    assign addr = b_rd_i ? b_addr_i[`phy_addr-1:0] : b_addr[`phy_addr-1:0];
-    assign r = b_rd_i || b_rd;
-    assign w = b_wr && !r;
-
-    hart #(.HART_ID(0)) inst_hart (
-        .b_addr_i(b_addr_i),
-        .b_data_i(data_in),
-        .b_rd_i(b_rd_i),
-        .b_dv_i(b_dv_i),
-
-        .b_addr(b_addr),
-
-        .b_data_in(data_in),
-        .b_rd(b_rd),
-        .b_dv(b_dv),
-
-        .b_data_out(data_out),
-        .b_wr(b_wr),
-
-        .rst_n(rst_n),
-
-        .clk(clk)
-    );
-
-    //genvar h_id;
-    //generate
-    //    for(h_id = 0; h_id < `core_count; h_id = h_id + 1) begin
-    //        hart #(.HART_ID(h_id)) inst_hart (
-    //            .b_addr_i(),
-    //            .b_data_i(),
-    //            .b_rd_i(),
-    //            .b_dv_i(),
-
-    //            .b_addr(),
-
-    //            .b_data_in(),
-    //            .b_rd(),
-    //            .b_dv(),
-
-    //            .b_data_out(),
-    //            .b_wr(),
-
-    //            .rst_n(rst_n),
-
-    //            .clk(clk)
-    //        );
-    //    end
-    //endgenerate
-
 
 endmodule

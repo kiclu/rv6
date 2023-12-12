@@ -1,7 +1,7 @@
 [option]
 indent = 4
 [textrules]
-header_copyright = true
+header_copyright = false
 style_directives = false
 style_semicolon = true
 style_textwidth = false
@@ -66,7 +66,7 @@ generate_case_with_label = false
 generate_for_with_label = false
 generate_if_with_label = false
 lowercamelcase_interface = false
-lowewcamelcase_module = false
+lowercamelcase_module = false
 lowercamelcase_package = false
 prefix_inout = false
 prefix_input = false
@@ -130,13 +130,13 @@ re_required_var_classmethod = false
 uppercamelcase_interface = false
 uppercamelcase_module = false
 uppercamelcase_package = false
-style_commaleading = true
-style_indent = true
+style_commaleading = false
+style_indent = false
 style_keyword_0or1space = false
-style_keyword_0space = true
+style_keyword_0space = false
 style_keyword_1or2space = false
-style_keyword_1space = true
-style_keyword_construct = true
+style_keyword_1space = false
+style_keyword_construct = false
 style_keyword_datatype = false
 style_keyword_end = true
 style_keyword_maybelabel = false

@@ -36,14 +36,14 @@ module hmem(
     output     [`dmem_line-1:0] b_data_in_d,
     input                       b_rd_d,
     output                      b_dv_d,
-    
+
     // internal data bus input
     input      [`dmem_line-1:0] b_data_out_d,
     input                       b_wr_d,
 
     // external bus
     output reg           [63:0] h_addr,
-    
+
     input      [`hmem_line-1:0] h_data_in,
     output                      h_rd,
     input                       h_dv,
@@ -240,5 +240,5 @@ module hmem(
 
     // read from L3 cache if L2 cache miss
     assign h_rd = (~hit_i && b_rd_i) || (~hit_d && (b_rd_d || b_wr_d));
-    
+
 endmodule

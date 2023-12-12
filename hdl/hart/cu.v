@@ -24,11 +24,7 @@ module cu(
     input      [31:0] ir_mem,
     input      [31:0] ir_wb,
 
-    input             b_rd_i,
-
-    input             b_rd,
-    input             b_wr,
-
+    // stage stall signals
     output            stall_if,
     output            stall_pd,
     output            stall_id,
@@ -36,6 +32,15 @@ module cu(
     output            stall_mem,
     output            stall_wb,
 
+    // atomic instruction signals
+    input             amo_req,
+    input             amo_ack,
+
+    // instruction/data bus signals
+    input             b_rd_i,
+    input             b_rd_d,
+
+    // forwarding signals
     output reg [ 1:0] s_mx_a_fw,
     output reg        a_fw,
 
@@ -47,7 +52,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd;
+    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
     `define op_lui      7'b0110111
@@ -99,12 +104,12 @@ module cu(
 
     /* FORWARDING */
 
-    wire a_fw_ex  = rd_ex  == rs1 && !rs1_pc  && rd_ex  && wr_ex;
-    wire a_fw_mem = rd_mem == rs1 && !rs1_pc  && rd_mem && wr_mem;
-    wire a_fw_wb  = rd_wb  == rs1 && !rs1_pc  && rd_wb  && wr_wb;
+    wire a_fw_ex  = rd_ex  == rs1 && !rs1_pc && rd_ex  && wr_ex;
+    wire a_fw_mem = rd_mem == rs1 && !rs1_pc && rd_mem && wr_mem;
+    wire a_fw_wb  = rd_wb  == rs1 && !rs1_pc && rd_wb  && wr_wb;
 
     always @(posedge clk) begin
-        a_fw <= 0;
+        //a_fw <= 0;
         if(!stall_all) begin
             if(a_fw_ex) begin
                 a_fw <= ir_ex[6:0] != `op_load;
@@ -118,6 +123,7 @@ module cu(
                 a_fw <= 1;
                 s_mx_a_fw <= 2;
             end
+            else a_fw <= 0;
         end
     end
 
@@ -166,7 +172,7 @@ module cu(
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
 
     // front end stall signals
-    assign stall_if  = stall_all || stall_c || dh;
+    assign stall_if  = stall_all || stall_c || dh || amo_req;
     assign stall_pd  = stall_all || stall_c || dh;
     assign stall_id  = stall_all || stall_c || dh;
 

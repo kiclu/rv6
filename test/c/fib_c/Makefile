@@ -2,9 +2,9 @@ DIR_SRC 	= src
 DIR_INCLUDE = include
 DIR_BUILD 	= build
 
-TARGET_ELF  = fib.elf
-TARGET_ASM  = fib.asm
-TARGET_HEX  = fib.hex
+TARGET_ELF  = fib_c.elf
+TARGET_ASM  = fib_c.asm
+TARGET_HEX  = fib_c.hex
 
 TOOLPREFIX = riscv64-unknown-elf-
 

@@ -19,6 +19,9 @@
 module pc(
     output reg [63:0] pc,
 
+    input             trap,
+    input      [63:0] trap_addr,
+
     input             jalr_taken,
     input      [63:0] jalr_addr,
 
@@ -31,6 +34,8 @@ module pc(
     input             pr_taken,
     input      [12:0] pr_offs,
 
+    input             c_ins,
+
     input             stall,
 
     input             rst_n,
@@ -40,12 +45,14 @@ module pc(
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) pc <= 64'h80000000;
+        else if(trap)         pc <= trap_addr;
+        else if(pr_miss)      pc <= br_addr;
+        else if(jalr_taken)   pc <= jalr_addr;
         else if(!stall) begin
-            if(pr_miss) pc <= br_addr;
-            else if(jalr_taken) pc <= jalr_addr;
-            else if(jal_taken) pc <= jal_addr;
+            if(jal_taken)     pc <= jal_addr;
             else if(pr_taken) pc <= pc + {{51{pr_offs[12]}}, pr_offs};
-            else pc <= pc + 4;
+            else if(c_ins)    pc <= pc + 2;
+            else              pc <= pc + 4;
         end
     end
 

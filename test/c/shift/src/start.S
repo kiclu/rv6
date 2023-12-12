@@ -6,10 +6,33 @@ _reset_handler:
     # initialize all registers to zero
     call _reg_init
 
-    # initialize stack pointer
-    la sp, _main_stack_region_end
+    # load 0xFFFF...FFFF
+    li a0, -1
 
-    call main
+    # load msb
+    li a1, 1
+    sll a1, a1, 63
+
+    # load MAX_INT
+    not a2, a1
+
+    # logic shift left, expected value 0xFFFF...FF00
+    sll a3, a2, 8
+
+    # logic right shift, expected value 0x00FFFF...FFFF
+    srl a4, a3, 8
+
+    # arithmetic right shift, expected value 0xFFFF...FFFF
+    sra a5, a3, 8
+
+    # word logic right shift, expected value 0x7FFFFFFF
+    srlw a6, a0, 1
+
+    # word arithmetic right shift, expected value 0xFFFFFFFF
+    sraw a7, a0, 1
+
+    # word logic left shift, expected value 0xFFFFFF00
+    sllw s2, a0, 8
 
     # return
     ret

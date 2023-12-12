@@ -9,7 +9,13 @@ _reset_handler:
     # initialize stack pointer
     la sp, _main_stack_region_end
 
-    call main
+    # read mhartid register
+    csrr a0, mhartid
+
+    #lui a0, 0x38
+    #addw a0,a0,-1353
+    #sll a0, a0, 0xe
+    #add a0,a0,-273
 
     # return
     ret
@@ -23,7 +29,7 @@ _reg_init:
     li t2,  0
     li fp,  0
     li s1,  0
-    li a0,  0
+    li a0,  -1
     li a1,  0
     li a2,  0
     li a3,  0
