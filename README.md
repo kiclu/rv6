@@ -84,10 +84,7 @@ During the Write Back stage, the result from previous stages is written back int
 ├─ synthesis/       # Vivado & Quartus II project files
 ├─ test/            # Testbench source files
 │   ├─ auto/            # Automated tests
-│   ├─ c/               # C source files for verification purposes
-│   │  ├─ default/          # Template verification program
-│   │  ├─ fib/              # Fibonacci sequence calculator (RV64I)
-│   │  └─ fib_c/            # Fibonacci sequence calculator (RV64IC)
+│   ├─ c/               # C source files for automated tests
 │   └─ tb_hart.sv       # Hart testbench module
 ├─ LICENSE
 ├─ Makefile
@@ -109,9 +106,9 @@ During the Write Back stage, the result from previous stages is written back int
 | `hmem_line`                                                           	| integer 	| Hart memory (L2 cache) line size in bits         	|
 | `hmem_sets`                                                           	| integer 	| Hart memory (L2 cache) set count                 	|
 | `hmem_ways`                                                           	| integer 	| Hart memory (L2 cache) ways per set              	|
-| `bpu_static_taken`                                                        |           | Branch predict static taken                       |
-| `bpu_static_ntaken`                                                       |           | Branch predict static not taken                   |
-| `bpu_static_btaken`                                                       |           | Branch predict static backward taken              |
+| `bpu_static_taken`                                                      |           | Branch predict static taken                       |
+| `bpu_static_ntaken`                                                     |           | Branch predict static not taken                   |
+| `bpu_static_btaken`                                                     |           | Branch predict static backward taken              |
 
 ## License
 The hardware is licensed under the [CERN Open Hardware Licence Version 2 - Strongly Reciprocal](https://ohwr.org/cern_ohl_s_v2.txt).
