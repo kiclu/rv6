@@ -70,6 +70,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ alu.v            # Integer ALU
 │   │   ├─ bpu.v            # Branch Prediction Unit
 │   │   ├─ br_alu.v         # Branch ALU
+│   │   ├─ csr.v            # Control & Status Registers
 │   │   ├─ cu.v             # Control Unit
 │   │   ├─ dmem.v           # Data Memory (L1d cache)
 │   │   ├─ hart.v           # Core top-level module
