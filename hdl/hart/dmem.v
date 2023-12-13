@@ -93,53 +93,73 @@ module dmem(
     reg [lru_size-1:0] lru_tree [0:`dmem_sets-1];
 
     // replacement entry
-    reg [`dmem_way_len-1:0] re;
+    reg [`dmem_way_len-1:0] re [0:`dmem_sets-1];
 
     // dmem operation rising edge
     wire dmem_op = rd || wr;
     reg  dmem_op_d;
-    wire lru_update = !dmem_op_d && dmem_op;
-    always @(posedge clk) dmem_op_d <= dmem_op;
+    wire lru_update = !dmem_op_d &&  dmem_op;
+    wire re_update  =  dmem_op_d && !dmem_op;
+
+    reg lru_update_d;
+    always @(posedge clk) begin
+        if(!rst_n) begin
+            dmem_op_d <= 0;
+            lru_update_d <= 0;
+        end
+        else begin
+            dmem_op_d <= dmem_op;
+            lru_update_d <= lru_update;
+        end
+    end
 
     // find replacement entry and update LRU tree
     always @(posedge clk) begin
         if(!rst_n) begin : dmem_clr_lru
-            integer i;
+            integer i, j, l;
             for(i = 0; i < `dmem_sets; i = i + 1) begin
-                lru_tree[i] <= {lru_size{1'b0}};
+                // initialize LRU tree
+                lru_tree[i] <= {lru_size{1'b1}};
+                // initialize replacement entry
+                re[i] <= {`dmem_way_len{1'b0}};
             end
-            re <= 0;
         end
-        else if(lru_update) begin : dmem_lru_update
-            integer i, l, i_parent;
-            // write update
-            if(wr) begin
+        else begin
+            // update LRU tree
+            if(lru_update_d) begin : dmem_lru_update
+                integer i, l, i_parent;
+                // write update
+                if(wr) begin
+                    i = 0;
+                    for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
+                        if(lru_tree[addr_set][i]) begin
+                            lru_tree[addr_set][i] = 1'b0;
+                            i = (i<<1) + 1;
+                        end
+                        else begin
+                            lru_tree[addr_set][i] = 1'b1;
+                            i = (i<<1) + 2;
+                        end
+                    end
+                end
+                // read update
+                else if(rd) begin
+                    i = (hit ? way : re[addr_set]) + lru_size;
+                    for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
+                        i_parent = (i[0] ? i-1 : i-2) >> 1;
+                        lru_tree[addr_set][i_parent] = !i[0];
+                        i = i_parent;
+                    end
+                end
+            end
+            // update replacement entry
+            if(re_update) begin : dmem_re_update
+                integer i, l;
                 i = 0;
                 for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                    if(lru_tree[addr_set][i]) begin
-                        lru_tree[addr_set][i] = 1'b0;
-                        i = i<<1 + 1;
-                    end
-                    else begin
-                        lru_tree[addr_set][i] = 1'b1;
-                        i = i<<1 + 2;
-                    end
+                    i = lru_tree[addr_set][i] ? (i<<1) + 1 : (i<<1) + 2;
                 end
-                re = i - `dmem_ways + 1;
-            end
-            // read update
-            else if(hit) begin
-                i = way + lru_size;
-                for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                    i_parent = (i[0] ? i-1 : i-2) >> 1;
-                    lru_tree[addr_set][i_parent] = !i[0];
-                    i = i_parent;
-                end
-
-                for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                    i = lru_tree[addr_set][i] ? i<<1 + 1 : i<<1 + 2;
-                end
-                re = i - `dmem_ways + 1;
+                re[addr_set] = i - `dmem_ways + 1;
             end
         end
     end
@@ -171,20 +191,20 @@ module dmem(
         // cache miss, load data into cache line on valid data bus
         else if(!hit && b_dv_d) begin : dmem_cache_miss
             // load data into cache
-            v[addr_set][re]    <= 1'b1;
-            tag[addr_set][re]  <= addr_tag;
-            data[addr_set][re]  = b_data_in_d;
+            v[addr_set][re[addr_set]]    <= 1'b1;
+            tag[addr_set][re[addr_set]]  <= addr_tag;
+            data[addr_set][re[addr_set]]  = b_data_in_d;
 
             // write data
             if(wr) begin
                 case(len)
-                    3'b000: data[addr_set][re][8*addr_offs +:  8] = data_in[ 7:0];
-                    3'b001: data[addr_set][re][8*addr_offs +: 16] = data_in[15:0];
-                    3'b010: data[addr_set][re][8*addr_offs +: 32] = data_in[31:0];
-                    3'b011: data[addr_set][re][8*addr_offs +: 64] = data_in[63:0];
+                    3'b000: data[addr_set][re[addr_set]][8*addr_offs +:  8] = data_in[ 7:0];
+                    3'b001: data[addr_set][re[addr_set]][8*addr_offs +: 16] = data_in[15:0];
+                    3'b010: data[addr_set][re[addr_set]][8*addr_offs +: 32] = data_in[31:0];
+                    3'b011: data[addr_set][re[addr_set]][8*addr_offs +: 64] = data_in[63:0];
                 endcase
                 // write-through
-                b_data_out_d <= data[addr_set][re];
+                b_data_out_d <= data[addr_set][re[addr_set]];
             end
         end
         // cache invalidation

@@ -119,6 +119,8 @@ module hart #(parameter HART_ID = 0) (
         .b_rd(b_rd_i),
         .b_dv(b_dv_i),
 
+        .stall(stall_if),
+
         .rst_n(h_rst_n),
 
         .clk(h_clk)
@@ -378,7 +380,7 @@ module hart #(parameter HART_ID = 0) (
 
     wire [63:0] csr_out;
 
-    wire csr_invalid;
+    wire csr_addr_invalid;
     wire csr_wr_invalid;
     wire csr_pr_invalid;
 
@@ -388,11 +390,14 @@ module hart #(parameter HART_ID = 0) (
         .csr_in(bxm_alu_out),
         .csr_out(csr_out),
 
-        .csr_invalid(csr_invalid),
+        .csr_addr_invalid(csr_addr_invalid),
         .csr_wr_invalid(csr_wr_invalid),
         .csr_pr_invalid(csr_pr_invalid),
 
         .trap_addr(trap_addr),
+        .trap(trap),
+
+        .pc(pc),
 
         .rst_n(h_rst_n),
 

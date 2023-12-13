@@ -43,6 +43,9 @@ module pc(
     input             clk
 );
 
+    wire [63:0] pr_addr = pc + {{51{pr_offs[12]}}, pr_offs};
+    wire [63:0] n_pc    = pc + (c_ins ? 64'h2 : 64'h4);
+
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) pc <= 64'h80000000;
         else if(trap)         pc <= trap_addr;
@@ -50,9 +53,8 @@ module pc(
         else if(jalr_taken)   pc <= jalr_addr;
         else if(!stall) begin
             if(jal_taken)     pc <= jal_addr;
-            else if(pr_taken) pc <= pc + {{51{pr_offs[12]}}, pr_offs};
-            else if(c_ins)    pc <= pc + 2;
-            else              pc <= pc + 4;
+            else if(pr_taken) pc <= pr_addr;
+            else              pc <= n_pc;
         end
     end
 
