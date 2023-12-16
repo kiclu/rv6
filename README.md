@@ -4,7 +4,7 @@
 ## Table of Contents
 - [Features](https://github.com/kiclu/rv6#features)
 - [Compatibility](https://github.com/kiclu/rv6#compatibility)
-- [Hart Architecture](https://github.com/kiclu/rv6#hart-architecture)
+- [Core Architecture](https://github.com/kiclu/rv6#core-architecture)
 - [Project Structure](https://github.com/kiclu/rv6#project-structure)
 - [Parameters](https://github.com/kiclu/rv6#parameters)
 - [License](https://github.com/kiclu/rv6#license)
