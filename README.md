@@ -109,7 +109,7 @@ During the Write Back stage, the result from previous stages is written back int
 | `dmem_line`                                                           	  | integer 	    | L1d cache line size in bits 	                    |
 | `dmem_sets`                                                           	  | integer 	    | L1d cache set count         	                    |
 | `dmem_ways`                                                           	  | integer 	    | L1d cache ways per set      	                    |
-| **HART memory (L2d cache)**                                               |               |                                                   |
+| **Hart memory (L2 cache)**                                                |               |                                                   |
 | `hmem_struct_set_assoc`  	                                                | ifdef flag    | L2 cache set associative architecture          	  |
 | `hmem_struct_direct`                                                      | ifdef flag    | L2 cache direct mapped architecture               |
 | `hmem_struct_full_assoc`                                                  | ifdef flag    | L2 cache fully associative architecture           |
