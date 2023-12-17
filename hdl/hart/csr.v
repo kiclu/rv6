@@ -259,9 +259,10 @@ module csr #(parameter HART_ID = 0) (
     wire csr_rsi = ir[14:12] == `csr_rsi && ir[6:0] == `op_system;
     wire csr_rc  = ir[14:12] == `csr_rc  && ir[6:0] == `op_system;
     wire csr_rci = ir[14:12] == `csr_rci && ir[6:0] == `op_system;
+    wire csr_op = csr_rw || csr_rwi || csr_rs || csr_rsi || csr_rc || csr_rci;
 
-    wire rd = !((csr_rw || csr_rwi                     ) && ir[11:7]  == 5'b0) && ir[6:0] == `op_system;
-    wire wr = !((csr_rs || csr_rsi || csr_rc || csr_rci) && ir[19:15] == 5'b0) && ir[6:0] == `op_system;
+    wire rd = csr_op && !((csr_rw || csr_rwi                     ) && ir[11:7]  == 5'b0);
+    wire wr = csr_op && !((csr_rs || csr_rsi || csr_rc || csr_rci) && ir[19:15] == 5'b0);
 
     assign csr_wr_invalid = &csr_addr[11:10] && wr;
     assign csr_pr_invalid = privilege_level < csr_addr[9:8] && (rd || wr);
