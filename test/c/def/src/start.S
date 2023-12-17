@@ -3,17 +3,18 @@
 
 .section .text
 _reset_handler:
+    add sp, sp, -8
+    sd ra, 0(sp)
+
     # initialize all registers to zero
     call _reg_init
 
-    # initialize stack pointer
-    la sp, _main_stack_region_end
-
     # return
+    ld ra, 0(sp)
+    add sp, sp, 8
     ret
 
 _reg_init:
-    li sp,  0
     li gp,  0
     li tp,  0
     li t0,  0
@@ -47,6 +48,9 @@ _reg_init:
 
 .section .text.start
 _start:
+    # initialize stack pointer
+    la sp, _main_stack_region_end
+
     call _reset_handler
 _exit:
     j _exit

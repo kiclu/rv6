@@ -31,6 +31,8 @@ module imem(
     input                   b_dv,
 
     // control signals
+    input                   stall,
+
     input                   rst_n,
 
     input                   clk
@@ -69,30 +71,33 @@ module imem(
     reg [lru_size-1:0] lru_tree [0:`imem_sets-1];
 
     // replacement entry
-    reg [`imem_way_len-1:0] re;
+    reg [`imem_way_len-1:0] re [0:`imem_sets-1];
 
     // find replacement entry and update LRU tree
     always @(posedge clk) begin
         if(!rst_n) begin : imem_clr_lru
             integer i;
             for(i = 0; i < `imem_sets; i = i + 1) begin
-                lru_tree[i] <= {lru_size{1'b0}};
+                lru_tree[i] <= {lru_size{1'b1}};
+                re[i] <= {`imem_way_len{1'b0}};
             end
-            re <= 0;
         end
-        else if(hit) begin : imem_lru_update
+        else if(!stall) begin : imem_lru_update
             integer i, l, i_parent;
-            i = way + lru_size;
+
+            // update LRU tree
+            i = (hit ? way : re[addr_set]) + lru_size;
             for(l = 0; l < $clog2(`imem_ways); l = l + 1) begin
-                i_parent = i[0] ? (i-1)/2 : (i-2)/2;
+                i_parent = (i[0] ? i-1 : i-2) >> 1;
                 lru_tree[addr_set][i_parent] = !i[0];
                 i = i_parent;
             end
 
+            // update replacement entry
             for(l = 0; l < $clog2(`imem_ways); l = l + 1) begin
                 i = lru_tree[addr_set][i] ? 2*i+1 : 2*i+2;
             end
-            re = i - `imem_ways + 1;
+            re[addr_set] = i - `imem_ways + 1;
         end
     end
 
@@ -110,9 +115,9 @@ module imem(
         // cache miss, load data into cache line on valid data bus
         else if(!hit && b_dv) begin : imem_cache_miss
             // load data into cache
-            v[addr_set][re]    <= 1'b1;
-            tag[addr_set][re]  <= addr_tag;
-            data[addr_set][re] <= b_data;
+            v[addr_set][re[addr_set]]    <= 1'b1;
+            tag[addr_set][re[addr_set]]  <= addr_tag;
+            data[addr_set][re[addr_set]] <= b_data;
         end
     end
 

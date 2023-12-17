@@ -29,11 +29,13 @@ module br_alu(
     output            pr_miss,
     output     [63:0] br_addr,
 
-    input             pr_taken
+    input             pr_taken,
+
+    input             stall
 );
 
     // JALR
-    assign jalr_taken = ir[6:0] == 7'b1100111;
+    assign jalr_taken = !stall && ir[6:0] == 7'b1100111;
     assign jalr_addr  = r1 + {{52{ir[31]}}, ir[31:21], 1'b0};
 
     // branch offset calculation

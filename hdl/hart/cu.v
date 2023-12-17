@@ -17,8 +17,6 @@
  */
 
 module cu(
-    input      [31:0] ir_if,
-    input      [31:0] ir_pd,
     input      [31:0] ir_id,
     input      [31:0] ir_ex,
     input      [31:0] ir_mem,

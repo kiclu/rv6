@@ -25,18 +25,18 @@ hex: ${HEX_TARGETS} ${HEX_SOURCES_C} ${HEX_SOURCES_S}
 	@cd $(dir ${@}) && make all
 	@echo "Makefile: Compiled ${@} successfully\n"
 
-all: hex syn_all sim_all sim_hart
+all: hex syn_all unit_test
 
 # Compile all source files
 syn_all: ${SOURCES_SYN}
 	@echo "Makefile: Compiling synthesis modules"
-	cd simulation/ && vsim -c tb_hart -do 'quit -sim; project open rv6; project compileall; quit -f;'
+	@cd simulation/ && vsim -c tb_hart -do 'quit -sim; project open rv6; project compileall; quit -f;'
 	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
 # Run testbench simulation
 %_sim: test/%.sv
 	@echo "vsim: Running testbench ${<} simulation"
-	cd simulation/ && vsim -c $(basename $(notdir ${<})) -do 'run -all; quit -f;'
+	@cd simulation/ && vsim -c $(basename $(notdir ${<})) -do 'run -all; quit -f;'
 	@echo "vsim: Testbench ${<} simulation finished successfully\n"
 
 SIM_MODULES = $(addsuffix _sim,$(basename $(shell find ${DIR_SIM} -name "*.sv" -printf "%P ")))
@@ -44,13 +44,13 @@ SIM_MODULES = $(addsuffix _sim,$(basename $(shell find ${DIR_SIM} -name "*.sv" -
 sim_all: ${SIM_MODULES} | hex
 	@echo "vsim: Testbench simulations finished successfully\n"
 
-sim_hart: | hex
+unit_test: | ${SOURCES_SYN} ${SOURCES_SIM} hex
 	@cd test/auto/ && ./auto
 
 cov_%: test/%.sv
 	@echo "vsim: Running coverage simulation for ${<}"
 	@cd simulation/ &&\
-	vsim -c rv6 -do 'quit -sim; vlog -coveropt 3 +cover +acc $(addprefix ../,${SOURCES_SYN}); vsim -coverage -vopt work.$(basename $(notdir $<)) -c -do "coverage same -onexit -directive -codeAll cov_$(basename $(notdir $<)).ucdb; run -all"; vcover report -html cov_$(basename $(notdir $<)).ucdb; quit -f'
+	@vsim -c rv6 -do 'quit -sim; vlog -coveropt 3 +cover +acc $(addprefix ../,${SOURCES_SYN}); vsim -coverage -vopt work.$(basename $(notdir $<)) -c -do "coverage same -onexit -directive -codeAll cov_$(basename $(notdir $<)).ucdb; run -all"; vcover report -html cov_$(basename $(notdir $<)).ucdb; quit -f'
 	@echo "vsim: Coverage simulation for ${<} successfully completed\n"
 
 # Recursive clean
