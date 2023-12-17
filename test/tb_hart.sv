@@ -18,14 +18,15 @@
 
 // default hex path
 `ifndef hex_path
-`define hex_path "../test/c/fib/fib.hex"
+//`define hex_path "../test/c/fib/fib.hex"
+`define hex_path "../test/c/ecall/ecall.hex"
 `endif
 
 `define tb_mem_size  32'h0001_0000
 `define tb_mem_entry 32'h8000_0000
 
 `include "../hdl/config.v"
-`include "../hdl/hart/csr.v"
+//`include "../hdl/hart/csr.v"
 
 `define DEBUG_FETCH
 
@@ -192,32 +193,32 @@ module tb_hart();
 
     wire stall_pc = dut.u_pc.stall;
     always @(posedge clk) begin
-        if(dut.u_pc.trap) $display("PC    @%8t: TRAP, nPC=%h", $time(), dut.u_pc.trap_addr);
+        if(dut.u_pc.trap_taken) $display("PC    @%8t: TRAP, nPC=%h", $time(), dut.u_pc.trap_addr);
         else if(dut.u_pc.pr_miss) $display("PC    @%8t: BRANCH PREDICT MISS, nPC=%h", $time(), dut.u_pc.br_addr);
         else if(dut.u_pc.jalr_taken) $display("PC    @%8t: JALR TAKEN, nPC=%h", $time(), dut.u_pc.jalr_addr);
         else if(dut.u_pc.jal_taken && !stall_pc) $display("PC    @%8t: JAL TAKEN, nPC=%h", $time(), dut.u_pc.jal_addr);
-        else if(dut.u_pc.pr_taken && !stall_pc) $display("");
+        else if(dut.u_pc.pr_taken && !stall_pc) $display("PC    @%8t: BRANCH PREDICT, nPC=%h", $time(), dut.u_pc.pr_addr);
         //else if(!stall) $display("");
     end
 
 
     /* CSR INFO */
 
-    always @(posedge dut.u_csr.csr_addr_invalid) begin
-        $display("CSR   @%8t: csr_addr_invalid: %s(%h)!", $time(), decode_csr(), dut.u_csr.csr_addr);
-    end
+    //always @(posedge dut.u_csr.csr_addr_invalid) begin
+    //    $display("CSR   @%8t: csr_addr_invalid: %s(%h)!", $time(), decode_csr(), dut.u_csr.csr_addr);
+    //end
 
-    always @(posedge dut.u_csr.csr_wr_invalid) begin
-        $display("CSR   @%8t: csr_wr_invalid: %s", $time(), decode_csr());
-    end
+    //always @(posedge dut.u_csr.csr_wr_invalid) begin
+    //    $display("CSR   @%8t: csr_wr_invalid: %s", $time(), decode_csr());
+    //end
 
-    always @(posedge dut.u_csr.csr_pr_invalid) begin
-        $display("CSR   @%8t: csr_pr_invalid: %s!", $time(), decode_csr());
-    end
+    //always @(posedge dut.u_csr.csr_pr_invalid) begin
+    //    $display("CSR   @%8t: csr_pr_invalid: %s!", $time(), decode_csr());
+    //end
 
-    always @(dut.u_csr.csr_reg) begin
-        $display("CSR   @%8t: t%0s=%0h", $time(), decode_csr(), dut.u_csr.ncsr);
-    end
+    //always @(dut.u_csr.csr_reg) begin
+    //    $display("CSR   @%8t: t%0s=%0h", $time(), decode_csr(), dut.u_csr.ncsr);
+    //end
 
 
     /* SIMULATION CONTROL */
@@ -231,7 +232,7 @@ module tb_hart();
         $stop();
     endtask
 
-    initial #20000 end_sim();
+    initial #200000 end_sim();
     always @(*) if(dut.bmw_ir === 32'h0000006f) end_sim();
 
 
@@ -356,44 +357,44 @@ module tb_hart();
         endcase
     endfunction
 
-    function automatic string decode_csr();
-        case(dut.u_csr.csr_addr)
-            `sstatus:       return "sstatus";
-            `sie:           return "sie";
-            `stvec:         return "stvec";
-            `scounteren:    return "scounteren";
-            `sscratch:      return "sscratch";
-            `sepc:          return "sepc";
-            `scause:        return "scause";
-            `stval:         return "stval";
-            `sip:           return "sip";
-            `satp:          return "satp";
-            `mvendorid:     return "mvendorid";
-            `marchid:       return "marchid";
-            `mimpid:        return "mimpid";
-            `mhartid:       return "mhartid";
-            `mconfigptr:    return "mconfigptr";
-            `mstatus:       return "mstatus";
-            `misa:          return "misa";
-            `medeleg:       return "medeleg";
-            `mideleg:       return "mideleg";
-            `mie:           return "mie";
-            `mtvec:         return "mtvec";
-            `mcounteren:    return "mcounteren";
-            `mscratch:      return "mscratch";
-            `mepc:          return "mepc";
-            `mcause:        return "mcause";
-            `mtval:         return "mtval";
-            `mip:           return "mip";
-            `mtinst:        return "mtinst";
-            `mtval:         return "mtval2";
-            `menvcfg:       return "menvcfg";
-            `mseccfg:       return "mseccfg";
-            `fflags:        return "fflags";
-            `frm:           return "frm";
-            `fcsr:          return "fcsr";
-            default: return "invalid CSR";
-        endcase
-    endfunction
+//    function automatic string decode_csr();
+//        case(dut.u_csr.csr_addr)
+//            `sstatus:       return "sstatus";
+//            `sie:           return "sie";
+//            `stvec:         return "stvec";
+//            `scounteren:    return "scounteren";
+//            `sscratch:      return "sscratch";
+//            `sepc:          return "sepc";
+//            `scause:        return "scause";
+//            `stval:         return "stval";
+//            `sip:           return "sip";
+//            `satp:          return "satp";
+//            `mvendorid:     return "mvendorid";
+//            `marchid:       return "marchid";
+//            `mimpid:        return "mimpid";
+//            `mhartid:       return "mhartid";
+//            `mconfigptr:    return "mconfigptr";
+//            `mstatus:       return "mstatus";
+//            `misa:          return "misa";
+//            `medeleg:       return "medeleg";
+//            `mideleg:       return "mideleg";
+//            `mie:           return "mie";
+//            `mtvec:         return "mtvec";
+//            `mcounteren:    return "mcounteren";
+//            `mscratch:      return "mscratch";
+//            `mepc:          return "mepc";
+//            `mcause:        return "mcause";
+//            `mtval:         return "mtval";
+//            `mip:           return "mip";
+//            `mtinst:        return "mtinst";
+//            `mtval:         return "mtval2";
+//            `menvcfg:       return "menvcfg";
+//            `mseccfg:       return "mseccfg";
+//            `fflags:        return "fflags";
+//            `frm:           return "frm";
+//            `fcsr:          return "fcsr";
+//            default: return "invalid CSR";
+//        endcase
+//    endfunction
 
 endmodule
