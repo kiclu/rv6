@@ -39,7 +39,17 @@ module hart #(parameter HART_ID = 0) (
     input                   h_clk
 );
 
+    // pipeline flush
     wire flush_n;
+
+    wire t_flush_pd;
+    wire t_flush_id;
+    wire t_flush_ex;
+    wire t_flush_mem;
+
+    // exception signals
+    wire dmem_ld_ma;
+    wire dmem_st_ma;
 
     /* IF */
 
@@ -52,7 +62,7 @@ module hart #(parameter HART_ID = 0) (
     wire [63:0] jal_addr;
     wire [12:0] pr_offs;
 
-    wire trap;
+    wire trap_taken;
     wire jalr_taken;
     wire jal_taken;
     wire pr_taken;
@@ -67,7 +77,7 @@ module hart #(parameter HART_ID = 0) (
     pc u_pc(
         .pc(pc),
 
-        .trap(trap),
+        .trap_taken(trap_taken),
         .trap_addr(trap_addr),
 
         .jalr_taken(jalr_taken),
@@ -133,7 +143,7 @@ module hart #(parameter HART_ID = 0) (
     reg bfp_c_ins;
 
     always @(posedge h_clk) begin
-        if(!flush_n) begin
+        if(!flush_n || t_flush_pd) begin
             bfp_ir <= 32'h13;
             bfp_pr_taken <= 1'b0;
             bfp_c_ins <= 1'b0;
@@ -176,7 +186,7 @@ module hart #(parameter HART_ID = 0) (
     reg bpd_c_ins;
 
     always @(posedge h_clk) begin
-        if(!flush_n) begin
+        if(!flush_n || t_flush_id) begin
             bpd_ir <= 32'h13;
             bpd_pr_taken <= 1'b0;
             bpd_c_ins <= 1'b0;
@@ -216,6 +226,8 @@ module hart #(parameter HART_ID = 0) (
         .clk(h_clk)
     );
 
+    wire stall_id;
+
     // branch alu
     br_alu u_br_alu(
         .pc(bpd_pc),
@@ -230,7 +242,9 @@ module hart #(parameter HART_ID = 0) (
         .pr_miss(pr_miss),
         .br_addr(br_addr),
 
-        .pr_taken(bpd_pr_taken)
+        .pr_taken(bpd_pr_taken),
+
+        .stall(stall_id)
     );
 
     assign flush_n = h_rst_n && !pr_miss && !jalr_taken;
@@ -269,10 +283,9 @@ module hart #(parameter HART_ID = 0) (
 
     reg [63:0] bdx_imm;
 
-    wire stall_id;
 
     always @(posedge h_clk) begin
-        if(!h_rst_n) bdx_ir <= 32'h13;
+        if(!h_rst_n || t_flush_ex) bdx_ir <= 32'h13;
         else if(!stall_id) begin
             bdx_pc <= bpd_pc;
             bdx_ir <= bpd_ir;
@@ -321,6 +334,7 @@ module hart #(parameter HART_ID = 0) (
         .op_ir({bdx_ir[31:27], bdx_ir[14:12], bdx_ir[6:0]})
     );
 
+    reg [63:0] bxm_pc;
     reg [31:0] bxm_ir;
 
     reg [63:0] bxm_alu_out;
@@ -329,8 +343,9 @@ module hart #(parameter HART_ID = 0) (
     wire stall_ex;
 
     always @(posedge h_clk) begin
-        if(!h_rst_n) bxm_ir <= 32'h13;
+        if(!h_rst_n || t_flush_mem) bxm_ir <= 32'h13;
         else if(!stall_ex) begin
+            bxm_pc <= bdx_pc;
             bxm_ir <= bdx_ir;
 
             bxm_alu_out <= alu_out;
@@ -341,6 +356,7 @@ module hart #(parameter HART_ID = 0) (
     /* MEM */
 
     wire [63:0] dmem_out;
+    wire stall_mem;
 
     // data memory / L1d cache
 
@@ -360,6 +376,9 @@ module hart #(parameter HART_ID = 0) (
 
         .data_in(bxm_r2),
         .wr(bxm_ir[6:0] == 7'b0100011),
+
+        .ld_ma(dmem_ld_ma),
+        .st_ma(dmem_st_ma),
 
         .b_addr_d(b_addr_d),
 
@@ -390,14 +409,31 @@ module hart #(parameter HART_ID = 0) (
         .csr_in(bxm_alu_out),
         .csr_out(csr_out),
 
-        .csr_addr_invalid(csr_addr_invalid),
-        .csr_wr_invalid(csr_wr_invalid),
-        .csr_pr_invalid(csr_pr_invalid),
-
+        .trap_taken(trap_taken),
         .trap_addr(trap_addr),
-        .trap(trap),
 
-        .pc(pc),
+        .intr_s(1'b0),
+        .intr_t(1'b0),
+        .intr_e(1'b0),
+
+        .dmem_ld_ma(dmem_ld_ma),
+        .dmem_st_ma(dmem_st_ma),
+
+        .dmem_addr(addr),
+
+        .flush_if(t_flush_if),
+        .flush_pd(t_flush_pd),
+        .flush_id(t_flush_id),
+        .flush_ex(t_flush_ex),
+        .flush_mem(t_flush_mem),
+
+        .pc_if(pc),
+        .pc_pd(bfp_pc),
+        .pc_id(bpd_pc),
+        .pc_ex(bdx_pc),
+        .pc_mem(bxm_pc),
+
+        .stall(stall_mem),
 
         .rst_n(h_rst_n),
 
@@ -409,8 +445,6 @@ module hart #(parameter HART_ID = 0) (
     reg [63:0] bmw_csr_out;
     reg [63:0] bmw_alu_out;
     reg [63:0] bmw_dmem_out;
-
-    wire stall_mem;
 
     always @(posedge h_clk) begin
         if(!h_rst_n) bmw_ir <= 32'h13;
@@ -425,16 +459,18 @@ module hart #(parameter HART_ID = 0) (
 
     /* WB */
 
-    reg [63:0] wb_mux [0:2];
-    assign wb_mux[0] = bmw_alu_out;
-    assign wb_mux[1] = bmw_dmem_out;
-    assign wb_mux[2] = bmw_csr_out;
-    wire [1:0] s_wb_mux;
-    assign s_wb_mux[0] = bmw_ir[6:0] == 7'b0000011;
-    assign s_wb_mux[1] = bmw_ir[6:0] == 7'b1110011;
+    reg [63:0] wb_mux;
+
+    always @(*) begin
+        case(bmw_ir[6:0])
+            7'b0000011: wb_mux <= bmw_dmem_out;
+            7'b1110011: wb_mux <= csr_out;
+            default:    wb_mux <= bmw_alu_out;
+        endcase
+    end
 
     assign rd = bmw_ir[11:7];
-    assign d  = wb_mux[s_wb_mux];
+    assign d  = wb_mux;
 
     wire stall_wb;
     assign wr = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011);
@@ -443,7 +479,7 @@ module hart #(parameter HART_ID = 0) (
 
     // wb forward register
     reg [63:0] wb_fw;
-    always @(posedge h_clk) if(!stall_wb) wb_fw <= wb_mux[s_wb_mux];
+    always @(posedge h_clk) if(!stall_wb) wb_fw <= wb_mux;
 
     assign mx_a_fw[0] = bxm_alu_out;
     assign mx_a_fw[1] = bmw_alu_out;
@@ -490,8 +526,6 @@ module hart #(parameter HART_ID = 0) (
     /* CONTROL UNIT */
 
     cu u_cu(
-        .ir_if(ir),
-        .ir_pd(bfp_ir),
         .ir_id(bpd_ir),
         .ir_ex(bdx_ir),
         .ir_mem(bxm_ir),
