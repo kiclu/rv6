@@ -30,15 +30,12 @@ module regfile(
     input         clk
 );
 
+    (* ram_style = "registers" *)
     reg [63:0] register [1:31];
 
     assign r1 = rs1 ? register[rs1] : 64'b0;
     assign r2 = rs2 ? register[rs2] : 64'b0;
 
     always @(posedge clk) if(wr && rd) register[rd] <= d;
-
-    // debug only, initialize registers to 0
-    integer i;
-    initial for(i = 1; i < 32; i = i + 1) register[i] <= 0;
 
 endmodule
