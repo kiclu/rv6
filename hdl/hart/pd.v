@@ -189,7 +189,7 @@ module pd(
 
             // c.sd
             16'b11100: begin
-                ir_out <= {5'b00000, ir_in[6:5], ir_in[12], rvc2, rvc1, 3'b011, ir_in[11:10], 3'b000, 7'b0100011};
+                ir_out <= {4'b0000, ir_in[6:5], ir_in[12], rvc2, rvc1, 3'b011, ir_in[11:10], 3'b000, 7'b0100011};
             end
 
             // c.addi
@@ -297,7 +297,7 @@ module pd(
 
             // c.ldsp
             16'b01110: begin
-                ir_out <= {3'b000, ir_in[4], ir_in[4:2], ir_in[12], ir_in[6:3], 3'b000, 5'b00010, 3'b011, ir_in[11:7], 7'b0000011};
+                ir_out <= {6'b0, ir_in[4:2], ir_in[12], ir_in[6:5], 3'b000, 5'b00010, 3'b011, ir_in[11:7], 7'b0000011};
             end
 
             // c.j[al]r/mv/add
@@ -330,12 +330,12 @@ module pd(
 
             // c.swsp
             16'b11010: begin
-                ir_out <= {4'b0000, ir_in[8:7], ir_in[12], ir_in[6:2], 5'b00010, 3'b000, ir_in[12:10], 2'b00, 7'b0100011};
+                ir_out <= {4'b0000, ir_in[8:7], ir_in[12], ir_in[6:2], 5'b00010, 3'b010, ir_in[12:10], 2'b00, 7'b0100011};
             end
 
             // c.sdsp
             16'b11110: begin
-                ir_out <= {3'b000, ir_in[9:7], ir_in[12], ir_in[6:2], 5'b00010, 3'b000, ir_in[12:11], 3'b000, 7'b0100011};
+                ir_out <= {3'b000, ir_in[9:7], ir_in[12], ir_in[6:2], 5'b00010, 3'b011, ir_in[12:11], 3'b000, 7'b0100011};
             end
 
         endcase
