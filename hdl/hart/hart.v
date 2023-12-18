@@ -116,7 +116,7 @@ module hart #(parameter HART_ID = 0) (
 
     // instruction memory / L1i cache
 
-    wire [63:0] b_addr_i = {pc[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
+    wire [63:0] b_addr_i;
     wire [`imem_line-1:0] b_data_i;
     wire b_rd_i;
     wire b_dv_i;
@@ -125,12 +125,14 @@ module hart #(parameter HART_ID = 0) (
         .pc(pc),
         .ir(ir),
 
+        .b_addr(b_addr_i),
+
         .b_data(b_data_i),
         .b_rd(b_rd_i),
         .b_dv(b_dv_i),
 
         .stall(stall_if),
-
+        .stall_ima(stall_ima),
         .rst_n(h_rst_n),
 
         .clk(h_clk)
@@ -537,6 +539,8 @@ module hart #(parameter HART_ID = 0) (
         .stall_ex(stall_ex),
         .stall_mem(stall_mem),
         .stall_wb(stall_wb),
+
+	.stall_ima(stall_ima),
 
         .amo_req(h_amo_req),
         .amo_ack(h_amo_ack),

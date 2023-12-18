@@ -23,24 +23,26 @@
 `include "../config.v"
 
 module imem(
-    input            [63:0] pc,
-    output           [31:0] ir,
+    input                [63:0] pc,
+    output reg           [31:0] ir,
 
-    input  [`imem_line-1:0] b_data,
-    output                  b_rd,
-    input                   b_dv,
+    output               [63:0] b_addr,
+    input      [`imem_line-1:0] b_data,
+    output                      b_rd,
+    input                       b_dv,
 
     // control signals
-    input                   stall,
-
-    input                   rst_n,
-
-    input                   clk
+    input                       stall,
+    output reg                  stall_ima,
+    input                       rst_n,
+    input                       clk
 );
 
-    wire [ `imem_tag_len-1:0] addr_tag  = pc[63:64-`imem_tag_len];
-    wire [ `imem_set_len-1:0] addr_set  = pc[`imem_set_len+`imem_offs_len-1:`imem_offs_len];
-    wire [`imem_offs_len-1:0] addr_offs = pc[`imem_offs_len-1:0];
+    reg [63:0] addr;
+
+    wire [ `imem_tag_len-1:0] addr_tag  = addr[63:64-`imem_tag_len];
+    wire [ `imem_set_len-1:0] addr_set  = addr[`imem_set_len+`imem_offs_len-1:`imem_offs_len];
+    wire [`imem_offs_len-1:0] addr_offs = addr[`imem_offs_len-1:0];
 
     reg  [    `imem_line-1:0] data [0:`imem_sets-1][0:`imem_ways-1];
     reg  [ `imem_tag_len-1:0] tag  [0:`imem_sets-1][0:`imem_ways-1];
@@ -48,6 +50,8 @@ module imem(
 
     reg [`imem_way_len-1:0] way;
     assign ir = data[addr_set][way][8*addr_offs +: 32];
+
+    assign b_addr = {addr[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
 
     /* HIT DETECTION */
 
@@ -118,6 +122,61 @@ module imem(
             v[addr_set][re[addr_set]]    <= 1'b1;
             tag[addr_set][re[addr_set]]  <= addr_tag;
             data[addr_set][re[addr_set]] <= b_data;
+        end
+    end
+
+    /* MISALIGNED ACCESS */
+
+    wire [63:0] inst_msa = pc + 2;
+    wire ma = inst_msa[63:`imem_offs_len] != pc[63:`imem_offs_len];
+
+    reg [31:0] ma_ir;
+
+    reg [1:0] ma_fsm;
+    reg [1:0] ma_fsm_next;
+    always @(*) begin
+        addr = 0;
+        ir = 0;
+        stall_ima = 0;
+        ma_fsm_next = 0;
+        case(ma_fsm)
+            2'd0: begin
+                addr = pc;
+                ir = data[addr_set][way][8*addr_offs +: 32];
+                stall_ima = ma;
+                ma_fsm_next = ma && hit;
+            end
+            2'd1: begin
+                addr = inst_msa;
+                ir = ma_ir;
+                stall_ima = 1;
+                ma_fsm_next = hit ? 2'd2 : 2'd1;
+            end
+            2'd2: begin
+                addr = inst_msa;
+                ir = ma_ir;
+                stall_ima = 0;
+                ma_fsm_next = 2'd0;
+            end
+        endcase
+    end
+
+    always @(posedge clk) begin
+        if(!rst_n) ma_fsm <= 2'd0;
+        else begin
+            case(ma_fsm)
+                2'd0: begin
+                    ma_ir[15:0] <= data[addr_set][way][8*addr_offs +: 16];
+                    ma_fsm <= ma_fsm_next;
+                end
+                2'd1: begin
+                    ma_ir[31:16] <= data[addr_set][way][8*addr_offs +: 16];
+                    ma_fsm <= ma_fsm_next;
+                end
+                2'd2: begin
+                    if(!stall) ma_fsm <= ma_fsm_next;
+                end
+            endcase
         end
     end
 

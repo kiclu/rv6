@@ -30,6 +30,9 @@ module cu(
     output            stall_mem,
     output            stall_wb,
 
+    // input stall causes
+    input             stall_ima,
+
     // atomic instruction signals
     input             amo_req,
     input             amo_ack,
@@ -50,7 +53,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack);
+    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima;
 
     /* PIPELINE DATA HAZARD */
     `define op_lui      7'b0110111
