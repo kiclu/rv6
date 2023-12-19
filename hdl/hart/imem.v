@@ -24,7 +24,7 @@
 
 module imem(
     input                [63:0] pc,
-    output reg           [31:0] ir,
+    output               [31:0] ir,
 
     output               [63:0] b_addr,
     input      [`imem_line-1:0] b_data,
@@ -49,7 +49,7 @@ module imem(
     reg                       v    [0:`imem_sets-1][0:`imem_ways-1];
 
     reg [`imem_way_len-1:0] way;
-    assign ir = data[addr_set][way][8*addr_offs +: 32];
+
 
     assign b_addr = {addr[63:`imem_offs_len], {`imem_offs_len{1'b0}}};
 
@@ -136,25 +136,21 @@ module imem(
     reg [1:0] ma_fsm_next;
     always @(*) begin
         addr = 0;
-        ir = 0;
         stall_ima = 0;
         ma_fsm_next = 0;
         case(ma_fsm)
             2'd0: begin
                 addr = pc;
-                ir = data[addr_set][way][8*addr_offs +: 32];
                 stall_ima = ma;
                 ma_fsm_next = ma && hit;
             end
             2'd1: begin
                 addr = inst_msa;
-                ir = ma_ir;
                 stall_ima = 1;
                 ma_fsm_next = hit ? 2'd2 : 2'd1;
             end
             2'd2: begin
                 addr = inst_msa;
-                ir = ma_ir;
                 stall_ima = 0;
                 ma_fsm_next = 2'd0;
             end
@@ -179,6 +175,8 @@ module imem(
             endcase
         end
     end
+
+    assign ir = ma_fsm != 2'b00 ? ma_ir : data[addr_set][way][8*addr_offs +: 32];
 
     /* BUS CONTROL SIGNALS */
 
