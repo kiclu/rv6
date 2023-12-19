@@ -16,6 +16,22 @@
  * external case of any product you make using this documentation.
  */
 
+`define op_lui      7'b0110111
+`define op_auipc    7'b0010111
+`define op_jal      7'b1101111
+`define op_jalr     7'b1100111
+
+`define op_load     7'b0000011
+`define op_store    7'b0100011
+
+`define op_itype    7'b0010011
+`define op_itype_w  7'b0011011
+
+`define op_rtype    7'b0110011
+`define op_rtype_w  7'b0111011
+
+`define op_branch   7'b1100011
+
 module cu(
     input      [31:0] ir_id,
     input      [31:0] ir_ex,
@@ -32,6 +48,7 @@ module cu(
 
     // input stall causes
     input             stall_ima,
+    input             stall_dmem,
 
     // atomic instruction signals
     input             amo_req,
@@ -53,24 +70,9 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima;
+    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima || stall_dmem;
 
     /* PIPELINE DATA HAZARD */
-    `define op_lui      7'b0110111
-    `define op_auipc    7'b0010111
-    `define op_jal      7'b1101111
-    `define op_jalr     7'b1100111
-
-    `define op_load     7'b0000011
-    `define op_store    7'b0100011
-
-    `define op_itype    7'b0010011
-    `define op_itype_w  7'b0011011
-
-    `define op_rtype    7'b0110011
-    `define op_rtype_w  7'b0111011
-
-    `define op_branch   7'b1100011
 
     wire rs1_pc  =
         ir_id[6:0] == `op_lui   ||
