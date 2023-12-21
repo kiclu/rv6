@@ -22,6 +22,8 @@
 
 `include "../config.v"
 
+`define hmem_read_valid_delay 4'd10
+
 module hmem(
     // internal instruction bus
     input                [63:0] b_addr_i,
@@ -29,34 +31,32 @@ module hmem(
     input                       b_rd_i,
     output                      b_dv_i,
 
-    // internal data bus common
+    // internal data bus
     input                [63:0] b_addr_d,
 
-    // internal data bus output
     output     [`dmem_line-1:0] b_data_in_d,
     input                       b_rd_d,
     output                      b_dv_d,
 
-    // internal data bus input
     input      [`dmem_line-1:0] b_data_out_d,
     input                       b_wr_d,
 
     // external bus
-    output reg           [63:0] h_addr,
+    output               [63:0] h_addr,
 
     input      [`hmem_line-1:0] h_data_in,
     output                      h_rd,
     input                       h_dv,
 
-    output reg [`hmem_line-1:0] h_data_out,
-    output reg                  h_wr,
+    output     [`hmem_line-1:0] h_data_out,
+    output                      h_wr,
 
     // control signals
     input                [63:0] inv_addr,
     input                       inv,
 
+    output                      stall,
     input                       rst_n,
-
     input                       clk
 );
 
@@ -68,45 +68,41 @@ module hmem(
     wire [ `hmem_set_len-1:0] addr_set_d  = b_addr_d[`hmem_set_len+`hmem_offs_len-1:`hmem_offs_len];
     wire [`hmem_offs_len-1:0] addr_offs_d = b_addr_d[`hmem_offs_len-1:0];
 
-    reg  [    `hmem_line-1:0] data [0:`hmem_sets-1][0:`hmem_ways-1];
+    localparam hmem_size = `hmem_sets * `hmem_ways;
+    (* ram_style = "block" *)
+    reg  [    `hmem_line-1:0] data [0: hmem_size-1];
     reg  [ `hmem_tag_len-1:0] tag  [0:`hmem_sets-1][0:`hmem_ways-1];
     reg                       v    [0:`hmem_sets-1][0:`hmem_ways-1];
 
+    reg [`hmem_line-1:0] cache_line_in;
+    reg [`hmem_line-1:0] cache_line_out_i;
+    reg [`hmem_line-1:0] cache_line_out_d;
+
     /* HIT DETECTION */
 
-    reg way_i;
-    reg hit_i;
+    reg [`hmem_way_len-1:0] way_qi;
+    reg                     hit_i;
     always @(*) begin : hmem_cache_hit_check_i
         integer i;
-        hit_i <= 0;
-        way_i <= 0;
+        hit_i <= 0; way_qi <= 0;
         for(i = 0; i < `hmem_ways; i = i + 1) begin
             if(tag[addr_set_i][i] == addr_tag_i && v[addr_set_i][i]) begin
-                way_i <= i;
-                hit_i <= 1;
+                way_qi <= i; hit_i <= 1;
             end
         end
     end
 
-    assign b_data_i = data[addr_set_i][way_i][8*addr_offs_i +: `imem_line];
-    assign b_dv_i = hit_i && b_rd_i;
-
-    reg way_d;
-    reg hit_d;
+    reg [`hmem_way_len-1:0] way_qd;
+    reg                     hit_d;
     always @(*) begin : hmem_cache_hit_check_d
         integer i;
-        hit_d <= 0;
-        way_d <= 0;
+        hit_d <= 0; way_qd <= 0;
         for(i = 0; i < `hmem_ways; i = i + 1) begin
             if(tag[addr_set_d][i] == addr_tag_d && v[addr_set_d][i]) begin
-                way_d <= i;
-                hit_d <= 1;
+                way_qd <= i; hit_d <= 1;
             end
         end
     end
-
-    assign b_data_in_d = data[addr_set_d][way_d][8*addr_offs_d +: `dmem_line];
-    assign b_dv_d = hit_d && b_rd_d;
 
     /* REPLACEMENT POLICY */
 
@@ -115,71 +111,235 @@ module hmem(
     reg [lru_size-1:0] lru_tree [0:`dmem_sets-1];
 
     // replacement entry
-    reg re;
+    reg [`hmem_way_len-1:0] re [0:`hmem_sets-1];
 
     // hmem operation rising edge
     wire hmem_op = b_rd_i || b_rd_d || b_wr_d;
     reg  hmem_op_d;
-    wire lru_update = !hmem_op_d && hmem_op;
-    always @(posedge clk) hmem_op_d <= hmem_op;
+
+    wire lru_update = !hmem_op_d &&  hmem_op;
+    reg  lru_update_d;
+
+    wire re_update  =  hmem_op_d && !hmem_op;
+
+    always @(posedge clk) begin
+        if(!rst_n) begin
+            hmem_op_d <= 0;
+            lru_update_d <= 0;
+        end
+        else begin
+            hmem_op_d <= hmem_op;
+            lru_update_d <= lru_update;
+        end
+    end
 
     // find replacement entry and update LRU tree
     always @(posedge clk) begin
         if(!rst_n) begin : hmem_clr_lru
             integer i;
             for(i = 0; i < `hmem_sets; i = i + 1) begin
-                lru_tree[i] <= {lru_size{1'b0}};
+                lru_tree[i] <= {lru_size{1'b1}};
+                re[i] <= {`hmem_way_len{1'b0}};
             end
-            re <= 0;
         end
-        else if(lru_update) begin : hmem_lru_update
-            integer i, l, i_parent;
-            // write update
-            if(b_wr_d) begin
-                i = 0;
-                for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
-                    if(lru_tree[addr_set_d][i]) begin
-                        lru_tree[addr_set_d][i] = 1'b0;
-                        i = i<<1 + 1;
+        else begin
+            // update LRU tree
+            if(lru_update_d) begin : hmem_lru_update
+                integer i, l, i_parent;
+                // write update
+                if(b_wr_d) begin
+                    i = 0;
+                    for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
+                        if(lru_tree[addr_set_d][i]) begin
+                            lru_tree[addr_set_d][i] = 1'b0;
+                            i = (i<<1) + 1;
+                        end
+                        else begin
+                            lru_tree[addr_set_d][i] = 1'b1;
+                            i = (i<<1) + 2;
+                        end
+                    end
+                end
+                // read update
+                else if(b_rd_i || b_rd_d) begin
+                    if(b_rd_i) begin
+                        i = (hit_i ? way_qi : re[addr_set_i]) + lru_size;
+                        for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
+                            i_parent = (i[0] ? i-1 : i-2) >> 1;
+                            lru_tree[addr_set_i][i_parent] = !i[0];
+                            i = i_parent;
+                        end
                     end
                     else begin
-                        lru_tree[addr_set_d][i] = 1'b1;
-                        i = i<<1 + 2;
+                        i = (hit_d ? way_qd : re[addr_set_d]) + lru_size;
+                        for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
+                            i_parent = (i[0] ? i-1 : i-2) >> 1;
+                            lru_tree[addr_set_d][i_parent] = !i[0];
+                            i = i_parent;
+                        end
                     end
                 end
-                re = i - `hmem_ways + 1;
             end
-            // read update
-            else if(hit_d) begin
-                i = way_d + lru_size;
-                for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
-                    i_parent = (i[0] ? i-1 : i-2) >> 1;
-                    lru_tree[addr_set_d][i_parent] = !i[0];
-                    i = i_parent;
+            // update replacement entry
+            if(re_update) begin : hmem_re_update
+                integer i, l;
+                if(b_rd_i) begin
+                    i = 0;
+                    for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
+                        i = lru_tree[addr_set_i][i] ? (i<<1) + 1 : (i<<1) + 2;
+                    end
+                    re[addr_set_i] = i - `hmem_ways + 1;
                 end
-
-                for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
-                    i = lru_tree[addr_set_d][i] ? i<<1 + 1 : i<<1 + 2;
+                else begin
+                    i = 0;
+                    for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
+                        i = lru_tree[addr_set_d][i] ? (i<<1) + 1 : (i<<1) + 2;
+                    end
+                    re[addr_set_d] = i - `hmem_ways + 1;
                 end
-                re = i - `hmem_ways + 1;
-            end
-            else if(hit_i) begin
-                i = way_i + lru_size;
-                for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
-                    i_parent = (i[0] ? i-1 : i-2) >> 1;
-                    lru_tree[addr_set_i][i_parent] = !i[0];
-                    i = i_parent;
-                end
-
-                for(l = 0; l < $clog2(`hmem_ways); l = l + 1) begin
-                    i = lru_tree[addr_set_i][i] ? i<<1 + 1 : i<<1 + 2;
-                end
-                re = i - `hmem_ways + 1;
             end
         end
     end
 
-    /* CACHE DATA UPDATE */
+    /* CACHE DATA WRITE */
+
+    wire op_i = b_rd_i;
+    wire op_d = b_rd_d || b_wr_d;
+
+    wire rd   = b_rd_i || b_rd_d;
+    wire wr   = b_wr_d;
+
+    wire [`hmem_set_len-1:0] set = op_d ? addr_set_d : addr_set_i;
+    wire [`hmem_way_len-1:0] way = op_d ? way_qd : way_qi;
+
+    reg  [   `hmem_line-1:0] buf_in;
+    reg                      s_mux_in;
+
+    reg  [`hmem_way_len-1:0] way_d;
+    reg                      wre;
+    always @(posedge clk) if(wre) data[`hmem_sets * set + way_d] <= cache_line_in;
+
+    always @(*) begin
+        cache_line_in = s_mux_in ? buf_in : cache_line_out_d;
+        if(b_wr_d) cache_line_in[8*b_addr_d +: `dmem_line] = b_data_out_d;
+    end
+
+    /* CACHE DATA READ */
+
+    reg rde_i;
+    always @(posedge clk) if(rde_i) cache_line_out_i <= data[`hmem_sets*addr_set_i + way_qi];
+
+    reg rde_d;
+    always @(posedge clk) if(rde_d) cache_line_out_d <= data[`hmem_sets*addr_set_d + way_qd];
+
+    /* FSM */
+
+    reg [2:0] hmem_fsm;
+    reg [2:0] hmem_fsm_next;
+
+    reg [3:0] ld_cnt;
+
+    reg fetch_d;
+
+    reg h_dv_d;
+    reg h_dv_dd;
+    always @(posedge clk) begin
+        h_dv_d  <= h_dv;
+        h_dv_dd <= h_dv_d;
+    end
+
+    always @(*) begin
+        way_d  = 0;
+
+        rde_i = 0;
+        rde_d = 0;
+        wre   = 0;
+
+        hmem_fsm_next = hmem_fsm;
+        case(hmem_fsm)
+            // IDLE
+            3'd0: begin
+                if( hit_i && op_i) hmem_fsm_next = 3'd1;
+                if(!hit_i && op_i) hmem_fsm_next = 3'd3;
+                if( hit_d && op_d) hmem_fsm_next = 3'd2;
+                if(!hit_d && op_d) hmem_fsm_next = 3'd3;
+            end
+            // LOAD_I
+            3'd1: begin
+                rde_i = 1;
+
+                if(ld_cnt == 4'd0) hmem_fsm_next = 3'd0;
+            end
+            // LOAD_D
+            3'd2: begin
+                rde_d = 1;
+
+                if(rd && ld_cnt == 4'd0) hmem_fsm_next = 3'd0;
+                else if(ld_cnt == 4'd0)  hmem_fsm_next = 3'd4;
+            end
+            // FETCH
+            3'd3: begin
+                if(op_i) way_d = re[addr_set_i];
+                if(op_d) way_d = re[addr_set_d];
+                wre = rd && h_dv_dd;
+
+                if(h_dv_dd)           hmem_fsm_next = 3'd4;
+                if(b_rd_i && h_dv_dd) hmem_fsm_next = 3'd0;
+                if(b_rd_d && h_dv_dd) hmem_fsm_next = 3'd0;
+            end
+            // WRITE
+            3'd4: begin
+                way_d = s_mux_in ? re[set] : way;
+                wre = 1;
+
+                hmem_fsm_next = 3'd0;
+            end
+        endcase
+    end
+
+    always @(posedge clk) begin
+        if(!rst_n) begin
+            s_mux_in <= 0;
+            hmem_fsm <= 3'd0;
+        end
+        else begin
+            case(hmem_fsm)
+                // IDLE
+                2'd0: begin
+                    ld_cnt  <= `hmem_read_valid_delay;
+                    fetch_d <= op_d;
+
+                    hmem_fsm <= hmem_fsm_next;
+                end
+                // LOAD_I
+                3'd1: begin
+                    if(ld_cnt) ld_cnt <= ld_cnt - 1;
+
+                    hmem_fsm <= hmem_fsm_next;
+                end
+                // LOAD_D
+                3'd2: begin
+                    if(ld_cnt) ld_cnt <= ld_cnt - 1;
+                    s_mux_in <= 0;
+
+                    hmem_fsm <= hmem_fsm_next;
+                end
+                // FETCH
+                3'd3: begin
+                    if(h_dv) buf_in <= h_data_in;
+                    s_mux_in <= 1;
+
+                    hmem_fsm <= hmem_fsm_next;
+                end
+                // WRITE
+                3'd4: begin
+                    hmem_fsm <= hmem_fsm_next;
+                end
+            endcase
+        end
+    end
+
+    /* CACHE METADATA UPDATE */
 
     wire [`hmem_tag_len-1:0] inv_tag = inv_addr[63:64-`hmem_tag_len];
     wire [`hmem_set_len-1:0] inv_set = inv_addr[`hmem_set_len+`hmem_offs_len-1:`hmem_offs_len];
@@ -194,51 +354,36 @@ module hmem(
             end
         end
         else begin
-            // cache hit, write data to cache and write-through
-            if(hit_d && b_wr_d) begin
-                // write data to cache
-                data[addr_set_d][way_d][8*addr_offs_d +: `dmem_line] = b_data_in_d;
-                // write-through
-                h_data_out <= data[addr_set_d][way_d];
-            end
             // data cache miss, load into cache line on valid external data bus
             if(!hit_d && h_dv && (b_rd_d || b_wr_d)) begin : hmem_cache_miss_d
                 // load data into cache
-                v[addr_set_d][re]   <= 1'b1;
-                tag[addr_set_d][re] <= addr_tag_d;
-                data[addr_set_d][re] = h_data_in;
-
-                if(b_wr_d) begin
-                    // write data to cache
-                    data[addr_set_d][re][8*addr_offs_d +: `dmem_line] = b_data_in_d;
-                    // write-through
-                    h_data_out <= data[addr_set_d][re];
-                end
+                v  [addr_set_d][re[addr_set_d]] <= 1'b1;
+                tag[addr_set_d][re[addr_set_d]] <= addr_tag_d;
             end
             // instruction cache miss, load into cache on valid external data bus
             else if(!hit_i && h_dv && b_rd_i) begin : hmem_cache_miss_i
                 // load data into cache
-                v[addr_set_i][re]   <= 1'b1;
-                tag[addr_set_i][re] <= addr_tag_i;
-                data[addr_set_i][re] = h_data_in;
+                v  [addr_set_i][re[addr_set_i]] <= 1'b1;
+                tag[addr_set_i][re[addr_set_i]] <= addr_tag_i;
             end
         end
     end
 
     /* BUS CONTROL SIGNALS */
 
-    always @(posedge clk) begin
-        if(b_rd_d || b_wr_d) h_addr <= {b_addr_d[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
-        else h_addr <= {b_addr_i[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
-    end
+    assign b_data_i    =  hmem_fsm == 3'd3 ? buf_in[8*addr_offs_i +: `imem_line] : cache_line_out_i[8*addr_offs_i +: `imem_line];
+    assign b_dv_i      = (hmem_fsm == 3'd3 && h_dv_dd && !fetch_d) || (hmem_fsm == 3'd1 && ld_cnt == 4'd0 && !fetch_d);
 
-    reg h_wr_d;
-    always @(posedge clk) begin
-        h_wr_d <= hit_d && b_wr_d;
-        h_wr <= !h_wr_d && hit_d && b_wr_d;
-    end
+    assign b_data_in_d =  hmem_fsm == 3'd3 ? buf_in[8*addr_offs_d +: `dmem_line] : cache_line_out_d[8*addr_offs_d +: `dmem_line];
+    assign b_dv_d      = (hmem_fsm == 3'd3 && h_dv_dd &&  fetch_d) || (hmem_fsm == 3'd2 && ld_cnt == 4'd0 &&  fetch_d);
 
-    // read from L3 cache if L2 cache miss
-    assign h_rd = (~hit_i && b_rd_i) || (~hit_d && (b_rd_d || b_wr_d));
+    assign h_addr = {fetch_d ? b_addr_d[63:`hmem_offs_len] : b_addr_i[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
+
+    assign h_data_out = cache_line_in;
+
+    assign h_rd = hmem_fsm == 3'd3 && !h_dv_dd;
+    assign h_wr = hmem_fsm == 3'd4;
+
+    assign stall = hmem_fsm != 3'd0;
 
 endmodule

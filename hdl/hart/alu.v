@@ -69,7 +69,6 @@ module alu(
                 4'b101:  alu_out = op_ir[13] ? `sa >>> b[5:0] : `sa >> b[5:0];
                 4'b110:  alu_out = a  |  b;
                 4'b111:  alu_out = a  &  b;
-                default: alu_out = a + b;
             endcase
         end
         else if(op_ir[6:0] == `op_rtype_w || op_ir[6:0] == `op_itype_w) begin

@@ -209,7 +209,6 @@ module csr #(parameter HART_ID = 0) (
     input      [63:0] dmem_addr,
 
     // pipeline flush signals
-    output            flush_if,
     output            flush_pd,
     output            flush_id,
     output            flush_ex,
