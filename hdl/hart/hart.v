@@ -417,7 +417,7 @@ module hart #(parameter HART_ID = 0) (
         .dmem_ld_ma(dmem_ld_ma),
         .dmem_st_ma(dmem_st_ma),
 
-        //.dmem_addr(bxm_alu_out),
+        .dmem_addr(bxm_alu_out),
 
         .flush_pd(t_flush_pd),
         .flush_id(t_flush_id),
@@ -486,6 +486,8 @@ module hart #(parameter HART_ID = 0) (
 
     /* L2 CACHE */
 
+    wire stall_hmem;
+
     hmem u_hmem(
         .b_addr_i(b_addr_i),
         .b_data_i(b_data_i),
@@ -513,6 +515,7 @@ module hart #(parameter HART_ID = 0) (
         .inv_addr(h_inv_addr),
         .inv(h_inv),
 
+        .stall(stall_hmem),
         .rst_n(h_rst_n),
         .clk(h_clk)
     );
@@ -534,6 +537,7 @@ module hart #(parameter HART_ID = 0) (
 
 	    .stall_ima(stall_ima),
         .stall_dmem(stall_dmem),
+        .stall_hmem(stall_hmem),
 
         .amo_req(h_amo_req),
         .amo_ack(h_amo_ack),

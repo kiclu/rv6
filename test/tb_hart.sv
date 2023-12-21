@@ -19,7 +19,11 @@
 // default hex path
 `ifndef hex_path
 //`define hex_path "../test/c/fib/fib.hex"
-`define hex_path "../test/c/ecall/ecall.hex"
+//`define hex_path "../test/c/shift/shift.hex"
+//`define hex_path "../test/c/ecall/ecall.hex"
+`define hex_path "../test/c/fib_c/fib_c.hex"
+//`define hex_path "../test/c/ima/ima.hex"
+//`define hex_path "../test/c/deadbeef/deadbeef.hex"
 `endif
 
 `define tb_mem_size  32'h0001_0000

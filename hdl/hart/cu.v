@@ -49,6 +49,7 @@ module cu(
     // input stall causes
     input             stall_ima,
     input             stall_dmem,
+    input             stall_hmem,
 
     // atomic instruction signals
     input             amo_req,
@@ -70,7 +71,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima || stall_dmem;
+    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima || stall_dmem || stall_hmem;
 
     /* PIPELINE DATA HAZARD */
 
@@ -112,7 +113,6 @@ module cu(
     wire a_fw_wb  = rd_wb  == rs1 && !rs1_pc && rd_wb  && wr_wb;
 
     always @(posedge clk) begin
-        //a_fw <= 0;
         if(!stall_all) begin
             if(a_fw_ex) begin
                 a_fw <= ir_ex[6:0] != `op_load;
@@ -135,7 +135,6 @@ module cu(
     wire b_fw_wb  = rd_wb  == rs2 && !rs2_imm && rd_wb  && wr_wb;
 
     always @(posedge clk) begin
-        b_fw <= 0;
         if(!stall_all) begin
             if(b_fw_ex) begin
                 b_fw <= ir_ex[6:0] != `op_load;
@@ -149,6 +148,7 @@ module cu(
                 b_fw <= 1;
                 s_mx_b_fw <= 2;
             end
+            else b_fw <= 0;
         end
     end
 
