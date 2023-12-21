@@ -292,10 +292,6 @@ module hmem(
                 way_d = s_mux_in ? re[set] : way;
                 wre = 1;
 
-                hmem_fsm_next = 3'd5;
-            end
-            // READY
-            3'd5: begin
                 hmem_fsm_next = 3'd0;
             end
         endcase
@@ -337,10 +333,6 @@ module hmem(
                 end
                 // WRITE
                 3'd4: begin
-                    hmem_fsm <= hmem_fsm_next;
-                end
-                // READY
-                3'd5: begin
                     hmem_fsm <= hmem_fsm_next;
                 end
             endcase
@@ -392,6 +384,6 @@ module hmem(
     assign h_rd = hmem_fsm == 3'd3 && !h_dv_dd;
     assign h_wr = hmem_fsm == 3'd4;
 
-    assign stall = hmem_fsm != 3'd0 && hmem_fsm != 3'd5;
+    assign stall = hmem_fsm != 3'd0;
 
 endmodule
