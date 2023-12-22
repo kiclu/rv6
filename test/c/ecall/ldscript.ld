@@ -35,7 +35,7 @@ SECTIONS {
         *(.bss .bss.*)
     } > VMA
 
-    . = ALIGN(0x4000);
+    . = ALIGN(0x1000);
     _main_stack_region_start = .;
     . += 0x4000;
     _main_stack_region_end = .;
