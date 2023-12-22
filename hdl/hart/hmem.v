@@ -84,10 +84,10 @@ module hmem(
     reg                     hit_i;
     always @(*) begin : hmem_cache_hit_check_i
         integer i;
-        hit_i <= 0; way_qi <= 0;
+        hit_i = 0; way_qi = 0;
         for(i = 0; i < `hmem_ways; i = i + 1) begin
             if(tag[addr_set_i][i] == addr_tag_i && v[addr_set_i][i]) begin
-                way_qi <= i; hit_i <= 1;
+                way_qi = i; hit_i = 1;
             end
         end
     end
@@ -96,10 +96,10 @@ module hmem(
     reg                     hit_d;
     always @(*) begin : hmem_cache_hit_check_d
         integer i;
-        hit_d <= 0; way_qd <= 0;
+        hit_d = 0; way_qd = 0;
         for(i = 0; i < `hmem_ways; i = i + 1) begin
             if(tag[addr_set_d][i] == addr_tag_d && v[addr_set_d][i]) begin
-                way_qd <= i; hit_d <= 1;
+                way_qd = i; hit_d = 1;
             end
         end
     end
@@ -108,7 +108,7 @@ module hmem(
 
     // LRU tree
     localparam lru_size = `hmem_ways - 1;
-    reg [lru_size-1:0] lru_tree [0:`dmem_sets-1];
+    reg [lru_size-1:0] lru_tree [0:`hmem_sets-1];
 
     // replacement entry
     reg [`hmem_way_len-1:0] re [0:`hmem_sets-1];
@@ -201,6 +201,25 @@ module hmem(
         end
     end
 
+    /* WRITE ADDRESS BUFFERING */
+
+    reg wr_pend;
+    reg [ `hmem_tag_len-1:0] tag_bd;
+    reg [ `hmem_set_len-1:0] set_bd;
+    reg [ `hmem_way_len-1:0] way_bd;
+    reg [`hmem_offs_len-1:0] offs_bd;
+    reg [    `dmem_line-1:0] data_bd;
+
+    always @(posedge clk) begin
+        if(b_wr_d) begin
+            tag_bd  <= addr_tag_d;
+            set_bd  <= addr_set_d;
+            way_bd  <= hit_d ? way_qd : re[addr_set_d];
+            offs_bd <= addr_offs_d;
+            data_bd <= b_data_out_d;
+        end
+    end
+
     /* CACHE DATA WRITE */
 
     wire op_i = b_rd_i;
@@ -209,19 +228,20 @@ module hmem(
     wire rd   = b_rd_i || b_rd_d;
     wire wr   = b_wr_d;
 
-    wire [`hmem_set_len-1:0] set = op_d ? addr_set_d : addr_set_i;
-    wire [`hmem_way_len-1:0] way = op_d ? way_qd : way_qi;
+    wire [`hmem_set_len-1:0] set_f = op_d ? addr_set_d : addr_set_i;
+    wire [`hmem_way_len-1:0] way_f = op_d ? way_qd : way_qi;
 
     reg  [   `hmem_line-1:0] buf_in;
     reg                      s_mux_in;
 
-    reg  [`hmem_way_len-1:0] way_d;
+    reg  [`hmem_set_len-1:0] set_dd;
+    reg  [`hmem_way_len-1:0] way_dd;
     reg                      wre;
-    always @(posedge clk) if(wre) data[`hmem_sets * set + way_d] <= cache_line_in;
+    always @(posedge clk) if(wre) data[`hmem_sets * set_dd + way_dd] <= cache_line_in;
 
     always @(*) begin
         cache_line_in = s_mux_in ? buf_in : cache_line_out_d;
-        if(b_wr_d) cache_line_in[8*b_addr_d +: `dmem_line] = b_data_out_d;
+        if(wr_pend) cache_line_in[8*offs_bd +: `dmem_line] = data_bd;
     end
 
     /* CACHE DATA READ */
@@ -230,7 +250,7 @@ module hmem(
     always @(posedge clk) if(rde_i) cache_line_out_i <= data[`hmem_sets*addr_set_i + way_qi];
 
     reg rde_d;
-    always @(posedge clk) if(rde_d) cache_line_out_d <= data[`hmem_sets*addr_set_d + way_qd];
+    always @(posedge clk) if(rde_d) cache_line_out_d <= data[`hmem_sets*wr_pend ? set_bd : addr_set_d + wr_pend ? way_bd : way_qd];
 
     /* FSM */
 
@@ -249,7 +269,7 @@ module hmem(
     end
 
     always @(*) begin
-        way_d  = 0;
+        way_dd = 0;
 
         rde_i = 0;
         rde_d = 0;
@@ -274,22 +294,31 @@ module hmem(
             3'd2: begin
                 rde_d = 1;
 
-                if(rd && ld_cnt == 4'd0) hmem_fsm_next = 3'd0;
-                else if(ld_cnt == 4'd0)  hmem_fsm_next = 3'd4;
+                if(wr_pend && ld_cnt == 4'd0) hmem_fsm_next = 3'd4;
+                else if(b_rd_d && ld_cnt == 4'd0) hmem_fsm_next = 3'd0;
             end
             // FETCH
             3'd3: begin
-                if(op_i) way_d = re[addr_set_i];
-                if(op_d) way_d = re[addr_set_d];
+                if(op_i) begin
+                    set_dd = addr_set_i;
+                    way_dd = re[addr_set_i];
+                end
+                if(op_d) begin
+                    set_dd = wr_pend ? set_bd : addr_set_d;
+                    way_dd = wr_pend ? way_bd : re[addr_set_d];
+                end
                 wre = rd && h_dv_dd;
 
-                if(h_dv_dd)           hmem_fsm_next = 3'd4;
-                if(b_rd_i && h_dv_dd) hmem_fsm_next = 3'd0;
-                if(b_rd_d && h_dv_dd) hmem_fsm_next = 3'd0;
+                if(wr_pend && h_dv_dd) hmem_fsm_next = 3'd4;
+                else begin
+                    if(b_rd_i  && h_dv_dd) hmem_fsm_next = 3'd0;
+                    if(b_rd_d  && h_dv_dd) hmem_fsm_next = 3'd0;
+                end
             end
             // WRITE
             3'd4: begin
-                way_d = s_mux_in ? re[set] : way;
+                set_dd = set_bd;
+                way_dd = way_bd;
                 wre = 1;
 
                 hmem_fsm_next = 3'd0;
@@ -339,6 +368,14 @@ module hmem(
         end
     end
 
+    always @(posedge clk) begin
+        if(!rst_n) wr_pend <= 0;
+        else begin
+            if(b_wr_d) wr_pend <= 1;
+            else if(hmem_fsm == 3'd4) wr_pend <= 0;
+        end
+    end
+
     /* CACHE METADATA UPDATE */
 
     wire [`hmem_tag_len-1:0] inv_tag = inv_addr[63:64-`hmem_tag_len];
@@ -355,10 +392,10 @@ module hmem(
         end
         else begin
             // data cache miss, load into cache line on valid external data bus
-            if(!hit_d && h_dv && (b_rd_d || b_wr_d)) begin : hmem_cache_miss_d
+            if(!hit_d && h_dv && (b_rd_d || b_wr_d || wr_pend)) begin : hmem_cache_miss_d
                 // load data into cache
-                v  [addr_set_d][re[addr_set_d]] <= 1'b1;
-                tag[addr_set_d][re[addr_set_d]] <= addr_tag_d;
+                v  [wr_pend ? set_bd : addr_set_d][re[wr_pend ? set_bd : addr_set_d]] <= 1'b1;
+                tag[wr_pend ? set_bd : addr_set_d][re[wr_pend ? set_bd : addr_set_d]] <= wr_pend ? tag_bd : addr_tag_d;
             end
             // instruction cache miss, load into cache on valid external data bus
             else if(!hit_i && h_dv && b_rd_i) begin : hmem_cache_miss_i
@@ -371,11 +408,11 @@ module hmem(
 
     /* BUS CONTROL SIGNALS */
 
-    assign b_data_i    =  hmem_fsm == 3'd3 ? buf_in[8*addr_offs_i +: `imem_line] : cache_line_out_i[8*addr_offs_i +: `imem_line];
-    assign b_dv_i      = (hmem_fsm == 3'd3 && h_dv_dd && !fetch_d) || (hmem_fsm == 3'd1 && ld_cnt == 4'd0 && !fetch_d);
+    assign b_data_i    = hmem_fsm == 3'd3 ? buf_in[8*addr_offs_i +: `imem_line] : cache_line_out_i[8*addr_offs_i +: `imem_line];
+    assign b_dv_i      = ((hmem_fsm == 3'd3 && h_dv_dd && !fetch_d) || (hmem_fsm == 3'd1 && ld_cnt == 4'd0 && !fetch_d)) && b_rd_i;
 
-    assign b_data_in_d =  hmem_fsm == 3'd3 ? buf_in[8*addr_offs_d +: `dmem_line] : cache_line_out_d[8*addr_offs_d +: `dmem_line];
-    assign b_dv_d      = (hmem_fsm == 3'd3 && h_dv_dd &&  fetch_d) || (hmem_fsm == 3'd2 && ld_cnt == 4'd0 &&  fetch_d);
+    assign b_data_in_d = hmem_fsm == 3'd3 ? buf_in[8*addr_offs_d +: `dmem_line] : cache_line_out_d[8*addr_offs_d +: `dmem_line];
+    assign b_dv_d      = ((hmem_fsm == 3'd3 && h_dv_dd &&  fetch_d) || (hmem_fsm == 3'd2 && ld_cnt == 4'd0 &&  fetch_d)) && b_rd_d;
 
     assign h_addr = {fetch_d ? b_addr_d[63:`hmem_offs_len] : b_addr_i[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
 
@@ -384,6 +421,6 @@ module hmem(
     assign h_rd = hmem_fsm == 3'd3 && !h_dv_dd;
     assign h_wr = hmem_fsm == 3'd4;
 
-    assign stall = hmem_fsm != 3'd0;
+    assign stall = (!wr_pend && hmem_fsm != 3'd0) || (wr_pend && (op_d || op_i));
 
 endmodule

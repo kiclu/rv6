@@ -22,7 +22,7 @@
 
 `include "../config.v"
 
-`define dmem_read_valid_delay 1
+`define dmem_read_valid_delay 3'd2
 
 module dmem(
     input                [63:0] addr,
@@ -179,15 +179,16 @@ module dmem(
     end
 
     /* CACHE DATA WRITE */
+
     reg [   `dmem_line-1:0] buf_in;
-    reg                     buf_d;
+    reg                     s_mux_in;
 
     reg [`dmem_way_len-1:0] way_d;
     reg wre;
     always @(posedge clk) if(wre) data[`dmem_sets * addr_set + way_d] <= cache_line_in;
 
     always @(*) begin
-        cache_line_in = buf_d ? buf_in : cache_line_out;
+        cache_line_in = s_mux_in ? buf_in : cache_line_out;
         if(wre) begin
             case(len)
                 3'b000: cache_line_in[8*addr_offs +:  8] = data_in[ 7:0];
@@ -200,22 +201,22 @@ module dmem(
 
     /* CACHE DATA READ */
 
-    reg [`dmem_way_len-1:0] way_q;
     reg rde;
-    always @(posedge clk) if(rde) cache_line_out <= data[`dmem_sets * addr_set + way_q];
+    always @(posedge clk) if(rde) cache_line_out <= data[`dmem_sets * addr_set + way];
 
     /* FSM */
 
     reg [1:0] dmem_fsm;
     reg [1:0] dmem_fsm_next;
 
-    reg [1:0] ld_cnt;
+    reg [2:0] ld_cnt;
 
     always @(*) begin
+        way_d = 0;
+
         rde = 0;
         wre = 0;
-        way_d = 0;
-        way_q = 0;
+
         dmem_fsm_next = dmem_fsm;
         case(dmem_fsm)
             // IDLE
@@ -233,7 +234,6 @@ module dmem(
             end
             // LOAD
             2'd2: begin
-                way_q = way;
                 rde = 1;
 
                 if(rd && ld_cnt == 2'd0) dmem_fsm_next = 0;
@@ -241,8 +241,8 @@ module dmem(
             end
             // WRITE
             2'd3: begin
+                way_d = s_mux_in ? re[addr_set] : way;
                 wre = 1;
-                way_d = buf_d ? re[addr_set] : way;
 
                 dmem_fsm_next = 0;
             end
@@ -251,7 +251,7 @@ module dmem(
 
     always @(posedge clk) begin
         if(!rst_n) begin
-            buf_d <= 0;
+            s_mux_in <= 0;
             dmem_fsm <= 2'd0;
         end
         else begin
@@ -259,30 +259,32 @@ module dmem(
                 // IDLE
                 2'd0: begin
                     ld_cnt <= `dmem_read_valid_delay;
+
                     dmem_fsm <= dmem_fsm_next;
                 end
                 // FETCH
                 2'd1: begin
                     if(b_dv_d) buf_in <= b_data_in_d;
-                    buf_d <= 1;
+                    s_mux_in <= 1;
+
                     dmem_fsm <= dmem_fsm_next;
                 end
                 // LOAD
                 2'd2: begin
                     if(ld_cnt) ld_cnt <= ld_cnt - 1;
-                    buf_d <= 0;
+                    s_mux_in <= 0;
+
                     dmem_fsm <= dmem_fsm_next;
                 end
                 // WRITE
                 2'd3: begin
-
                     dmem_fsm <= dmem_fsm_next;
                 end
             endcase
         end
     end
 
-    /* CACHE DATA UPDATE */
+    /* CACHE METADATA UPDATE */
 
     wire [`dmem_tag_len-1:0] inv_tag = inv_addr[63:64-`dmem_tag_len];
     wire [`dmem_set_len-1:0] inv_set = inv_addr[`dmem_set_len+`dmem_offs_len-1:`dmem_offs_len];
@@ -318,10 +320,10 @@ module dmem(
     reg [63:0] aaddr_end;
     always @(*) begin
         case(len[1:0])
-            2'b00: aaddr_end <= addr + 64'd0;
-            2'b01: aaddr_end <= addr + 64'd1;
-            2'b10: aaddr_end <= addr + 64'd3;
-            2'b11: aaddr_end <= addr + 64'd7;
+            2'b00: aaddr_end = addr + 64'd0;
+            2'b01: aaddr_end = addr + 64'd1;
+            2'b10: aaddr_end = addr + 64'd3;
+            2'b11: aaddr_end = addr + 64'd7;
         endcase
     end
     assign ld_ma = rd && (aaddr_end[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
@@ -331,9 +333,9 @@ module dmem(
 
     assign b_addr_d = {addr[63:`dmem_offs_len], {`dmem_offs_len{1'b0}}};
 
-    assign b_rd_d = dmem_fsm == 2'd1;
-
     assign b_data_out_d = cache_line_in;
+
+    assign b_rd_d = dmem_fsm == 2'd1;
     assign b_wr_d = dmem_fsm == 2'd3;
 
     assign stall = dmem_fsm_next != 2'd0;
