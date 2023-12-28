@@ -19,26 +19,29 @@
 // default hex path
 `ifndef hex_path
 
-`define hex_path "../test/c/fib/fib.hex"            // test 0
+//`define hex_path "../test/c/fib/fib.hex"            // test 0
 //`define hex_path "../test/c/fib_c/fib_c.hex"        // test 1
 //`define hex_path "../test/c/mhartid/mhartid.hex"    // test 2
-//`define hex_path "../test/c/deadbeef/deadbeef.hex"  // test 3
+`define hex_path "../test/c/deadbeef/deadbeef.hex"  // test 3
 //`define hex_path "../test/c/shift/shift.hex"        // test 4
+
+//`define hex_path "../../../temp/dromajo/riscv-simple-tests/rv64ua-p-amoadd_d.hex"
 
 //`define hex_path "../test/c/ecall/ecall.hex"
 //`define hex_path "../test/c/ima/ima.hex"
 `endif
 
 `define tb_mem_size  32'h0001_0000
-`define tb_mem_entry 32'h8000_0000
+`define tb_mem_entry 64'h8000_0000
+
+`define DROMOJO_TRACE
+`define AMO_ENABLE
+`define REG_TRACE
 
 `include "../hdl/config.v"
 
-`define DEBUG_FETCH
-
 `timescale 1ns/1ps
 module tb_hart();
-
     wire           [63:0] h_addr;
 
     reg  [`hmem_line-1:0] h_data_in;
@@ -101,8 +104,8 @@ module tb_hart();
         h_rst_n <= 1;
     end
 
-    // memory bus
-    always @(posedge clk) begin
+    // data in
+    always @(h_rd) begin
         if(h_rd) begin
             #800
             for(integer i = 0; i < `hmem_line/8; ++i) begin
@@ -113,6 +116,14 @@ module tb_hart();
             h_data_in = `hmem_line'bZ;
             h_dv = 0;
         end
+        else begin
+            h_data_in = 'bZ;
+            h_dv = 0;
+        end
+    end
+
+    // data out
+    always @(posedge clk) begin
         if(h_wr) begin
             for(integer i = 0; i < `hmem_line/8; ++i) begin
                 mem[h_addr + i] = h_data_out[8*i +: 8];
@@ -120,211 +131,77 @@ module tb_hart();
         end
     end
 
+`ifdef AMO_ENABLE
     // amo handshake
     always @(*) begin
         if(h_amo_req) h_amo_ack <= #160 1;
         else h_amo_ack <= #0 0;
     end
+`endif
 
-`ifdef DEBUG_RETIRE
+`ifdef DROMOJO_TRACE
+    int fd;
+    initial fd = $fopen("trace", "w");
+
+    reg [63:0] bmw_pc;
+    always @(posedge clk) begin
+        if(!dut.stall_mem) begin
+            bmw_pc <= dut.bxm_pc;
+        end
+    end
+
+    reg init = 0;
+
     // print destination register and value on instruction retire
     always @(posedge clk) begin
-        if(!dut.stall_wb && dut.wr && dut.rd) begin
-            $display("RETIRE @%8t: %8s : rd=%4s, d=%h",
-                $time(),
-                decode_ir(dut.bmw_ir),
-                decode_r(dut.bmw_ir[11:7]),
-                dut.d
-            );
-        end
-    end
-`endif
-
-
-`ifdef DEBUG_FORWARD
-    reg [31:0] wb_fw_ir;
-    always @(posedge clk) if(!dut.stall_wb) wb_fw_ir <= dut.bmw_ir;
-
-    // print forwarding in pipeline
-    always @(posedge clk) begin
-        if(dut.a_fw || dut.b_fw) begin
-            $display("====================");
-            $display("FORWARD @%8t : %s %s, %s, %s", $time, decode_ir(dut.bdx_ir), decode_r(dut.bdx_ir[11:7]), decode_r(dut.bdx_ir[19:15]), decode_r(dut.bdx_ir[24:20]));
-            if(dut.a_fw) begin
-                case(dut.s_mx_a_fw)
-                    0: begin
-                        $display("a_fw_ex:  %s %s, %s, %s", decode_ir(dut.bxm_ir), decode_r(dut.bxm_ir[11:7]), decode_r(dut.bxm_ir[19:15]), decode_r(dut.bxm_ir[24:20]));
-                    end
-                    1: begin
-                        $display("a_fw_mem: %s %s, %s, %s", decode_ir(dut.bmw_ir), decode_r(dut.bmw_ir[11:7]), decode_r(dut.bmw_ir[19:15]), decode_r(dut.bmw_ir[24:20]));
-                    end
-                    2: begin
-                        $display("a_fw_wb:  %s %s, %s, %s", decode_ir(wb_fw_ir), decode_r(wb_fw_ir), decode_r(wb_fw_ir), decode_r(wb_fw_ir));
-                    end
-                endcase
+        if(bmw_pc == `tb_mem_entry) init = 1;
+        if(init) begin
+            if(!dut.stall_wb && dut.wr && dut.rd) begin
+                $fdisplay(
+                    fd,
+                    "0 %1d 0x%016h (0x%08h) x%2d 0x%016h",
+                    dut.u_csr.privilege_level,
+                    bmw_pc,
+                    dut.bmw_ir,
+                    dut.rd,
+                    dut.d
+                );
             end
-            if(dut.b_fw) begin
-                case(dut.s_mx_b_fw)
-                    0: begin
-                        $display("b_fw_ex:  %s %s, %s, %s", decode_ir(dut.bxm_ir), decode_r(dut.bxm_ir[11:7]), decode_r(dut.bxm_ir[19:15]), decode_r(dut.bxm_ir[24:20]));
-                    end
-                    1: begin
-                        $display("b_fw_mem: %s %s, %s, %s", decode_ir(dut.bmw_ir), decode_r(dut.bmw_ir[11:7]), decode_r(dut.bmw_ir[19:15]), decode_r(dut.bmw_ir[24:20]));
-                    end
-                    2: begin
-                        $display("b_fw_wb:  %s %s, %s, %s", decode_ir(wb_fw_ir), decode_r(wb_fw_ir), decode_r(wb_fw_ir), decode_r(wb_fw_ir));
-                    end
-                endcase
+            else if(!dut.stall_wb) begin
+                $fdisplay(
+                    fd,
+                    "0 %1d 0x%016h (0x%08h)",
+                    dut.u_csr.privilege_level,
+                    bmw_pc,
+                    dut.bmw_ir,
+                );
             end
-            $display("====================");
         end
     end
 `endif
 
-`ifdef DEBUG_FETCH
+`ifdef MEM_TRACE
+    reg [63:0] addr;
+    reg [2:0] cnt;
+
     always @(posedge clk) begin
-        if(!dut.stall_wb && dut.wr && dut.rd) begin
-            $display(
-                "IR@IF @%8t: %8s : PC=%8h, IR=%8h",
-                $time(),
-                decode_ir(dut.ir),
-                dut.pc,
-                dut.ir
-            );
+        if(h_wr) begin
+            cnt <= 7'd7;
+            addr <= h_addr;
         end
+        if(cnt == 3'd1) begin
+            $display("WRITE: addr=%h", addr);
+            for(integer i = `hmem_line/8 - 1; i >= 0; --i) begin
+                $display("MEM[%h] = %h", addr+i, mem[addr+i]);
+            end
+        end
+        if(cnt) cnt <= cnt - 1;
     end
 `endif
-
-    /* PC INFO */
-
-    wire stall_pc = dut.u_pc.stall;
-    always @(posedge clk) begin
-        if(dut.u_pc.trap_taken) $display("PC    @%8t: TRAP, nPC=%h", $time(), dut.u_pc.trap_addr);
-        else if(dut.u_pc.pr_miss) $display("PC    @%8t: BRANCH PREDICT MISS, nPC=%h", $time(), dut.u_pc.br_addr);
-        else if(dut.u_pc.jalr_taken) $display("PC    @%8t: JALR TAKEN, nPC=%h", $time(), dut.u_pc.jalr_addr);
-        else if(dut.u_pc.jal_taken && !stall_pc) $display("PC    @%8t: JAL TAKEN, nPC=%h", $time(), dut.u_pc.jal_addr);
-        else if(dut.u_pc.pr_taken && !stall_pc) $display("PC    @%8t: BRANCH PREDICT, nPC=%h", $time(), dut.u_pc.pr_addr);
-        //else if(!stall) $display("");
-    end
-
-
-    /* CSR INFO */
-
-    //always @(posedge dut.u_csr.csr_addr_invalid) begin
-    //    $display("CSR   @%8t: csr_addr_invalid: %s(%h)!", $time(), decode_csr(), dut.u_csr.csr_addr);
-    //end
-
-    //always @(posedge dut.u_csr.csr_wr_invalid) begin
-    //    $display("CSR   @%8t: csr_wr_invalid: %s", $time(), decode_csr());
-    //end
-
-    //always @(posedge dut.u_csr.csr_pr_invalid) begin
-    //    $display("CSR   @%8t: csr_pr_invalid: %s!", $time(), decode_csr());
-    //end
-
-    //always @(dut.u_csr.csr_reg) begin
-    //    $display("CSR   @%8t: t%0s=%0h", $time(), decode_csr(), dut.u_csr.ncsr);
-    //end
-
 
     /* SIMULATION CONTROL */
 
-    task end_sim();
-        $display("hex_p=%s", `hex_path);
-        $display("end_time=%0t", $time());
-        for(integer i = 1; i < 32; ++i) begin
-            $display("%0s=0x%0h", decode_r(i), dut.u_regfile.register[i]);
-        end
-        $stop();
-    endtask
-
-    initial #200000 end_sim();
-    always @(*) if(dut.bmw_ir === 32'h0000006f) end_sim();
-
-
-    /* FUNCTIONS */
-
-    // decode instruction register to op string
-    function automatic string decode_ir(logic [31:0] ir);
-        priority casez(ir[6:0])
-            7'b0110111: return "lui";
-            7'b0010111: return "auipc";
-            7'b1101111: return "jal";
-            7'b1100111: return "jalr";
-            7'b1100011: begin
-                case(ir[14:12])
-                    3'b000: return "beq";
-                    3'b001: return "bne";
-                    3'b100: return "blt";
-                    3'b101: return "bge";
-                    3'b110: return "bltu";
-                    3'b111: return "bgeu";
-                endcase
-            end
-            7'b0000011: begin
-                case(ir[14:12])
-                    3'b000: return "lb";
-                    3'b001: return "lh";
-                    3'b010: return "lw";
-                    3'b011: return "ld";
-                    3'b100: return "lbu";
-                    3'b101: return "lhu";
-                    3'b110: return "lwu";
-                endcase
-            end
-            7'b0100011: begin
-                case(ir[14:12])
-                    3'b000: return "sb";
-                    3'b001: return "sh";
-                    3'b010: return "sw";
-                    3'b011: return "sd";
-                endcase
-            end
-            7'b0010011: begin
-                case(ir[14:12])
-                    3'b000: return "addi";
-                    3'b001: return "slli";
-                    3'b010: return "slti";
-                    3'b011: return "sltiu";
-                    3'b100: return "xori";
-                    3'b101: return ir[30] ? "srai" : "srli";
-                    3'b110: return "ori";
-                    3'b111: return "andi";
-                endcase
-            end
-            7'b0110011: begin
-                case(ir[14:12])
-                    3'b000: return ir[30] ? "sub" : "add";
-                    3'b001: return "sll";
-                    3'b010: return "slt";
-                    3'b011: return "sltu";
-                    3'b100: return "xor";
-                    3'b101: return ir[30] ? "sra" : "srl";
-                    3'b110: return "or";
-                    3'b111: return "and";
-                endcase
-            end
-            // addiw/slliw/srliw/sraiw
-            7'b0011011: begin
-                case(ir[14:12])
-                    3'b000: return "addiw";
-                    3'b001: return "slliw";
-                    3'b101: return ir[30] ? "sraiw" : "srliw";
-                endcase
-            end
-            // addw/subw...
-            7'b0111011: begin
-                case(ir[14:12])
-                    3'b000: return ir[30] ? "subw" : "addw";
-                    3'b001: return "sllw";
-                    3'b101: return ir[30] ? "sraw" : "srlw";
-                endcase
-            end
-            default: return "invalid opcode";
-        endcase
-    endfunction
-
-    // decode register to string
+`ifdef REG_TRACE
     function automatic string decode_r(logic [4:0] r);
         case(r)
             5'd0:  return "zero";
@@ -362,45 +239,20 @@ module tb_hart();
             default: return "xx";
         endcase
     endfunction
+`endif
 
-//    function automatic string decode_csr();
-//        case(dut.u_csr.csr_addr)
-//            `sstatus:       return "sstatus";
-//            `sie:           return "sie";
-//            `stvec:         return "stvec";
-//            `scounteren:    return "scounteren";
-//            `sscratch:      return "sscratch";
-//            `sepc:          return "sepc";
-//            `scause:        return "scause";
-//            `stval:         return "stval";
-//            `sip:           return "sip";
-//            `satp:          return "satp";
-//            `mvendorid:     return "mvendorid";
-//            `marchid:       return "marchid";
-//            `mimpid:        return "mimpid";
-//            `mhartid:       return "mhartid";
-//            `mconfigptr:    return "mconfigptr";
-//            `mstatus:       return "mstatus";
-//            `misa:          return "misa";
-//            `medeleg:       return "medeleg";
-//            `mideleg:       return "mideleg";
-//            `mie:           return "mie";
-//            `mtvec:         return "mtvec";
-//            `mcounteren:    return "mcounteren";
-//            `mscratch:      return "mscratch";
-//            `mepc:          return "mepc";
-//            `mcause:        return "mcause";
-//            `mtval:         return "mtval";
-//            `mip:           return "mip";
-//            `mtinst:        return "mtinst";
-//            `mtval:         return "mtval2";
-//            `menvcfg:       return "menvcfg";
-//            `mseccfg:       return "mseccfg";
-//            `fflags:        return "fflags";
-//            `frm:           return "frm";
-//            `fcsr:          return "fcsr";
-//            default: return "invalid CSR";
-//        endcase
-//    endfunction
+    task end_sim();
+`ifdef REG_TRACE
+        $display("hex_p=%s", `hex_path);
+        $display("end_time=%0t", $time());
+        for(integer i = 1; i < 32; ++i) begin
+            $display("%0s=0x%0h", decode_r(i), dut.u_regfile.register[i]);
+        end
+`endif
+        $stop();
+    endtask
+
+    initial #200000 end_sim();
+    always @(*) if(dut.bmw_ir === 32'h0000006f) end_sim();
 
 endmodule
