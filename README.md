@@ -4,27 +4,27 @@
 ## Table of Contents
 - [Features](https://github.com/kiclu/rv6#features)
 - [Compatibility](https://github.com/kiclu/rv6#compatibility)
-- [Hart Architecture](https://github.com/kiclu/rv6#hart-architecture)
+- [Core Architecture](https://github.com/kiclu/rv6#core-architecture)
 - [Project Structure](https://github.com/kiclu/rv6#project-structure)
 - [Parameters](https://github.com/kiclu/rv6#parameters)
 - [License](https://github.com/kiclu/rv6#license)
 
 ## Features
 - RV64IMAC_Zicsr ISA extenstions
-- Optimized 6-stage pipeline
+- Optimized 6-stage, single-issue, in-order pipeline
 - Machine, Supervisor & User privilege modes
 - Three level cache hierarchy
 - Branch prediction
 - Instruction pre-decoding for compressed & atomic instruction support
-- Parametrized caches & branch prediction unit
+- Parametrized branch prediction, cache sizes and architectures
 
 ## Compatibility
 RV6 core is compatible with following RISC-V Foundation specifications:
 - [RISC-V Instruction Set Manual - Volume I: Unprivileged ISA](https://github.com/kiclu/rv6/blob/master/doc/riscv-unprivileged-isa.pdf), version 20191213
 - [RISC-V Instruction Set Manual - Volume II: Privileged Architecture](https://github.com/kiclu/rv6/blob/master/doc/riscv-privileged-isa.pdf), version 20211203
 
-## Hart Architecture
-Pipeline is split into 6 stages:
+## Core Architecture
+Pipeline is split into following 6 stages:
 - Instruction Fetch (IF)
 - Instruction Pre-Decode (PD)
 - Instruction Decode (ID)
@@ -70,6 +70,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ alu.v            # Integer ALU
 │   │   ├─ bpu.v            # Branch Prediction Unit
 │   │   ├─ br_alu.v         # Branch ALU
+│   │   ├─ csr.v            # Control & Status Registers
 │   │   ├─ cu.v             # Control Unit
 │   │   ├─ dmem.v           # Data Memory (L1d cache)
 │   │   ├─ hart.v           # Core top-level module
@@ -84,10 +85,7 @@ During the Write Back stage, the result from previous stages is written back int
 ├─ synthesis/       # Vivado & Quartus II project files
 ├─ test/            # Testbench source files
 │   ├─ auto/            # Automated tests
-│   ├─ c/               # C source files for verification purposes
-│   │  ├─ default/          # Template verification program
-│   │  ├─ fib/              # Fibonacci sequence calculator (RV64I)
-│   │  └─ fib_c/            # Fibonacci sequence calculator (RV64IC)
+│   ├─ c/               # C source files for automated tests
 │   └─ tb_hart.sv       # Hart testbench module
 ├─ LICENSE
 ├─ Makefile
@@ -95,23 +93,35 @@ During the Write Back stage, the result from previous stages is written back int
 ```
 
 ## Parameters
-| Parameter                                                             	| Type    	| Description                                      	|
-|-----------------------------------------------------------------------	|---------	|--------------------------------------------------	|
-| `imem_struct_set_assoc` `imem_struct_direct` `imem_struct_full_assoc` 	|         	| Instruction memory (L1i cache) structure         	|
-| `imem_line`                                                           	| integer 	| Instruction memory (L1i cache) line size in bits 	|
-| `imem_sets`                                                           	| integer 	| Instruction memory (L1i cache) set count         	|
-| `imem_ways`                                                           	| integer 	| Instruction memory (L1i cache) ways per set      	|
-| `dmem_struct_set_assoc` `dmem_struct_full_assoc` `dmem_struct_direct` 	|         	| Data memory (L1d cache) structure                	|
-| `dmem_line`                                                           	| integer 	| Data memory (L1d cache) line size in bits        	|
-| `dmem_sets`                                                           	| integer 	| Data memory (L1d cache) set count                	|
-| `dmem_ways`                                                           	| integer 	| Data memory (L1d cache) ways per set             	|
-| `hmem_struct_set_assoc` `hmem_struct_full_assoc` `hmem_struct_direct` 	|         	| Hart memory (L2 cache) structure                 	|
-| `hmem_line`                                                           	| integer 	| Hart memory (L2 cache) line size in bits         	|
-| `hmem_sets`                                                           	| integer 	| Hart memory (L2 cache) set count                 	|
-| `hmem_ways`                                                           	| integer 	| Hart memory (L2 cache) ways per set              	|
-| `bpu_static_taken`                                                        |           | Branch predict static taken                       |
-| `bpu_static_ntaken`                                                       |           | Branch predict static not taken                   |
-| `bpu_static_btaken`                                                       |           | Branch predict static backward taken              |
+| Parameter                                                             	  | Type    	    | Description                                      	|
+|---------------------------------------------------------------------------|---------------|---------------------------------------------------|
+|  **Instruction memory (L1i cache)**                                       |               |                                                   |
+| `imem_struct_set_assoc`  	                                                | ifdef flag    | L1i cache set associative architecture          	|
+| `imem_struct_direct`                                                      | ifdef flag    | L1i cache direct mapped architecture              |
+| `imem_struct_full_assoc`                                                  | ifdef flag    | L1i cache fully associative architecture          |
+| `imem_line`                                                           	  | integer 	    | L1i cache line size in bits 	                    |
+| `imem_sets`                                                           	  | integer 	    | L1i cache set count         	                    |
+| `imem_ways`                                                           	  | integer 	    | L1i cache ways per set      	                    |
+| **Data memory (L1d cache)**                                               |               |                                                   |
+| `dmem_struct_set_assoc`  	                                                | ifdef flag    | L1d cache set associative architecture          	|
+| `dmem_struct_direct`                                                      | ifdef flag    | L1d cache direct mapped architecture              |
+| `dmem_struct_full_assoc`                                                  | ifdef flag    | L1d cache fully associative architecture          |
+| `dmem_line`                                                           	  | integer 	    | L1d cache line size in bits 	                    |
+| `dmem_sets`                                                           	  | integer 	    | L1d cache set count         	                    |
+| `dmem_ways`                                                           	  | integer 	    | L1d cache ways per set      	                    |
+| **Hart memory (L2 cache)**                                                |               |                                                   |
+| `hmem_struct_set_assoc`  	                                                | ifdef flag    | L2 cache set associative architecture          	  |
+| `hmem_struct_direct`                                                      | ifdef flag    | L2 cache direct mapped architecture               |
+| `hmem_struct_full_assoc`                                                  | ifdef flag    | L2 cache fully associative architecture           |
+| `hmem_line`                                                           	  | integer 	    | L2 cache line size in bits 	                      |
+| `hmem_sets`                                                           	  | integer 	    | L2 cache set count         	                      |
+| `hmem_ways`                                                           	  | integer 	    | L2 cache ways per set      	                      |
+| **Branch Prediction**                                                     |               |                                                   |
+| `bpu_static_taken`                                                        | ifdef flag    | Branch predict static taken                       |
+| `bpu_static_ntaken`                                                       | ifdef flag    | Branch predict static not taken                   |
+| `bpu_static_btaken`                                                       | ifdef flag    | Branch predict static backward taken              |
+
+*Parameters labeled with `ifdef flag` type are conditional compilation flags and are included in the project only if corresponding flag is defined in `config.v` file.
 
 ## License
 The hardware is licensed under the [CERN Open Hardware Licence Version 2 - Strongly Reciprocal](https://ohwr.org/cern_ohl_s_v2.txt).
