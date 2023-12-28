@@ -39,24 +39,26 @@ module dmem(
     output                      st_ma,
 
     // external bus signals
-    output               [63:0] b_addr_d,
+    output reg           [63:0] b_addr_d,
 
     input      [`dmem_line-1:0] b_data_in_d,
-    output                      b_rd_d,
+    output reg                  b_rd_d,
     input                       b_dv_d,
 
-    output     [`dmem_line-1:0] b_data_out_d,
-    output                      b_wr_d,
+    output reg [`dmem_line-1:0] b_data_out_d,
+    output reg                  b_wr_d,
 
     // cache invalidaton
     input                [63:0] inv_addr,
     input                       inv,
 
     // control signals
-    output                      stall,
+    output                      stall_dmem,
     input                       rst_n,
     input                       clk
 );
+
+    wire dmem_op = rd || wr;
 
     wire [ `dmem_tag_len-1:0] addr_tag  = addr[63:64-`dmem_tag_len];
     wire [ `dmem_set_len-1:0] addr_set  = addr[`dmem_set_len+`dmem_offs_len-1:`dmem_offs_len];
@@ -69,140 +71,70 @@ module dmem(
     reg  [ `dmem_tag_len-1:0] tag  [0:`dmem_sets-1][0:`dmem_ways-1];
     reg                       v    [0:`dmem_sets-1][0:`dmem_ways-1];
 
-    /* OUTPUT MUX */
+    // replacement entry
+    reg [`dmem_way_len-1:0] re [0:`dmem_sets-1];
+
+    reg hit_q;
 
     reg [`dmem_line-1:0] cache_line_out;
     reg [`dmem_line-1:0] cache_line_in;
 
-    reg [`dmem_way_len-1:0] way;
-    wire [63:0] data_mux [0:6];
-    assign data_mux[0] =   $signed(cache_line_out[8*addr_offs +:  8]);  // signed byte
-    assign data_mux[1] =   $signed(cache_line_out[8*addr_offs +: 16]);  // signed half word
-    assign data_mux[2] =   $signed(cache_line_out[8*addr_offs +: 32]);  // signed word
-    assign data_mux[3] =           cache_line_out[8*addr_offs +: 64];   // double word
-    assign data_mux[4] = $unsigned(cache_line_out[8*addr_offs +:  8]);  // unsigned byte
-    assign data_mux[5] = $unsigned(cache_line_out[8*addr_offs +: 16]);  // unsigned half word
-    assign data_mux[6] = $unsigned(cache_line_out[8*addr_offs +: 32]);  // unsigned word
-    assign data_out = data_mux[len];
+    /* READ BUFFER */
 
-    /* HIT DETECTION */
+    reg [`dmem_tag_len-1:0] r_tag;
+    reg [`dmem_set_len-1:0] r_set;
+    reg [   `dmem_line-1:0] r_data;
 
-    reg hit;
-    always @(*) begin : dmem_cache_hit_check
-        integer i;
-        hit = 0; way = 0;
-        for(i = 0; i < `dmem_ways; i = i + 1) begin
-            if(tag[addr_set][i] == addr_tag && v[addr_set][i]) begin
-                way = i; hit = 1;
-            end
-        end
-    end
+    wire r_hit_q = r_tag == addr_tag && r_set == addr_set;
 
-    /* REPLACEMENT POLICY */
+    /* CACHE DATA READ */
 
-    // LRU tree
-    localparam lru_size = `dmem_ways - 1;
-    reg [lru_size-1:0] lru_tree [0:`dmem_sets-1];
+    reg [`dmem_set_len-1:0] set_q;
+    reg [`dmem_way_len-1:0] way_q;
 
-    // replacement entry
-    reg [`dmem_way_len-1:0] re [0:`dmem_sets-1];
+    reg rde;
+    always @(posedge clk) if(rde) cache_line_out <= data[`dmem_ways*set_q + way_q];
 
-    // dmem operation rising edge
-    wire dmem_op = rd || wr;
-    reg  dmem_op_d;
+    /* WRITE BUFFER */
 
-    wire lru_update = !dmem_op_d &&  dmem_op;
-    reg  lru_update_d;
+    reg                [1:0] w_len;
+    reg [ `dmem_tag_len-1:0] w_tag;
+    reg [ `dmem_set_len-1:0] w_set;
+    reg [ `dmem_way_len-1:0] w_way;
+    reg [`dmem_offs_len-1:0] w_offs;
+    reg               [63:0] w_data;
 
-    wire re_update  =  dmem_op_d && !dmem_op;
+    reg wr_pend;
 
     always @(posedge clk) begin
-        if(!rst_n) begin
-            dmem_op_d <= 0;
-            lru_update_d <= 0;
-        end
-        else begin
-            dmem_op_d <= dmem_op;
-            lru_update_d <= lru_update;
-        end
-    end
-
-    // find replacement entry and update LRU tree
-    always @(posedge clk) begin
-        if(!rst_n) begin : dmem_clr_lru
-            integer i, j, l;
-            for(i = 0; i < `dmem_sets; i = i + 1) begin
-                // initialize LRU tree
-                lru_tree[i] <= {lru_size{1'b1}};
-                // initialize replacement entry
-                re[i] <= {`dmem_way_len{1'b0}};
-            end
-        end
-        else begin
-            // update LRU tree
-            if(lru_update_d) begin : dmem_lru_update
-                integer i, l, i_parent;
-                // write update
-                if(wr) begin
-                    i = 0;
-                    for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                        if(lru_tree[addr_set][i]) begin
-                            lru_tree[addr_set][i] = 1'b0;
-                            i = (i<<1) + 1;
-                        end
-                        else begin
-                            lru_tree[addr_set][i] = 1'b1;
-                            i = (i<<1) + 2;
-                        end
-                    end
-                end
-                // read update
-                if(rd) begin
-                    i = (hit ? way : re[addr_set]) + lru_size;
-                    for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                        i_parent = (i[0] ? i-1 : i-2) >> 1;
-                        lru_tree[addr_set][i_parent] = !i[0];
-                        i = i_parent;
-                    end
-                end
-            end
-            // update replacement entry
-            if(re_update) begin : dmem_re_update
-                integer i, l;
-                i = 0;
-                for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                    i = lru_tree[addr_set][i] ? (i<<1) + 1 : (i<<1) + 2;
-                end
-                re[addr_set] = i - `dmem_ways + 1;
-            end
+        if(wr) begin
+            w_len  <= len[1:0];
+            w_tag  <= addr_tag;
+            w_set  <= addr_set;
+            w_way  <= hit_q ? way_q : re[addr_set];
+            w_offs <= addr_offs;
+            w_data <= data_in;
         end
     end
 
     /* CACHE DATA WRITE */
 
-    reg [   `dmem_line-1:0] buf_in;
-    reg                     s_mux_in;
-
+    reg [`dmem_set_len-1:0] set_d;
     reg [`dmem_way_len-1:0] way_d;
+
     reg wre;
-    always @(posedge clk) if(wre) data[`dmem_sets * addr_set + way_d] <= cache_line_in;
+    always @(posedge clk) if(wre) data[`dmem_ways*set_d + way_d] <= cache_line_in;
 
+    reg [`dmem_line-1:0] cache_line_in_w;
     always @(*) begin
-        cache_line_in = s_mux_in ? buf_in : cache_line_out;
-        if(wre) begin
-            case(len)
-                3'b000: cache_line_in[8*addr_offs +:  8] = data_in[ 7:0];
-                3'b001: cache_line_in[8*addr_offs +: 16] = data_in[15:0];
-                3'b010: cache_line_in[8*addr_offs +: 32] = data_in[31:0];
-                3'b011: cache_line_in[8*addr_offs +: 64] = data_in[63:0];
-            endcase
-        end
+        cache_line_in_w = r_data;
+        case(w_len[1:0])
+            2'b00: cache_line_in_w[8*w_offs +:  8] = w_data[ 7:0];
+            2'b01: cache_line_in_w[8*w_offs +: 16] = w_data[15:0];
+            2'b10: cache_line_in_w[8*w_offs +: 32] = w_data[31:0];
+            2'b11: cache_line_in_w[8*w_offs +: 64] = w_data[63:0];
+        endcase
     end
-
-    /* CACHE DATA READ */
-
-    reg rde;
-    always @(posedge clk) if(rde) cache_line_out <= data[`dmem_sets * addr_set + way];
 
     /* FSM */
 
@@ -212,77 +144,124 @@ module dmem(
     reg [2:0] ld_cnt;
 
     always @(*) begin
-        way_d = 0;
-
+        cache_line_in = {`dmem_line{1'bZ}};
         rde = 0;
         wre = 0;
+        set_d = w_set;
+        way_d = re[w_set];
+        set_q = addr_set;
+
+        b_data_out_d = {`dmem_line{1'bZ}};
+        b_rd_d = 0;
+        b_wr_d = 0;
 
         dmem_fsm_next = dmem_fsm;
         case(dmem_fsm)
-            // IDLE
+            // READY
             2'd0: begin
-                if(dmem_op && !hit) dmem_fsm_next = 1;
-                if(dmem_op &&  hit) dmem_fsm_next = 2;
+                if(dmem_op && !hit_q) dmem_fsm_next = 2'd1;
+                if(dmem_op &&  hit_q) dmem_fsm_next = 2'd2;
+                if(wr && r_hit_q) dmem_fsm_next = 2'd3;
+                if(rd && r_hit_q) dmem_fsm_next = 2'd0;
             end
             // FETCH
             2'd1: begin
-                way_d = re[addr_set];
-                wre = rd && b_dv_d;
+                b_rd_d = 1;
 
-                if(rd && b_dv_d) dmem_fsm_next = 0;
-                if(wr && b_dv_d) dmem_fsm_next = 3;
+                cache_line_in = b_data_in_d;
+                set_d = wr_pend ? w_set : addr_set;
+                way_d = re[set_d];
+                wre   = b_dv_d && !wr_pend;
+
+                if(b_dv_d && rd)      dmem_fsm_next = 2'd0;
+                if(b_dv_d && wr_pend) dmem_fsm_next = 2'd3;
             end
             // LOAD
             2'd2: begin
-                rde = 1;
+                rde = ld_cnt == `dmem_read_valid_delay;
 
-                if(rd && ld_cnt == 2'd0) dmem_fsm_next = 0;
-                if(wr && ld_cnt == 2'd0) dmem_fsm_next = 3;
+                if(ld_cnt == 2'd0 && rd)      dmem_fsm_next = 2'd0;
+                if(ld_cnt == 2'd0 && wr_pend) dmem_fsm_next = 2'd3;
             end
             // WRITE
             2'd3: begin
-                way_d = s_mux_in ? re[addr_set] : way;
+                cache_line_in = cache_line_in_w;
                 wre = 1;
+                set_d = w_set;
+                way_d = w_way;
 
-                dmem_fsm_next = 0;
+                b_data_out_d = cache_line_in_w;
+                b_wr_d = 1;
+
+                dmem_fsm_next = 2'd0;
             end
         endcase
     end
 
     always @(posedge clk) begin
         if(!rst_n) begin
-            s_mux_in <= 0;
+            wr_pend  <= 0;
+            ld_cnt   <= `dmem_read_valid_delay;
             dmem_fsm <= 2'd0;
+            r_tag <= 0;
+            r_set <= 0;
         end
         else begin
             case(dmem_fsm)
-                // IDLE
+                // READY
                 2'd0: begin
-                    ld_cnt <= `dmem_read_valid_delay;
+                    if(dmem_op) b_addr_d <= {addr[63:`dmem_offs_len], {`dmem_offs_len{1'b0}}};
+                    wr_pend <= wr;
 
                     dmem_fsm <= dmem_fsm_next;
                 end
                 // FETCH
                 2'd1: begin
-                    if(b_dv_d) buf_in <= b_data_in_d;
-                    s_mux_in <= 1;
+                    if(b_dv_d) begin
+                        r_tag  <= wr_pend ? w_tag : addr_tag;
+                        r_set  <= wr_pend ? w_set : addr_set;
+                        r_data <= b_data_in_d;
+                    end
 
                     dmem_fsm <= dmem_fsm_next;
                 end
                 // LOAD
                 2'd2: begin
+                    if(ld_cnt == 2'd0) begin
+                        r_tag  <= wr_pend ? w_tag : addr_tag;
+                        r_set  <= wr_pend ? w_set : addr_set;
+                        r_data <= cache_line_out;
+                        ld_cnt <= `dmem_read_valid_delay;
+                    end
+
                     if(ld_cnt) ld_cnt <= ld_cnt - 1;
-                    s_mux_in <= 0;
 
                     dmem_fsm <= dmem_fsm_next;
                 end
                 // WRITE
                 2'd3: begin
+                    r_data  <= cache_line_in;
+                    wr_pend <= 0;
+
                     dmem_fsm <= dmem_fsm_next;
                 end
             endcase
         end
     end
+
+    assign stall_dmem = (rd && !r_hit_q) || (wr_pend && dmem_op);
+
+    /* OUTPUT MUX */
+
+    wire [63:0] data_mux [0:6];
+    assign data_mux[0] =   $signed(r_data[8*addr_offs +:  8]);  // signed byte
+    assign data_mux[1] =   $signed(r_data[8*addr_offs +: 16]);  // signed half word
+    assign data_mux[2] =   $signed(r_data[8*addr_offs +: 32]);  // signed word
+    assign data_mux[3] =           r_data[8*addr_offs +: 64];   // double word
+    assign data_mux[4] = $unsigned(r_data[8*addr_offs +:  8]);  // unsigned byte
+    assign data_mux[5] = $unsigned(r_data[8*addr_offs +: 16]);  // unsigned half word
+    assign data_mux[6] = $unsigned(r_data[8*addr_offs +: 32]);  // unsigned word
+    assign data_out = data_mux[len];
 
     /* CACHE METADATA UPDATE */
 
@@ -299,10 +278,9 @@ module dmem(
             end
         end
         else begin
-            // cache miss, load data into cache line on valid data bus
-            if(!hit && b_dv_d) begin
-                v  [addr_set][re[addr_set]] <= 1'b1;
-                tag[addr_set][re[addr_set]] <= addr_tag;
+            if(wre) begin
+                v  [set_d][way_d] <= 1'b1;
+                tag[set_d][way_d] <= w_tag;
             end
 
             // cache invalidation
@@ -315,29 +293,72 @@ module dmem(
         end
     end
 
+    /* HIT DETECTION */
+
+    always @(*) begin : dmem_cache_hit_q_check
+        integer i;
+        hit_q = 0; way_q = 0;
+        for(i = 0; i < `dmem_ways; i = i + 1) begin
+            if(tag[addr_set][i] == addr_tag && v[addr_set][i]) begin
+                hit_q = 1; way_q = i;
+            end
+        end
+    end
+
     /* MISALIGNED ACCESS DETECTION */
 
-    reg [63:0] aaddr_end;
+    reg [63:0] addr_2;
     always @(*) begin
         case(len[1:0])
-            2'b00: aaddr_end = addr + 64'd0;
-            2'b01: aaddr_end = addr + 64'd1;
-            2'b10: aaddr_end = addr + 64'd3;
-            2'b11: aaddr_end = addr + 64'd7;
+            2'b00: addr_2 = addr + 64'd0;
+            2'b01: addr_2 = addr + 64'd1;
+            2'b10: addr_2 = addr + 64'd3;
+            2'b11: addr_2 = addr + 64'd7;
         endcase
     end
-    assign ld_ma = rd && (aaddr_end[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
-    assign st_ma = wr && (aaddr_end[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
+    assign ld_ma = rd && (addr_2[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
+    assign st_ma = wr && (addr_2[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
 
-    /* BUS CONTROL SIGNALS */
+    /* REPLACEMENT POLICY */
 
-    assign b_addr_d = {addr[63:`dmem_offs_len], {`dmem_offs_len{1'b0}}};
+    // LRU tree
+    localparam lru_size = `dmem_ways - 1;
+    reg [lru_size-1:0] lru_tree [0:`dmem_sets-1];
 
-    assign b_data_out_d = cache_line_in;
+    wire lru_update = dmem_fsm == 2'd0 && dmem_fsm_next != 2'd0;
+    wire re_update  = dmem_fsm != 2'd0 && dmem_fsm_next == 2'd0;
 
-    assign b_rd_d = dmem_fsm == 2'd1;
-    assign b_wr_d = dmem_fsm == 2'd3;
+    // update LRU tree
+    always @(posedge clk) begin
+        if(!rst_n) begin : dmem_clr_lru
+            integer i;
+            for(i = 0; i < `dmem_sets; i = i + 1) lru_tree[i] = {lru_size{1'b1}};
+        end
+        else if(lru_update) begin : dmem_lru_update
+            integer i, l, i_parent;
+            i = (hit_q ? way_q : re[addr_set]) + lru_size;
+            for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
+                i_parent = (i[0] ? i-1 : i-2) >> 1;
+                lru_tree[addr_set][i_parent] = !i[0];
+                i = i_parent;
+            end
+        end
+    end
 
-    assign stall = dmem_fsm_next != 2'd0;
+    // update replacement entry
+    always @(posedge clk) begin
+        if(!rst_n) begin : dmem_clr_re
+            integer i;
+            for(i = 0; i < `dmem_sets; i = i + 1) re[i] = 0;
+        end
+        else if(re_update) begin : dmem_re_update
+            integer i, l;
+            i = 0;
+            for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
+                i = lru_tree[addr_set][i] ? (i<<1) + 1 : (i<<1) + 2;
+            end
+            re[addr_set] = i - `dmem_ways + 1;
+        end
+    end
 
 endmodule

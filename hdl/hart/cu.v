@@ -47,7 +47,7 @@ module cu(
     output            stall_wb,
 
     // input stall causes
-    input             stall_ima,
+    input             stall_imem,
     input             stall_dmem,
     input             stall_hmem,
 
@@ -71,7 +71,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima || stall_dmem || stall_hmem;
+    wire stall_all = !rst_n || stall_imem || stall_dmem || stall_hmem || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
 
