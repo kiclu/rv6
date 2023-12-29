@@ -246,7 +246,6 @@ module hart #(parameter HART_ID = 0) (
 
     assign flush_n = h_rst_n && !pr_miss && !jalr_taken;
 
-
     // immediate format mux
     wire [63:0] mux_imm [0:4];
     assign mux_imm[0] = {{52{bpd_ir[31]}}, bpd_ir[31:20]};                  // I-type

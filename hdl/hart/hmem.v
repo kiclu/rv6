@@ -192,15 +192,15 @@ module hmem(
         case(hmem_fsm)
             // READY
             3'd0: begin
-                if(b_rd_i && !hit_qi) hmem_fsm_next = 3'd1;
-                if(b_rd_i &&  hit_qi) hmem_fsm_next = 3'd2;
-                if(b_rd_i &&  ri_hit) hmem_fsm_next = 3'd0;
                 if(b_rd_d && !hit_qd) hmem_fsm_next = 3'd3;
                 if(b_rd_d &&  hit_qd) hmem_fsm_next = 3'd4;
                 if(b_rd_d &&  rd_hit) hmem_fsm_next = 3'd0;
                 if(b_wr_d && !hit_qd) hmem_fsm_next = 3'd3;
                 if(b_wr_d &&  hit_qd) hmem_fsm_next = 3'd4;
                 if(b_wr_d &&  rd_hit) hmem_fsm_next = 3'd5;
+                if(b_rd_i && !hit_qi) hmem_fsm_next = 3'd1;
+                if(b_rd_i &&  hit_qi) hmem_fsm_next = 3'd2;
+                if(b_rd_i &&  ri_hit) hmem_fsm_next = 3'd0;
             end
             // FETCH_I
             3'd1: begin

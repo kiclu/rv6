@@ -70,7 +70,17 @@ module imem(
     wire l_hit = l_tag == addr_tag && l_set == addr_set;
 
     /* MISALIGNED BUFFER */
+
+    wire [63:0] addr_2 = addr + 63'd2;
+
+    wire [ `imem_tag_len-1:0] addr_2_tag  = addr_2[63:64-`imem_tag_len];
+    wire [ `imem_set_len-1:0] addr_2_set  = addr_2[`imem_set_len+`imem_offs_len-1:`imem_offs_len];
+
+    reg [`imem_tag_len-1:0] ma_tag;
+    reg [`imem_set_len-1:0] ma_set;
     reg [   `imem_line-1:0] ma_data;
+
+    wire ma_hit = !ma || (ma_tag == addr_2_tag && ma_set == addr_2_set);
 
     /* CACHE READ */
 
@@ -92,6 +102,10 @@ module imem(
     reg [2:0] imem_fsm_next;
     reg [1:0] ld_cnt;
 
+    reg ma_d;
+    always @(posedge clk) ma_d <= ma;
+    wire ma_re = ma & !ma_d;
+
     always @(*) begin
         addr = pc;
         b_rd_i = 0;
@@ -106,11 +120,11 @@ module imem(
         case(imem_fsm)
             // READY
             3'd0: begin
-                stall_imem = !l_hit;
                 if(!hit) imem_fsm_next = 3'd1;
                 if( hit) imem_fsm_next = 3'd2;
                 if(l_hit &&  ma) imem_fsm_next = 3'd3;
                 if(l_hit && !ma) imem_fsm_next = 3'd0;
+                stall_imem = !l_hit || !ma_hit;
             end
             // FETCH
             3'd1: begin
@@ -140,7 +154,6 @@ module imem(
             3'd4: begin
                 b_rd_i = 1;
                 addr = pc+2;
-                //wre  = b_dv_i;
 
                 if(b_dv_i) imem_fsm_next = 3'd0;
             end
@@ -159,6 +172,8 @@ module imem(
             ld_cnt <= `imem_read_valid_delay;
             l_tag <= 0;
             l_set <= 0;
+            ma_tag <= 0;
+            ma_set <= 0;
         end
         else begin
             case(imem_fsm)
@@ -192,12 +207,18 @@ module imem(
                 end
                 // FETCH MA
                 3'd4: begin
-                    if(b_dv_i) ma_data <= b_data_i;
+                    if(b_dv_i) begin
+                        ma_tag <= addr_tag;
+                        ma_set <= addr_set;
+                        ma_data <= b_data_i;
+                    end
                     imem_fsm <= imem_fsm_next;
                 end
                 // LOAD MA
                 3'd5: begin
                     if(ld_cnt == 2'd0) begin
+                        ma_tag <= addr_tag;
+                        ma_set <= addr_set;
                         ma_data <= cache_line_out;
                         ld_cnt  <= `imem_read_valid_delay;
                     end
@@ -222,7 +243,6 @@ module imem(
 
     /* MISALIGNED ACCESS DETECTION */
 
-    wire [63:0] addr_2 = addr + 63'd2;
     always @(*) ma = addr[63:`imem_offs_len] != addr_2[63:`imem_offs_len];
 
     /* REPLACEMENT POLICY */
@@ -288,7 +308,7 @@ module imem(
             ir = l_data[8*addr_offs +: 32];
         end
         if(imem_fsm == 3'd0 &&  ma) begin
-            ir = {ma_data[15:0], l_data[addr_offs +: 16]};
+            ir = {ma_data[15:0], l_data[8*addr_offs +: 16]};
         end
     end
 
