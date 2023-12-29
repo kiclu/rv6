@@ -22,7 +22,7 @@
 
 `include "../config.v"
 
-`define hmem_read_valid_delay 4'd10
+`define hmem_read_valid_delay 4'd2
 
 module hmem(
     // internal instruction bus
@@ -275,8 +275,8 @@ module hmem(
             case(hmem_fsm)
                 // READY
                 3'd0: begin
-                    if(imem_op) h_addr <= {b_addr_i[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
                     if(dmem_op) h_addr <= {b_addr_d[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
+                    if(imem_op) h_addr <= {b_addr_i[63:`hmem_offs_len], {`hmem_offs_len{1'b0}}};
                     wr_pend <= b_wr_d;
 
                     hmem_fsm <= hmem_fsm_next;
