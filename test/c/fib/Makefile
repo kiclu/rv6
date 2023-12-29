@@ -14,11 +14,12 @@ AS 		= ${TOOLPREFIX}as
 LD 		= ${TOOLPREFIX}ld
 OBJCOPY = ${TOOLPREFIX}objcopy
 OBJDUMP = ${TOOLPREFIX}objdump
+STRIP	= ${TOOLPREFIX}strip
 
 LDSCRIPT = ldscript.ld
 
 ASFLAGS = -march=rv64izicsr -mabi=lp64
-CFLAGS  = -march=rv64izicsr -mabi=lp64 -mcmodel=medany -MMD -MP -MF"${@:%.o=%.d}" -O2
+CFLAGS  = -march=rv64izicsr -mabi=lp64 -I${DIR_INCLUDE} -mcmodel=medany -MMD -MP -MF"${@:%.o=%.d}" -O2
 
 SOURCES_S = $(shell find . -name "*.S" -printf "%P ")
 OBJECTS += $(addprefix ${DIR_BUILD}/,${SOURCES_S:.S=.o})
@@ -29,6 +30,8 @@ all: ${TARGET_ELF} ${TARGET_ASM} ${TARGET_HEX}
 
 ${TARGET_ELF}: ${OBJECTS} | ${LDSCRIPT}
 	${LD} ${LDFLAGS} -T ${LDSCRIPT} -o ${@} ${OBJECTS}
+	${STRIP} -R .riscv.attributes ${TARGET_ELF}
+	${STRIP} -R .comment ${TARGET_ELF}
 
 ${TARGET_ASM}: ${TARGET_ELF}
 	${OBJDUMP} -D ${<} > ${@}

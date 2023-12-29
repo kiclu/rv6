@@ -1,6 +1,8 @@
 .extern main
 .extern _main_stack_region_end
 
+.global _start
+
 .section .text
 _reset_handler:
     add sp, sp, -8
@@ -48,11 +50,11 @@ _reg_init:
     li t6,  0
     ret
 
-.section .text.start
+.section .text.init
 _start:
     # initialize stack pointer
     la sp, _main_stack_region_end
 
     call _reset_handler
-_exit:
-    j _exit
+_stop:
+    j _stop

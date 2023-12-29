@@ -340,7 +340,7 @@ module csr #(parameter HART_ID = 0) (
 
     // generate new CSR value
     reg [63:0] ncsr;
-    always @(csr, ir, csr_in, wpri) begin
+    always @(*) begin
         ncsr = 64'b0;
         if(ir[6:0] == `op_system) begin
             case(ir[14:12])
@@ -526,7 +526,6 @@ module csr #(parameter HART_ID = 0) (
                 default: exc = 0;
             endcase
             cause_pc = pc_mem;
-            val = dmem_addr;
             flush = `FLUSH_MEM;
         end
         // Load/Store/AMO Address Misaligned
@@ -534,6 +533,7 @@ module csr #(parameter HART_ID = 0) (
             if(dmem_ld_ma) begin cause = 4'd4; exc = 1; end
             else           begin cause = 4'd6; exc = 1; end
             cause_pc = pc_mem;
+            val = dmem_addr;
             flush = `FLUSH_MEM;
         end
     end

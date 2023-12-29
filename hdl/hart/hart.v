@@ -117,19 +117,20 @@ module hart #(parameter HART_ID = 0) (
     wire [`imem_line-1:0] b_data_i;
     wire b_rd_i;
     wire b_dv_i;
+    wire stall_imem;
 
     imem u_imem(
         .pc(pc),
         .ir(ir),
 
-        .b_addr(b_addr_i),
+        .b_addr_i(b_addr_i),
 
-        .b_data(b_data_i),
-        .b_rd(b_rd_i),
-        .b_dv(b_dv_i),
+        .b_data_i(b_data_i),
+        .b_rd_i(b_rd_i),
+        .b_dv_i(b_dv_i),
 
         .stall(stall_if),
-        .stall_ima(stall_ima),
+        .stall_imem(stall_imem),
         .rst_n(h_rst_n),
         .clk(h_clk)
     );
@@ -244,7 +245,6 @@ module hart #(parameter HART_ID = 0) (
     );
 
     assign flush_n = h_rst_n && !pr_miss && !jalr_taken;
-
 
     // immediate format mux
     wire [63:0] mux_imm [0:4];
@@ -390,7 +390,7 @@ module hart #(parameter HART_ID = 0) (
         .inv_addr(h_inv_addr),
         .inv(h_inv),
 
-        .stall(stall_dmem),
+        .stall_dmem(stall_dmem),
         .rst_n(h_rst_n),
         .clk(h_clk)
     );
@@ -515,7 +515,7 @@ module hart #(parameter HART_ID = 0) (
         .inv_addr(h_inv_addr),
         .inv(h_inv),
 
-        .stall(stall_hmem),
+        .stall_hmem(stall_hmem),
         .rst_n(h_rst_n),
         .clk(h_clk)
     );
@@ -535,7 +535,7 @@ module hart #(parameter HART_ID = 0) (
         .stall_mem(stall_mem),
         .stall_wb(stall_wb),
 
-	    .stall_ima(stall_ima),
+	    .stall_imem(stall_imem),
         .stall_dmem(stall_dmem),
         .stall_hmem(stall_hmem),
 

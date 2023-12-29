@@ -1,34 +1,33 @@
 OUTPUT_ARCH("riscv")
-
-MEMORY {
-    VMA     (rw)    : ORIGIN = 0x80000000, LENGTH = 32k
-}
+ENTRY( _start )
 
 SECTIONS {
-    start : {
-        *(.text.start)
-    } > VMA
+    . = 0x80000000;
+
+    text.init : {
+        *(.text.init)
+    }
 
     text : {
         *(.text)
-        *(.text*)
-    } > VMA
+        *(.text.*)
+    }
 
     rodata : {
         *(.rodata)
         *(.rodata*)
-    } > VMA
+    }
 
     bss : {
         *(.bss)
         *(.bss*)
         *(COMMON)
-    } > VMA
+    }
 
     data : {
         *(.data)
         *(.data*)
-    } > VMA
+    }
 
     . = ALIGN(0x1000);
     _main_stack_region_start = .;

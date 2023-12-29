@@ -47,7 +47,7 @@ module cu(
     output            stall_wb,
 
     // input stall causes
-    input             stall_ima,
+    input             stall_imem,
     input             stall_dmem,
     input             stall_hmem,
 
@@ -71,7 +71,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || b_rd_i || b_rd_d || (amo_req && !amo_ack) || stall_ima || stall_dmem || stall_hmem;
+    wire stall_all = !rst_n || stall_hmem || stall_imem || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
 
@@ -175,13 +175,13 @@ module cu(
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
 
     // front end stall signals
-    assign stall_if  = stall_all || stall_c || dh || amo_req;
-    assign stall_pd  = stall_all || stall_c || dh;
-    assign stall_id  = stall_all || stall_c || dh;
+    assign stall_if  = stall_all || stall_c || dh || stall_dmem || amo_req;
+    assign stall_pd  = stall_all || stall_c || dh || stall_dmem;
+    assign stall_id  = stall_all || stall_c || dh || stall_dmem;
 
     // back end stall signals
-    assign stall_ex  = stall_all || stall_d[2];
-    assign stall_mem = stall_all || stall_d[3];
+    assign stall_ex  = stall_all || stall_d[2] || stall_dmem;
+    assign stall_mem = stall_all || stall_d[3] || stall_dmem;
     assign stall_wb  = stall_all || stall_d[4];
 
     always @(posedge clk) begin
