@@ -19,10 +19,10 @@
 // default hex path
 `ifndef hex_path
 
-//`define hex_path "../test/c/fib/fib.hex"            // test 0
+`define hex_path "../test/c/fib/fib.hex"            // test 0
 //`define hex_path "../test/c/fib_c/fib_c.hex"        // test 1
 //`define hex_path "../test/c/mhartid/mhartid.hex"    // test 2
-`define hex_path "../test/c/deadbeef/deadbeef.hex"  // test 3
+//`define hex_path "../test/c/deadbeef/deadbeef.hex"  // test 3
 //`define hex_path "../test/c/shift/shift.hex"        // test 4
 
 //`define hex_path "../../../temp/dromajo/riscv-simple-tests/rv64ua-p-amoadd_d.hex"
