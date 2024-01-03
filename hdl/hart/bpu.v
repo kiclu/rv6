@@ -18,7 +18,7 @@
 
 `include "../config.v"
 
-module bpu(
+module bpu (
     input      [63:0] pc,
     input      [31:0] ir,
 
