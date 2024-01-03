@@ -25,8 +25,6 @@
 
 module tb_hart;
 
-    /* DUT */
-
     wire             [63:0] h_addr;
     reg    [`hmem_line-1:0] h_data_in;
     wire                    h_rd;
@@ -146,33 +144,22 @@ module tb_hart;
          );
     end
 
-    string elf = "/opt/riscv/target/share/riscv-tests/isa/rv64ui-p-slt";
+    string _elf = "/opt/riscv/target/share/riscv-tests/isa/rv64ui-p-xor";
 
     initial begin
-        dromajo_cosim();
-        read_hex("temp.hex");
+        dromajo_cosim(_elf);
     end
 
-`define dromajo "/opt/riscv/bin/dromajo"
-`define objcopy "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
+`define dromajo             "/opt/riscv/bin/dromajo"
+`define dromajo_cosim_test  "/opt/riscv/bin/dromajo_cosim_test"
+`define objcopy             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
-    task dromajo_cosim();
+    task dromajo_cosim(string elf);
         $system({`dromajo, " --trace 0 ", elf, " 2> check.trace"});
         $system({`objcopy, " -O verilog ", elf, " temp.hex"});
+        read_hex("temp.hex");
     endtask
 
-    always @(negedge clk) begin
-        if(dut.bmw_ir == 32'hfc3f2223) begin
-            if(
-                dut.u_regfile._reg[10] == 64'h0  &&
-                dut.u_regfile._reg[17] == 64'd93 &&
-                dut.u_regfile._reg[ 3] == 64'd1
-            ) $display("PASS");
-            else $display("FAIL");
-            $fclose(fd);
-            $stop();
-        end
-    end
 
     class Exception;
         bit [63:0] cause;
@@ -205,6 +192,8 @@ module tb_hart;
         endfunction
     endclass
 
+    bit [31:0] ir_retired;
+
     class Instruction;
         bit [31:0] ir;
         bit [63:0] pc;
@@ -214,12 +203,12 @@ module tb_hart;
 
         Exception e;
 
-        function new(bit [31:0] ir, bit [63:0] pc);
+        function new(bit [63:0] hart_id, bit[1:0] priv_lvl, bit [31:0] ir, bit [63:0] pc);
+            this.hart_id = hart_id;
+            this.priv_lvl = priv_lvl;
+
             this.ir = ir;
             this.pc = pc;
-
-            this.hart_id = 0;
-            this.priv_lvl = 2'b11;
 
             this.e = null;
         endfunction
@@ -261,51 +250,54 @@ module tb_hart;
                     this.ir,
                 );
             end
+            ir_retired = this.ir;
         endfunction
 
     endclass
 
     enum {IF, PD, ID, EX, MEM, WB} phase;
-    Instruction pipeline [0:5];
+    Instruction pipeline [1:5];
 
     always @(posedge clk) begin
-        //pipeline[PD] = null;
         if(!dut.stall_wb && pipeline[WB]) pipeline[WB].retire();
-
-        if(dut.t_flush_mem) begin
-            pipeline[PD] = null;
-            pipeline[ID] = null;
-            pipeline[EX] = null;
-        end
-
-        if(dut.t_flush_ex) begin
-            pipeline[PD] = null;
-            pipeline[ID] = null;
-        end
-
-        if(dut.t_flush_id) begin
-            pipeline[PD] = null;
-        end
-
-        if(dut.t_flush_pd) begin
-        end
-
-        if(!dut.flush_n) begin
-            pipeline[PD] = null;
-            pipeline[ID] = null;
-        end
 
         if(!dut.stall_mem) pipeline[WB]  = pipeline[MEM];
         if(!dut.stall_ex)  pipeline[MEM] = pipeline[EX];
         if(!dut.stall_id)  pipeline[EX]  = pipeline[ID];
         if(!dut.stall_pd)  pipeline[ID]  = pipeline[PD];
-        if(!dut.stall_if)  pipeline[PD]  = new(dut.ir, dut.pc);
+        if(!dut.stall_if)  pipeline[PD]  = new(0, dut.u_csr.privilege_level, dut.ir, dut.pc);
+
+        if(dut.t_flush_mem && !pipeline[MEM].e) pipeline[MEM] = null;
+
+        if(dut.t_flush_ex)  pipeline[EX] = null;
+
+        if(dut.t_flush_id || dut.flush_id) begin
+            pipeline[ID] = null;
+        end
+
+        if(dut.t_flush_pd || dut.flush_pd) begin
+            pipeline[PD] = null;
+        end
     end
 
-    always @(posedge clk) begin
+    always @(negedge clk) begin
         if(dut.u_csr.csr_addr_invalid && pipeline[MEM]) begin
             automatic InvalidCSRException ex = new(2, 0, dut.u_csr.csr_addr);
             pipeline[MEM].e = ex;
+        end
+
+        if(dut.u_csr.ecall && pipeline[MEM]) begin
+            automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
+            pipeline[MEM].e = ex;
+        end
+    end
+
+    always @(negedge clk) begin
+        // end sim if write_tohost
+        if(ir_retired == 32'hfc3f2223) begin
+            $fclose(fd);
+            $system({`dromajo_cosim_test, " cosim trace ", _elf});
+            $stop();
         end
     end
 
