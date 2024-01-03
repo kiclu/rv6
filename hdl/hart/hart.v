@@ -145,8 +145,10 @@ module hart #(parameter HART_ID = 0) (
     reg bfp_pr_taken;
     reg bfp_c_ins;
 
+    wire flush_pd = !flush_n && !stall_if;
+
     always @(posedge h_clk) begin
-        if(!flush_n || t_flush_pd) begin
+        if(flush_pd || t_flush_pd) begin
             bfp_ir       <= 32'h13;
             bfp_pr_taken <= 1'b0;
             bfp_c_ins    <= 1'b0;
@@ -186,8 +188,10 @@ module hart #(parameter HART_ID = 0) (
     reg bpd_pr_taken;
     reg bpd_c_ins;
 
+    wire flush_id = !flush_n && !stall_if;
+
     always @(posedge h_clk) begin
-        if(!flush_n || t_flush_id) begin
+        if(flush_id || t_flush_id) begin
             bpd_ir       <= 32'h13;
             bpd_pr_taken <= 1'b0;
             bpd_c_ins    <= 1'b0;
@@ -248,7 +252,7 @@ module hart #(parameter HART_ID = 0) (
         .stall          (stall_id       )
     );
 
-    assign flush_n = h_rst_n && !pr_miss && !jalr_taken;
+    assign flush_n = h_rst_n && (!pr_miss && !jalr_taken);
 
     // immediate format mux
     reg [63:0] mux_imm;

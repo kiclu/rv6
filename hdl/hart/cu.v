@@ -32,7 +32,9 @@
 
 `define op_branch   7'b1100011
 
-module cu(
+`define op_system   7'b1110011
+
+module cu (
     input      [31:0] ir_id,
     input      [31:0] ir_ex,
     input      [31:0] ir_mem,
@@ -71,7 +73,7 @@ module cu(
     input             clk
 );
 
-    wire stall_all = !rst_n || stall_hmem || stall_imem || (amo_req && !amo_ack);
+    wire stall_all = !rst_n || stall_hmem || stall_imem || stall_dmem || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
 
@@ -155,9 +157,9 @@ module cu(
     reg fw;
     always @(*) begin
         fw <= 0;
-        if(a_fw_ex || b_fw_ex) fw <= ir_ex[6:0] != `op_load;
-        else if(a_fw_mem || b_fw_mem) fw <= ir_mem[6:0] != `op_load;
-        else if(a_fw_wb || b_fw_wb) fw <= 1;
+        if(a_fw_ex || b_fw_ex)        fw <= ir_ex [6:0] != `op_load && ir_ex [6:0] != `op_system;
+        else if(a_fw_mem || b_fw_mem) fw <= ir_mem[6:0] != `op_load && ir_mem[6:0] != `op_system;
+        else if(a_fw_wb || b_fw_wb)   fw <= 1;
     end
 
     /* STALL */
@@ -175,19 +177,19 @@ module cu(
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
 
     // front end stall signals
-    assign stall_if  = stall_all || stall_c || dh || stall_dmem || amo_req;
-    assign stall_pd  = stall_all || stall_c || dh || stall_dmem;
-    assign stall_id  = stall_all || stall_c || dh || stall_dmem;
+    assign stall_if  = stall_all || stall_c || dh || amo_req;
+    assign stall_pd  = stall_all || stall_c || dh;
+    assign stall_id  = stall_all || stall_c || dh;
 
     // back end stall signals
-    assign stall_ex  = stall_all || stall_d[2] || stall_dmem;
-    assign stall_mem = stall_all || stall_d[3] || stall_dmem;
+    assign stall_ex  = stall_all || stall_d[2];
+    assign stall_mem = stall_all || stall_d[3];
     assign stall_wb  = stall_all || stall_d[4];
 
     always @(posedge clk) begin
         if(!rst_n) begin
             stall_c <= 0;
-            stall_d <= 5'b11100;
+            stall_d <= 5'b11111;
         end
         else if(dh) begin
             if(dh_ex) begin

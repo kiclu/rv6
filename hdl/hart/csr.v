@@ -98,8 +98,11 @@
 `define fcsr            12'h003
 `define fcsr_reg        csr_reg[29]
 
-`define csr_count 32
+// machine memory protection
+`define pmpcfg0         12'h3a0
+`define pmpaddr0        12'h3b0
 
+`define csr_count 32
 
 // mstatus register fields
 `define mstatus_sd      `mstatus_reg[63]
@@ -171,20 +174,19 @@
 `define sie_stie        `sie_reg[5]
 `define sie_ssie        `sie_reg[1]
 
-
 // Zicsr instructions
-`define op_system   7'b1110011
-`define csr_rw      3'b001
-`define csr_rs      3'b010
-`define csr_rc      3'b011
-`define csr_rwi     3'b101
-`define csr_rsi     3'b110
-`define csr_rci     3'b111
+`define op_system       7'b1110011
+`define csr_rw          3'b001
+`define csr_rs          3'b010
+`define csr_rc          3'b011
+`define csr_rwi         3'b101
+`define csr_rsi         3'b110
+`define csr_rci         3'b111
 
-`define FLUSH_PD    4'b1000
-`define FLUSH_ID    4'b1100
-`define FLUSH_EX    4'b1110
-`define FLUSH_MEM   4'b1111
+`define FLUSH_PD        4'b1000
+`define FLUSH_ID        4'b1100
+`define FLUSH_EX        4'b1110
+`define FLUSH_MEM       4'b1111
 
 module csr #(parameter HART_ID = 0) (
     input      [31:0] ir,
@@ -194,12 +196,12 @@ module csr #(parameter HART_ID = 0) (
 
     // PC signals
     output reg [63:0] trap_addr,
-    output            trap_taken,
+    output reg        trap_taken,
 
     // interrupt signals
-    input             intr_s,
-    input             intr_t,
-    input             intr_e,
+    input             irq_e,
+    input             irq_t,
+    input             irq_s,
 
     // exception signals
     input             dmem_ld_ma,
@@ -247,6 +249,8 @@ module csr #(parameter HART_ID = 0) (
     reg  s_trap;
     wire s_ret;
 
+    wire trap_ret;
+
     // interrupt / exception context
     reg [63:0] val;
 
@@ -272,52 +276,56 @@ module csr #(parameter HART_ID = 0) (
     // current CSR value
     reg [63:0] csr;
     always @(*) begin
-        csr_addr_invalid <= 0;
-        csr <= 64'b0;
+        csr_addr_invalid = 0;
+        csr = 64'b0;
         if(rd || wr) begin
             case(csr_addr)
-                `sstatus:       csr <= `sstatus_reg;
-                `sie:           csr <= `sie_reg;
-                `stvec:         csr <= `stvec_reg;
-                `scounteren:    csr <= `scounteren_reg;
+                `sstatus:       csr = `sstatus_reg;
+                `sie:           csr = `sie_reg;
+                `stvec:         csr = `stvec_reg;
+                `scounteren:    csr = `scounteren_reg;
 
-                `sscratch:      csr <= `sscratch_reg;
-                `sepc:          csr <= `sepc_reg;
-                `scause:        csr <= `scause_reg;
-                `stval:         csr <= `stval_reg;
-                `sip:           csr <= `sip_reg;
+                `sscratch:      csr = `sscratch_reg;
+                `sepc:          csr = `sepc_reg;
+                `scause:        csr = `scause_reg;
+                `stval:         csr = `stval_reg;
+                `sip:           csr = `sip_reg;
 
-                `satp:          csr <= `satp_reg;
+                `satp:          csr = `satp_reg;
 
-                `mvendorid:     csr <= `mvendorid_reg;
-                `marchid:       csr <= `marchid_reg;
-                `mimpid:        csr <= `mimpid_reg;
-                `mhartid:       csr <= `mhartid_reg;
-                `mconfigptr:    csr <= `mconfigptr_reg;
+                `mvendorid:     csr = `mvendorid_reg;
+                `marchid:       csr = `marchid_reg;
+                `mimpid:        csr = `mimpid_reg;
+                `mhartid:       csr = `mhartid_reg;
+                `mconfigptr:    csr = `mconfigptr_reg;
 
-                `mstatus:       csr <= `mstatus_reg;
-                `misa:          csr <= `misa_reg;
-                `medeleg:       csr <= `medeleg_reg;
-                `mideleg:       csr <= `mideleg_reg;
-                `mie:           csr <= `mie_reg;
-                `mtvec:         csr <= `mtvec_reg;
-                `mcounteren:    csr <= `mcounteren_reg;
+                `mstatus:       csr = `mstatus_reg;
+                `misa:          csr = `misa_reg;
+                `medeleg:       csr = `medeleg_reg;
+                `mideleg:       csr = `mideleg_reg;
+                `mie:           csr = `mie_reg;
+                `mtvec:         csr = `mtvec_reg;
+                `mcounteren:    csr = `mcounteren_reg;
 
-                `mscratch:      csr <= `mscratch_reg;
-                `mepc:          csr <= `mepc_reg;
-                `mcause:        csr <= `mcause_reg;
-                `mtval:         csr <= `mtval_reg;
-                `mip:           csr <= `mip_reg;
-                `mtinst:        csr <= `mtinst_reg;
+                `mscratch:      csr = `mscratch_reg;
+                `mepc:          csr = `mepc_reg;
+                `mcause:        csr = `mcause_reg;
+                `mtval:         csr = `mtval_reg;
+                `mip:           csr = `mip_reg;
+                `mtinst:        csr = `mtinst_reg;
 
-                `menvcfg:       csr <= `menvcfg_reg;
-                `mseccfg:       csr <= `mseccfg_reg;
+                `menvcfg:       csr = `menvcfg_reg;
+                `mseccfg:       csr = `mseccfg_reg;
 
-                `fflags:        csr <= `fflags_reg;
-                `frm:           csr <= `frm_reg;
-                `fcsr:          csr <= `fcsr_reg;
+                `fflags:        csr = `fflags_reg;
+                `frm:           csr = `frm_reg;
+                `fcsr:          csr = `fcsr_reg;
 
-                default: csr_addr_invalid <= 1;
+                // riscv-tests only
+                `pmpcfg0:       csr = 0;
+                `pmpaddr0:      csr = 0;
+
+                default: csr_addr_invalid = 1;
             endcase
         end
     end
@@ -326,13 +334,13 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] wpri;
     always @(*) begin
         case(csr_addr)
-            `sstatus:   wpri <= 64'h80000003000de762;
-            `mstatus:   wpri <= 64'h8000003f007fffea;
+            `sstatus:   wpri = 64'h80000003000de762;
+            `mstatus:   wpri = 64'h8000003f007fffea;
 
-            `menvcfg:   wpri <= 64'hc0000000000000f1;
-            `mseccfg:   wpri <= 64'h0000000000000207;
+            `menvcfg:   wpri = 64'hc0000000000000f1;
+            `mseccfg:   wpri = 64'h0000000000000207;
 
-            default:    wpri <= 64'hffffffffffffffff;
+            default:    wpri = 64'hffffffffffffffff;
         endcase
     end
 
@@ -457,7 +465,7 @@ module csr #(parameter HART_ID = 0) (
 
                 // mstatus
                 `mstatus_mie    <= 0;
-                `mstatus_mpie   <= `mie;
+                `mstatus_mpie   <= `mstatus_mie;
                 `mstatus_mpp    <= privilege_level;
                 // mepc
                 `mepc_reg       <= cause_pc;
@@ -465,8 +473,6 @@ module csr #(parameter HART_ID = 0) (
                 `mcause_reg     <= cause;
                 // mtval
                 `mtval_reg      <= val;
-                // mip
-
             end
             // supervisor trap
             else if(s_trap) begin
@@ -474,7 +480,7 @@ module csr #(parameter HART_ID = 0) (
 
                 // sstatus
                 `sstatus_sie    <= 0;
-                `sstatus_spie   <= `sie;
+                `sstatus_spie   <= `sstatus_sie;
                 `sstatus_spp    <= privilege_level[0];
                 // sepc
                 `sepc_reg       <= cause_pc;
@@ -482,8 +488,16 @@ module csr #(parameter HART_ID = 0) (
                 `scause_reg     <= cause;
                 // stval
                 `stval_reg      <= val;
-                // sip
-
+            end
+        end
+        else if(trap_ret) begin
+            if(m_ret) begin
+                `mstatus_mie <= `mstatus_mpie;
+                privilege_level <= `mstatus_mpp;
+            end
+            else if(s_ret) begin
+                `sstatus_sie <= `sstatus_spie;
+                privilege_level <= {1'b0, `sstatus_spp};
             end
         end
     end
@@ -501,7 +515,7 @@ module csr #(parameter HART_ID = 0) (
     wire dmem_ma    = dmem_ld_ma || dmem_st_ma;
 
     // interrupt / exception detection
-    wire intr = intr_s || intr_t || intr_e;
+    reg intr = 0;
     reg exc;
 
     // pipeline flush signals
@@ -518,23 +532,30 @@ module csr #(parameter HART_ID = 0) (
         if(trap_ret) flush = `FLUSH_MEM;
 
         // Environment call
-        if(ecall) begin
+        else if(ecall) begin
             case(privilege_level)
                 2'b00: begin cause = 4'd8;  exc = 1; end
                 2'b01: begin cause = 4'd9;  exc = 1; end
                 2'b11: begin cause = 4'd11; exc = 1; end
                 default: exc = 0;
             endcase
-            cause_pc = pc_mem;
-            flush = `FLUSH_MEM;
+            cause_pc    = pc_mem;
+            flush       = `FLUSH_MEM;
         end
         // Load/Store/AMO Address Misaligned
         else if(dmem_ma) begin
             if(dmem_ld_ma) begin cause = 4'd4; exc = 1; end
             else           begin cause = 4'd6; exc = 1; end
-            cause_pc = pc_mem;
-            val = dmem_addr;
-            flush = `FLUSH_MEM;
+            cause_pc    = pc_mem;
+            val         = dmem_addr;
+            flush       = `FLUSH_MEM;
+        end
+        else if(csr_addr_invalid) begin
+            cause       = 4'd2;
+            exc         = 1;
+            cause_pc    = pc_mem;
+            val         = 0;
+            flush       = `FLUSH_MEM;
         end
     end
 
@@ -552,22 +573,19 @@ module csr #(parameter HART_ID = 0) (
             m_trap = !`mideleg_reg[cause] || privilege_level == 2'b11;
             s_trap =  `mideleg_reg[cause] && privilege_level != 2'b11;
         end
-    end
 
-    // PC trap signal generation
-    reg trap_taken_d;
-    always @(posedge clk) trap_taken_d <= m_trap || s_trap;
-    assign trap_taken = ((m_trap || s_trap) && !trap_taken_d) || trap_ret;
+        trap_taken = m_trap || s_trap || m_ret || s_ret;
+    end
 
     // trap entry/exit address
     wire [63:0] stvec_offs;
     wire [63:0] mtvec_offs;
     always @(*) begin
-        trap_addr <= 64'h0;
-        if(m_trap) trap_addr <= {`mtvec_reg[63:2], 2'b00} + mtvec_offs;
-        if(s_trap) trap_addr <= {`stvec_reg[63:2], 2'b00} + stvec_offs;
-        if(m_ret)  trap_addr <= `mepc_reg;
-        if(s_ret)  trap_addr <= `sepc_reg;
+        trap_addr = 64'hZ;
+        if(m_trap) trap_addr = {`mtvec_reg[63:2], 2'b00} + mtvec_offs;
+        if(s_trap) trap_addr = {`stvec_reg[63:2], 2'b00} + stvec_offs;
+        if(m_ret)  trap_addr = `mepc_reg;
+        if(s_ret)  trap_addr = `sepc_reg;
     end
 
     // vectored exception address generation
@@ -598,12 +616,8 @@ module csr #(parameter HART_ID = 0) (
     // SIE  = supervisor interrupt enable
 endmodule
 
-
 /* currently unimplemented registers */
 
-// machine memory protection
-`define pmpcfg0         12'h3a0
-`define pmpaddr0        12'h3b0
 
 // unprivileged counter/timers
 `define cycle           12'hc00

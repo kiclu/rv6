@@ -50,9 +50,10 @@ module pc(
         if(!rst_n) pc <= 64'h80000000;
         else if(trap_taken)   pc <= trap_addr;
         else if(jalr_taken)   pc <= jalr_addr;
-        else if(pr_miss)      pc <= br_addr;
+        //else if(pr_miss)      pc <= br_addr;
         else if(!stall) begin
-            if(jal_taken)     pc <= jal_addr;
+            if(pr_miss) pc <= br_addr;
+            else if(jal_taken)     pc <= jal_addr;
             else if(pr_taken) pc <= pr_addr;
             else              pc <= n_pc;
         end
