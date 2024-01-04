@@ -1,14 +1,2 @@
-# C build files
-*.o
-*.d
-*.asm
-*.elf
-*.hex
-
 # backup files
 *.bak
-
-# verification logs/traces
-simulation/*.trace
-simulation/*.dromajo.log
-simulation/transcript
