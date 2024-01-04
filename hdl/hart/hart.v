@@ -308,6 +308,7 @@ module hart #(parameter HART_ID = 0) (
     assign alu_mx_a[0] = bdx_r1;
     assign alu_mx_a[1] = bdx_pc;
     assign alu_mx_a[2] = mx_a_fw[s_mx_a_fw];
+    assign alu_mx_a[3] = bdx_pc;
     wire [1:0] s_alu_mx_a;
 
     assign s_alu_mx_a[1] = a_fw;
@@ -316,6 +317,7 @@ module hart #(parameter HART_ID = 0) (
     wire [63:0] alu_mx_b [0:3];
     assign alu_mx_b[0] = bdx_imm;
     assign alu_mx_b[1] = bdx_r2;
+    assign alu_mx_b[2] = bdx_imm;
     assign alu_mx_b[3] = mx_b_fw[s_mx_b_fw];
     wire [1:0] s_alu_mx_b;
 

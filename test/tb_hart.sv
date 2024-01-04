@@ -316,6 +316,10 @@ module tb_hart;
                         automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
                         this.pipeline[MEM].e = ex;
                     end
+                    if(dut.u_csr.trap_ret && this.pipeline[MEM]) begin
+                        automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
+                        this.pipeline[MEM].e = ex;
+                    end
                 end
             end
         endtask
