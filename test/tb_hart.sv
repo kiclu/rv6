@@ -16,95 +16,89 @@
  * external case of any product you make using this documentation.
  */
 
-// default hex path
-`ifndef hex_path
-
-`define hex_path "../test/c/fib/fib.hex"            // test 0
-//`define hex_path "../test/c/fib_c/fib_c.hex"        // test 1
-//`define hex_path "../test/c/mhartid/mhartid.hex"    // test 2
-//`define hex_path "../test/c/deadbeef/deadbeef.hex"  // test 3
-//`define hex_path "../test/c/shift/shift.hex"        // test 4
-
-//`define hex_path "../../../temp/dromajo/riscv-simple-tests/rv64ua-p-amoadd_d.hex"
-
-//`define hex_path "../test/c/ecall/ecall.hex"
-//`define hex_path "../test/c/ima/ima.hex"
-`endif
-
-`define tb_mem_size  32'h0001_0000
-`define tb_mem_entry 64'h8000_0000
-
-`define DROMOJO_TRACE
-`define AMO_ENABLE
-`define REG_TRACE
-
 `include "../hdl/config.v"
 
+`define tb_entry    64'h8000_0000
+`define tb_mem_size 64'h10_0000
+
+`define ANSI_COLORS
+
 `timescale 1ns/1ps
-module tb_hart();
-    wire           [63:0] h_addr;
 
-    reg  [`hmem_line-1:0] h_data_in;
-    wire                  h_rd;
-    reg                   h_dv;
+module tb_hart;
 
-    wire [`hmem_line-1:0] h_data_out;
-    wire                  h_wr;
+    wire             [63:0] h_addr;
+    reg    [`hmem_line-1:0] h_data_in;
+    wire                    h_rd;
+    reg                     h_dv;
+    wire   [`hmem_line-1:0] h_data_out;
+    wire                    h_wr;
+    reg                     h_irq_e;
+    reg                     h_irq_t;
+    reg                     h_irq_s;
+    reg              [63:0] h_inv_addr;
+    reg                     h_inv;
+    wire                    h_amo_req;
+    reg                     h_amo_ack;
+    reg                     h_rst_n;
+    wire                    h_clk;
 
-    reg            [63:0] h_inv_addr;
-    reg                   h_inv;
-
-    wire                  h_amo_req;
-    reg                   h_amo_ack;
-
-    reg                   h_rst_n;
-    reg                   h_clk;
-
-    hart #(.HART_ID(0)) dut(
-        .h_addr(h_addr),
-
-        .h_data_in(h_data_in),
-        .h_rd(h_rd),
-        .h_dv(h_dv),
-
-        .h_data_out(h_data_out),
-        .h_wr(h_wr),
-
-        .h_inv_addr(h_inv_addr),
-        .h_inv(h_inv),
-
-        .h_amo_req(h_amo_req),
-        .h_amo_ack(h_amo_ack),
-
-        .h_rst_n(h_rst_n),
-
-        .h_clk(h_clk)
+    hart #(.HART_ID(0)) dut (
+        .h_addr         (h_addr         ),
+        .h_data_in      (h_data_in      ),
+        .h_rd           (h_rd           ),
+        .h_dv           (h_dv           ),
+        .h_data_out     (h_data_out     ),
+        .h_wr           (h_wr           ),
+        .h_irq_e        (h_irq_e        ),
+        .h_irq_t        (h_irq_t        ),
+        .h_irq_s        (h_irq_s        ),
+        .h_inv_addr     (h_inv_addr     ),
+        .h_inv          (h_inv          ),
+        .h_amo_req      (h_amo_req      ),
+        .h_amo_ack      (h_amo_ack      ),
+        .h_rst_n        (h_rst_n        ),
+        .h_clk          (h_clk          )
     );
 
-    reg [7:0] mem [`tb_mem_entry : `tb_mem_entry+`tb_mem_size-1];
+    // initial signal values
     initial begin
-        $readmemh(`hex_path, mem, `tb_mem_entry);
-        for(integer i = `tb_mem_entry; i < `tb_mem_entry+`tb_mem_size; ++i) begin
-            if(mem[i] === 8'hX) mem[i] <= 8'h00;
+        h_data_in   = 64'bZ;
+        h_dv        = 0;
+        h_irq_e     = 0;
+        h_irq_t     = 0;
+        h_irq_s     = 0;
+        h_inv_addr  = 64'bZ;
+        h_inv       = 0;
+        h_amo_ack   = 0;
+    end
+
+    // reset signal
+    initial begin
+        h_rst_n = 1;
+    end
+
+    // clock generator
+    reg clk;
+    initial begin
+        clk = 1;
+        forever #10 clk = ~clk;
+    end
+    assign h_clk = clk;
+
+    /* MEMORY MODEL */
+
+    reg [7:0] mem [`tb_entry : `tb_entry+`tb_mem_size-1];
+
+    // initialize memory
+    task read_hex(string filename);
+        $readmemh(filename, mem, `tb_entry);
+        for(integer i = `tb_entry; i < `tb_entry+`tb_mem_size; ++i) begin
+            if(mem[i] === 8'hX) mem[i] = 8'h00;
         end
-    end
+    endtask
 
-    initial forever #10 h_clk = ~h_clk;
-    wire clk = h_clk;
-
-    initial begin
-        h_data_in <= `hmem_line'hZ;
-        h_dv <= 0;
-        h_inv_addr <= 64'hZ;
-        h_inv <= 0;
-        h_amo_ack <= 0;
-        h_rst_n <= 0;
-        h_clk <= 1;
-        #80
-        h_rst_n <= 1;
-    end
-
-    // data in
+    // memory read op
     always @(h_rd) begin
         if(h_rd) begin
             #800
@@ -122,7 +116,7 @@ module tb_hart();
         end
     end
 
-    // data out
+    // memory write op
     always @(posedge clk) begin
         if(h_wr) begin
             for(integer i = 0; i < `hmem_line/8; ++i) begin
@@ -131,128 +125,314 @@ module tb_hart();
         end
     end
 
-`ifdef AMO_ENABLE
-    // amo handshake
-    always @(*) begin
-        if(h_amo_req) h_amo_ack <= #160 1;
-        else h_amo_ack <= #0 0;
-    end
-`endif
+    /* MONITOR */
 
-`ifdef DROMOJO_TRACE
-    int fd;
-    initial fd = $fopen("trace", "w");
+    string _elf = "/opt/riscv/target/share/riscv-tests/isa/rv64ui-p-xor";
 
-    reg [63:0] bmw_pc;
-    always @(posedge clk) begin
-        if(!dut.stall_mem) begin
-            bmw_pc <= dut.bxm_pc;
-        end
-    end
+`define dromajo             "/opt/riscv/bin/dromajo"
+`define dromajo_cosim_test  "/opt/riscv/bin/dromajo_cosim_test"
+`define objcopy             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
-    reg init = 0;
+    class Exception;
+        bit [63:0] cause;
+        bit [63:0] tval;
 
-    // print destination register and value on instruction retire
-    always @(posedge clk) begin
-        if(bmw_pc == `tb_mem_entry) init = 1;
-        if(init) begin
-            if(!dut.stall_wb && dut.wr && dut.rd) begin
-                $fdisplay(
-                    fd,
-                    "0 %1d 0x%016h (0x%08h) x%2d 0x%016h",
-                    dut.u_csr.privilege_level,
-                    bmw_pc,
-                    dut.bmw_ir,
+        function new(bit [63:0] cause, bit [63:0] tval);
+            this.cause = cause;
+            this.tval = tval;
+        endfunction
+
+        virtual function string what();
+            return "";
+        endfunction
+
+    endclass
+
+    class InvalidCSRException extends Exception;
+        bit [11:0] csr_addr;
+
+        function new(bit [63:0] cause, bit [63:0] tval, bit [11:0] csr_addr);
+            super.new(cause, tval);
+            this.csr_addr = csr_addr;
+        endfunction
+
+        function string what();
+            return $sformatf(
+                "csr_read: invalid CSR=0x%-h\n",
+                this.csr_addr
+            );
+        endfunction
+
+    endclass
+
+    enum {IF, PD, ID, EX, MEM, WB} phase;
+
+    class Instruction;
+        bit [31:0] ir;
+        bit [63:0] pc;
+
+        bit [63:0] hart_id;
+        bit [ 1:0] priv_lvl;
+
+        Exception e;
+
+        function new(bit [63:0] hart_id, bit[1:0] priv_lvl, bit [31:0] ir, bit [63:0] pc);
+            this.hart_id = hart_id;
+            this.priv_lvl = priv_lvl;
+
+            this.ir = ir;
+            this.pc = pc;
+
+            this.e = null;
+        endfunction
+
+        function string retire();
+            if(this.e) begin
+                string exc = this.e.what();
+
+                string ret = $sformatf(
+                    "%-d %-d 0x%16h (0x%8h) exception %-d, tval %16h",
+                    this.hart_id,
+                    this.priv_lvl,
+                    this.pc,
+                    this.ir,
+                    this.e.cause,
+                    this.e.tval
+                );
+
+                return {exc, ret};
+            end
+            else if(dut.wr && dut.rd) begin
+                return $sformatf(
+                    "%-d %-d 0x%16h (0x%8h) x%2d 0x%16h",
+                    this.hart_id,
+                    this.priv_lvl,
+                    this.pc,
+                    this.ir,
                     dut.rd,
                     dut.d
                 );
             end
-            else if(!dut.stall_wb) begin
-                $fdisplay(
-                    fd,
-                    "0 %1d 0x%016h (0x%08h)",
-                    dut.u_csr.privilege_level,
-                    bmw_pc,
-                    dut.bmw_ir,
+            else begin
+                return $sformatf(
+                    "%-d %-d 0x%16h (0x%8h)",
+                    this.hart_id,
+                    this.priv_lvl,
+                    this.pc,
+                    this.ir
                 );
             end
-        end
-    end
-`endif
+        endfunction
 
-`ifdef MEM_TRACE
-    reg [63:0] addr;
-    reg [2:0] cnt;
+    endclass
 
-    always @(posedge clk) begin
-        if(h_wr) begin
-            cnt <= 7'd7;
-            addr <= h_addr;
-        end
-        if(cnt == 3'd1) begin
-            $display("WRITE: addr=%h", addr);
-            for(integer i = `hmem_line/8 - 1; i >= 0; --i) begin
-                $display("MEM[%h] = %h", addr+i, mem[addr+i]);
+    class Test;
+
+        string name;
+
+        function new(string elf);
+            integer k;
+            this.elf = elf;
+            for(integer i = 0; i < elf.len(); ++i) begin
+                if(elf.getc(i) == 8'h2F) begin
+                    k = i;
+                end
             end
-        end
-        if(cnt) cnt <= cnt - 1;
-    end
-`endif
+            this.name = elf.substr(k+1, elf.len()-1);
+        endfunction
 
-    /* SIMULATION CONTROL */
+        local string elf;
 
-`ifdef REG_TRACE
-    function automatic string decode_r(logic [4:0] r);
-        case(r)
-            5'd0:  return "zero";
-            5'd1:  return "ra";
-            5'd2:  return "sp";
-            5'd3:  return "gp";
-            5'd4:  return "tp";
-            5'd5:  return "t0";
-            5'd6:  return "t1";
-            5'd7:  return "t2";
-            5'd8:  return "fp";
-            5'd9:  return "s1";
-            5'd10: return "a0";
-            5'd11: return "a1";
-            5'd12: return "a2";
-            5'd13: return "a3";
-            5'd14: return "a4";
-            5'd15: return "a5";
-            5'd16: return "a6";
-            5'd17: return "a7";
-            5'd18: return "s2";
-            5'd19: return "s3";
-            5'd20: return "s4";
-            5'd21: return "s5";
-            5'd22: return "s6";
-            5'd23: return "s7";
-            5'd24: return "s8";
-            5'd25: return "s9";
-            5'd26: return "s10";
-            5'd27: return "s11";
-            5'd28: return "t3";
-            5'd29: return "t4";
-            5'd30: return "t5";
-            5'd31: return "t6";
-            default: return "xx";
-        endcase
-    endfunction
-`endif
+        local bit [31:0] ir_retired;
+        local integer fd;
+        local Instruction pipeline [1:5];
 
-    task end_sim();
-`ifdef REG_TRACE
-        $display("hex_p=%s", `hex_path);
-        $display("end_time=%0t", $time());
-        for(integer i = 1; i < 32; ++i) begin
-            $display("%0s=0x%0h", decode_r(i), dut.u_regfile.register[i]);
-        end
+        local task dromajo_cosim();
+            //$system({`dromajo, " --trace 0 ", this.elf, " 2> check.trace"});
+            $system({`objcopy, " -O verilog ", this.elf, " temp.hex"});
+            read_hex("temp.hex");
+
+            // probably some debug section or some other kind of bootrom?? not documented anywhere
+            // fdisplay here just so trace comparison works
+            $fdisplay(
+                this.fd,
+"0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000
+0 3 0x0000000000010004 (0x00050663)
+0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010
+0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100
+0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603
+0 3 0x000000000001001c (0x7b041073)
+0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001
+0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000
+0 3 0x0000000000010028 (0x7b141073)
+0 3 0x000000000001002c (0x7b200073)"
+            );
+
+        endtask
+
+        local task pipeline_sync();
+            forever begin
+                if(!this.fd) break;
+                @(posedge clk) begin
+                    if(!dut.stall_wb && this.pipeline[WB]) begin
+                        this.ir_retired = this.pipeline[WB].ir;
+                        if(!this.fd) break;
+                        $fdisplay(
+                            this.fd,
+                            "%s",
+                            this.pipeline[WB].retire()
+                        );
+                    end
+
+                    if(!dut.stall_mem) this.pipeline[WB]  = this.pipeline[MEM];
+                    if(!dut.stall_ex)  this.pipeline[MEM] = this.pipeline[EX];
+                    if(!dut.stall_id)  this.pipeline[EX]  = this.pipeline[ID];
+                    if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
+                    if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, dut.ir, dut.pc);
+
+                    if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
+
+                    if(dut.t_flush_ex)  this.pipeline[EX] = null;
+
+                    if(dut.t_flush_id || dut.flush_id) begin
+                        this.pipeline[ID] = null;
+                    end
+
+                    if(dut.t_flush_pd || dut.flush_pd) begin
+                        this.pipeline[PD] = null;
+                    end
+                end
+            end
+        endtask
+
+        local task exception_handler();
+            forever begin
+                if(!this.fd) break;
+                @(negedge clk) begin
+                    if(dut.u_csr.csr_addr_invalid && this.pipeline[MEM]) begin
+                        automatic InvalidCSRException ex = new(2, 0, dut.u_csr.csr_addr);
+                        this.pipeline[MEM].e = ex;
+                    end
+                    if(dut.u_csr.ecall && this.pipeline[MEM]) begin
+                        automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
+                        this.pipeline[MEM].e = ex;
+                    end
+                end
+            end
+        endtask
+
+        bit passed;
+
+        local task tohost_monitor();
+            forever begin
+                @(negedge clk) begin
+                    if(this.ir_retired == 32'hfc3f2223) begin
+                        $fclose(this.fd);
+                        this.fd = 0;
+                        this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
+                        break;
+                    end
+                end
+            end
+        endtask
+
+        local task timeout();
+            #200_0000;
+        endtask
+
+        task run();
+
+            // hart reset signal
+            #80
+            h_rst_n = 0;
+            #80;
+            h_rst_n = 1;
+
+            // trace file handle init
+            this.fd = $fopen({this.name, ".trace"}, "w");
+
+            // run co-sim
+            this.dromajo_cosim();
+            fork
+                this.pipeline_sync();
+                this.exception_handler();
+                this.tohost_monitor();
+                this.timeout();
+            join_any
+        endtask
+
+    endclass
+
+    class RiscvTestEnv;
+
+        string path;
+
+        function new(string path, string template);
+            this.path = path;
+            this.gen_file_list(template);
+            this.passed = 0;
+            this.failed = 0;
+        endfunction
+
+        local task gen_file_list(string template);
+            $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' > tb_hart.lst"});
+        endtask
+
+        Test t;
+
+        integer passed;
+        integer failed;
+
+        task run();
+            integer fd;
+            string filename;
+
+            $display("Running riscv-tests...");
+            fd = $fopen("tb_hart.lst", "r");
+            while(!$feof(fd)) begin
+                $fgets(filename, fd);
+                filename = filename.substr(0, filename.len()-2);
+                if(filename == "") break;
+                t = new(filename);
+                t.run();
+                $display(
+                    "%-25s: %s",
+                    t.name,
+`ifdef ANSI_COLORS
+                    t.passed ? "\x1b[1;32mpassed\x1b[0m" : "\x1b[1;31mfailed\x1b[0m"
+`else
+                    t.passed ? "passed" : "failed"
 `endif
+                );
+
+                this.passed +=  t.passed;
+                this.failed += !t.passed;
+            end
+
+            $display(
+`ifdef ANSI_COLORS
+                "riscv-tests finished: \x1b[1;32m%d\x1b[0m passed, \x1b[1;31m%d\x1b[0m failed!",
+`else
+                "riscv-tests finished: %d passed, %d failed!",
+`endif
+                this.passed,
+                this.failed
+            );
+
+            $fclose(fd);
+
+            $system("rm tb_hart.lst");
+
+        endtask
+
+    endclass
+
+    RiscvTestEnv env;
+
+    initial begin
+        env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-*");
+        env.run();
         $stop();
-    endtask
-
-    initial #200000 end_sim();
-    always @(*) if(dut.bmw_ir === 32'h0000006f) end_sim();
+    end
 
 endmodule

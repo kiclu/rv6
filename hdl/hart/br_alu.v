@@ -16,7 +16,7 @@
  * external case of any product you make using this documentation.
  */
 
-module br_alu(
+module br_alu (
     input      [63:0] pc,
     input      [31:0] ir,
 

@@ -28,6 +28,10 @@ module hart #(parameter HART_ID = 0) (
     output [`hmem_line-1:0] h_data_out,
     output                  h_wr,
 
+    input                   h_irq_e,
+    input                   h_irq_t,
+    input                   h_irq_s,
+
     input            [63:0] h_inv_addr,
     input                   h_inv,
 
@@ -73,42 +77,42 @@ module hart #(parameter HART_ID = 0) (
     wire stall_if;
 
     // program counter
-    pc u_pc(
-        .pc(pc),
+    pc u_pc (
+        .pc             (pc             ),
 
-        .trap_taken(trap_taken),
-        .trap_addr(trap_addr),
+        .trap_taken     (trap_taken     ),
+        .trap_addr      (trap_addr      ),
 
-        .jalr_taken(jalr_taken),
-        .jalr_addr(jalr_addr),
+        .jalr_taken     (jalr_taken     ),
+        .jalr_addr      (jalr_addr      ),
 
-        .pr_miss(pr_miss),
-        .br_addr(br_addr),
+        .pr_miss        (pr_miss        ),
+        .br_addr        (br_addr        ),
 
-        .jal_taken(jal_taken),
-        .jal_addr(jal_addr),
+        .jal_taken      (jal_taken      ),
+        .jal_addr       (jal_addr       ),
 
-        .pr_taken(pr_taken),
-        .pr_offs(pr_offs),
+        .pr_taken       (pr_taken       ),
+        .pr_offs        (pr_offs        ),
 
-        .c_ins(c_ins),
+        .c_ins          (c_ins          ),
 
-        .stall(stall_if),
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .stall          (stall_if       ),
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
     // branch prediction unit
-    bpu u_bpu(
-        .pc(pc),
-        .ir(ir),
+    bpu u_bpu (
+        .pc             (pc             ),
+        .ir             (ir             ),
 
-        .jal_taken(jal_taken),
-        .jal_addr(jal_addr),
-        .pr_taken(pr_taken),
-        .pr_offs(pr_offs),
+        .jal_taken      (jal_taken      ),
+        .jal_addr       (jal_addr       ),
+        .pr_taken       (pr_taken       ),
+        .pr_offs        (pr_offs        ),
 
-        .rst_n(h_rst_n)
+        .rst_n          (h_rst_n        )
     );
 
     // instruction memory / L1i cache
@@ -119,20 +123,20 @@ module hart #(parameter HART_ID = 0) (
     wire b_dv_i;
     wire stall_imem;
 
-    imem u_imem(
-        .pc(pc),
-        .ir(ir),
+    imem u_imem (
+        .pc             (pc             ),
+        .ir             (ir             ),
 
-        .b_addr_i(b_addr_i),
+        .b_addr_i       (b_addr_i       ),
 
-        .b_data_i(b_data_i),
-        .b_rd_i(b_rd_i),
-        .b_dv_i(b_dv_i),
+        .b_data_i       (b_data_i       ),
+        .b_rd_i         (b_rd_i         ),
+        .b_dv_i         (b_dv_i         ),
 
-        .stall(stall_if),
-        .stall_imem(stall_imem),
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .stall          (stall_if       ),
+        .stall_imem     (stall_imem     ),
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
     reg [63:0] bfp_pc;
@@ -141,17 +145,19 @@ module hart #(parameter HART_ID = 0) (
     reg bfp_pr_taken;
     reg bfp_c_ins;
 
+    wire flush_pd = !flush_n && !stall_if;
+
     always @(posedge h_clk) begin
-        if(!flush_n || t_flush_pd) begin
-            bfp_ir <= 32'h13;
+        if(flush_pd || t_flush_pd) begin
+            bfp_ir       <= 32'h13;
             bfp_pr_taken <= 1'b0;
-            bfp_c_ins <= 1'b0;
+            bfp_c_ins    <= 1'b0;
         end
         else if(!stall_if) begin
-            bfp_pc <= pc;
-            bfp_ir <= ir;
+            bfp_pc       <= pc;
+            bfp_ir       <= ir;
             bfp_pr_taken <= pr_taken;
-            bfp_c_ins <= c_ins;
+            bfp_c_ins    <= c_ins;
         end
     end
 
@@ -162,18 +168,18 @@ module hart #(parameter HART_ID = 0) (
     wire stall_pd;
 
     // instruction predecoder
-    pd u_pd(
-        .pc_in(bfp_pc),
-        .ir_in(bfp_ir),
+    pd u_pd (
+        .pc_in          (bfp_pc         ),
+        .ir_in          (bfp_ir         ),
 
-        .ir_out(pd_ir),
+        .ir_out         (pd_ir          ),
 
-        .amo_req(h_amo_req),
-        .amo_ack(h_amo_ack),
+        .amo_req        (h_amo_req      ),
+        .amo_ack        (h_amo_ack      ),
 
-        .stall(stall_pd),
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .stall          (stall_pd       ),
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
     reg [63:0] bpd_pc;
@@ -182,17 +188,19 @@ module hart #(parameter HART_ID = 0) (
     reg bpd_pr_taken;
     reg bpd_c_ins;
 
+    wire flush_id = !flush_n && !stall_if;
+
     always @(posedge h_clk) begin
-        if(!flush_n || t_flush_id) begin
-            bpd_ir <= 32'h13;
+        if(flush_id || t_flush_id) begin
+            bpd_ir       <= 32'h13;
             bpd_pr_taken <= 1'b0;
-            bpd_c_ins <= 1'b0;
+            bpd_c_ins    <= 1'b0;
         end
         else if(!stall_pd) begin
-            bpd_pc <= bfp_pc;
-            bpd_ir <= pd_ir;
+            bpd_pc       <= bfp_pc;
+            bpd_ir       <= pd_ir;
             bpd_pr_taken <= bfp_pr_taken;
-            bpd_c_ins <= bfp_c_ins;
+            bpd_c_ins    <= bfp_c_ins;
         end
     end
 
@@ -209,66 +217,59 @@ module hart #(parameter HART_ID = 0) (
     wire wr;
 
     // register file
-    regfile u_regfile(
-        .r1(r1),
-        .rs1(rs1),
+    regfile u_regfile (
+        .r1             (r1             ),
+        .rs1            (rs1            ),
 
-        .r2(r2),
-        .rs2(rs2),
+        .r2             (r2             ),
+        .rs2            (rs2            ),
 
-        .d(d),
-        .rd(rd),
-        .wr(wr),
+        .d              (d              ),
+        .rd             (rd             ),
+        .wr             (wr             ),
 
-        .clk(h_clk)
+        .clk            (h_clk          )
     );
 
     wire stall_id;
 
     // branch alu
-    br_alu u_br_alu(
-        .pc(bpd_pc),
-        .ir(bpd_ir),
+    br_alu u_br_alu (
+        .pc             (bpd_pc         ),
+        .ir             (bpd_ir         ),
 
-        .r1(r1),
-        .r2(r2),
+        .r1             (r1             ),
+        .r2             (r2             ),
 
-        .jalr_taken(jalr_taken),
-        .jalr_addr(jalr_addr),
+        .jalr_taken     (jalr_taken     ),
+        .jalr_addr      (jalr_addr      ),
 
-        .pr_miss(pr_miss),
-        .br_addr(br_addr),
+        .pr_miss        (pr_miss        ),
+        .br_addr        (br_addr        ),
 
-        .pr_taken(bpd_pr_taken),
+        .pr_taken       (bpd_pr_taken   ),
 
-        .stall(stall_id)
+        .stall          (stall_id       )
     );
 
-    assign flush_n = h_rst_n && !pr_miss && !jalr_taken;
+    assign flush_n = h_rst_n && (!pr_miss && !jalr_taken);
 
     // immediate format mux
-    wire [63:0] mux_imm [0:4];
-    assign mux_imm[0] = {{52{bpd_ir[31]}}, bpd_ir[31:20]};                  // I-type
-    assign mux_imm[1] = {{52{bpd_ir[31]}}, bpd_ir[31:25], bpd_ir[11:7]};    // S-type
-    assign mux_imm[2] = {{32{bpd_ir[31]}}, bpd_ir[31:12], 12'b0};           // U-type
-    assign mux_imm[3] = bpd_c_ins ? 64'h2 : 64'h4;                          // J-type
-    assign mux_imm[4] = {59'b0, bpd_ir[19:15]};                             // SYSTEM-IMM
-    reg [2:0] s_mux_imm;
-
+    reg [63:0] mux_imm;
     always @(*) begin
         case(bpd_ir[6:0])
             // I-type
-            7'b0000011, 7'b0010011: s_mux_imm <= 3'b000;
+            7'b0000011, 7'b0010011, 7'b0011011: mux_imm = {{52{bpd_ir[31]}}, bpd_ir[31:20]};
             // S-type
-            7'b0100011:             s_mux_imm <= 3'b001;
+            7'b0100011:                         mux_imm = {{52{bpd_ir[31]}}, bpd_ir[31:25], bpd_ir[11:7]};
             // U-type
-            7'b0110111, 7'b0010111: s_mux_imm <= 3'b010;
+            7'b0110111, 7'b0010111:             mux_imm = {{32{bpd_ir[31]}}, bpd_ir[31:12], 12'b0};
             // J-type
-            7'b1101111, 7'b1100111: s_mux_imm <= 3'b011;
+            7'b1101111, 7'b1100111:             mux_imm = bpd_c_ins ? 64'h2 : 64'h4;
             // SYSTEM
-            7'b1110011:             s_mux_imm <= 3'b100;
+            7'b1110011:                         mux_imm = {59'b0, bpd_ir[19:15]};
 
-            default:                s_mux_imm <= 3'b000;
+            default:                            mux_imm = 64'b0;
         endcase
     end
 
@@ -283,13 +284,13 @@ module hart #(parameter HART_ID = 0) (
     always @(posedge h_clk) begin
         if(!h_rst_n || t_flush_ex) bdx_ir <= 32'h13;
         else if(!stall_id) begin
-            bdx_pc <= bpd_pc;
-            bdx_ir <= bpd_ir;
+            bdx_pc  <= bpd_pc;
+            bdx_ir  <= bpd_ir;
 
-            bdx_r1 <= r1;
-            bdx_r2 <= r2;
+            bdx_r1  <= r1;
+            bdx_r2  <= r2;
 
-            bdx_imm <= mux_imm[s_mux_imm];
+            bdx_imm <= mux_imm;
         end
     end
 
@@ -323,11 +324,15 @@ module hart #(parameter HART_ID = 0) (
 
     wire [63:0] alu_out;
 
-    alu u_alu(
-        .a(alu_mx_a[s_alu_mx_a]),
-        .b(alu_mx_b[s_alu_mx_b]),
-        .alu_out(alu_out),
-        .op_ir({bdx_ir[31:27], bdx_ir[14:12], bdx_ir[6:0]})
+    wire [63:0] alu_a  = alu_mx_a[s_alu_mx_a];
+    wire [63:0] alu_b  = alu_mx_b[s_alu_mx_b];
+    wire [14:0] alu_op = {bdx_ir[31:27], bdx_ir[14:12], bdx_ir[6:0]};
+
+    alu u_alu (
+        .a              (alu_a          ),
+        .b              (alu_b          ),
+        .alu_out        (alu_out        ),
+        .op_ir          (alu_op         )
     );
 
     reg [63:0] bxm_pc;
@@ -341,11 +346,11 @@ module hart #(parameter HART_ID = 0) (
     always @(posedge h_clk) begin
         if(!h_rst_n || t_flush_mem) bxm_ir <= 32'h13;
         else if(!stall_ex) begin
-            bxm_pc <= bdx_pc;
-            bxm_ir <= bdx_ir;
+            bxm_pc      <= bdx_pc;
+            bxm_ir      <= bdx_ir;
 
             bxm_alu_out <= alu_out;
-            bxm_r2 <= bdx_r2;
+            bxm_r2      <= bdx_r2;
         end
     end
 
@@ -365,34 +370,37 @@ module hart #(parameter HART_ID = 0) (
 
     wire stall_dmem;
 
-    dmem u_dmem(
-        .addr(bxm_alu_out),
-        .len(bxm_ir[14:12]),
+    wire op_load  = bxm_ir[6:0] == 7'b0000011;
+    wire op_write = bxm_ir[6:0] == 7'b0100011;
 
-        .data_out(dmem_out),
-        .rd(bxm_ir[6:0] == 7'b0000011),
+    dmem u_dmem (
+        .addr           (bxm_alu_out    ),
+        .len            (bxm_ir[14:12]  ),
 
-        .data_in(bxm_r2),
-        .wr(bxm_ir[6:0] == 7'b0100011),
+        .data_out       (dmem_out       ),
+        .rd             (op_load        ),
 
-        .ld_ma(dmem_ld_ma),
-        .st_ma(dmem_st_ma),
+        .data_in        (bxm_r2         ),
+        .wr             (op_write       ),
 
-        .b_addr_d(b_addr_d),
+        .ld_ma          (dmem_ld_ma     ),
+        .st_ma          (dmem_st_ma     ),
 
-        .b_data_in_d(b_data_in_d),
-        .b_rd_d(b_rd_d),
-        .b_dv_d(b_dv_d),
+        .b_addr_d       (b_addr_d       ),
 
-        .b_data_out_d(b_data_out_d),
-        .b_wr_d(b_wr_d),
+        .b_data_in_d    (b_data_in_d    ),
+        .b_rd_d         (b_rd_d         ),
+        .b_dv_d         (b_dv_d         ),
 
-        .inv_addr(h_inv_addr),
-        .inv(h_inv),
+        .b_data_out_d   (b_data_out_d   ),
+        .b_wr_d         (b_wr_d         ),
 
-        .stall_dmem(stall_dmem),
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .inv_addr       (h_inv_addr     ),
+        .inv            (h_inv          ),
+
+        .stall_dmem     (stall_dmem     ),
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
     wire [63:0] csr_out;
@@ -402,40 +410,41 @@ module hart #(parameter HART_ID = 0) (
     wire csr_pr_invalid;
 
     csr #(.HART_ID(HART_ID)) u_csr (
-        .ir(bxm_ir),
+        .ir             (bxm_ir         ),
 
-        .csr_in(bxm_alu_out),
-        .csr_out(csr_out),
+        .csr_in         (bxm_alu_out    ),
+        .csr_out        (csr_out        ),
 
-        .trap_taken(trap_taken),
-        .trap_addr(trap_addr),
+        .trap_taken     (trap_taken     ),
+        .trap_addr      (trap_addr      ),
 
-        .intr_s(1'b0),
-        .intr_t(1'b0),
-        .intr_e(1'b0),
+        .irq_e          (h_irq_e        ),
+        .irq_t          (h_irq_t        ),
+        .irq_s          (h_irq_s        ),
 
-        .dmem_ld_ma(dmem_ld_ma),
-        .dmem_st_ma(dmem_st_ma),
+        .dmem_ld_ma     (dmem_ld_ma     ),
+        .dmem_st_ma     (dmem_st_ma     ),
 
-        .dmem_addr(bxm_alu_out),
+        .dmem_addr      (bxm_alu_out    ),
 
-        .flush_pd(t_flush_pd),
-        .flush_id(t_flush_id),
-        .flush_ex(t_flush_ex),
-        .flush_mem(t_flush_mem),
+        .flush_pd       (t_flush_pd     ),
+        .flush_id       (t_flush_id     ),
+        .flush_ex       (t_flush_ex     ),
+        .flush_mem      (t_flush_mem    ),
 
-        .pc_if(pc),
-        .pc_pd(bfp_pc),
-        .pc_id(bpd_pc),
-        .pc_ex(bdx_pc),
-        .pc_mem(bxm_pc),
+        .pc_if          (pc             ),
+        .pc_pd          (bfp_pc         ),
+        .pc_id          (bpd_pc         ),
+        .pc_ex          (bdx_pc         ),
+        .pc_mem         (bxm_pc         ),
 
-        .stall(stall_mem),
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .stall          (stall_mem      ),
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
     reg [31:0] bmw_ir;
+    reg [63:0] bmw_pc;
 
     reg [63:0] bmw_csr_out;
     reg [63:0] bmw_alu_out;
@@ -444,10 +453,11 @@ module hart #(parameter HART_ID = 0) (
     always @(posedge h_clk) begin
         if(!h_rst_n) bmw_ir <= 32'h13;
         else if(!stall_mem) begin
-            bmw_ir <= bxm_ir;
+            bmw_ir       <= bxm_ir;
+            bmw_pc       <= bxm_pc;
 
-            bmw_csr_out <= csr_out;
-            bmw_alu_out <= bxm_alu_out;
+            bmw_csr_out  <= csr_out;
+            bmw_alu_out  <= bxm_alu_out;
             bmw_dmem_out <= dmem_out;
         end
     end
@@ -488,71 +498,71 @@ module hart #(parameter HART_ID = 0) (
 
     wire stall_hmem;
 
-    hmem u_hmem(
-        .b_addr_i(b_addr_i),
-        .b_data_i(b_data_i),
-        .b_rd_i(b_rd_i),
-        .b_dv_i(b_dv_i),
+    hmem u_hmem (
+        .b_addr_i       (b_addr_i       ),
+        .b_data_i       (b_data_i       ),
+        .b_rd_i         (b_rd_i         ),
+        .b_dv_i         (b_dv_i         ),
 
-        .b_addr_d(b_addr_d),
+        .b_addr_d       (b_addr_d       ),
 
-        .b_data_in_d(b_data_in_d),
-        .b_rd_d(b_rd_d),
-        .b_dv_d(b_dv_d),
+        .b_data_in_d    (b_data_in_d    ),
+        .b_rd_d         (b_rd_d         ),
+        .b_dv_d         (b_dv_d         ),
 
-        .b_data_out_d(b_data_out_d),
-        .b_wr_d(b_wr_d),
+        .b_data_out_d   (b_data_out_d   ),
+        .b_wr_d         (b_wr_d         ),
 
-        .h_addr(h_addr),
+        .h_addr         (h_addr         ),
 
-        .h_data_in(h_data_in),
-        .h_rd(h_rd),
-        .h_dv(h_dv),
+        .h_data_in      (h_data_in      ),
+        .h_rd           (h_rd           ),
+        .h_dv           (h_dv           ),
 
-        .h_data_out(h_data_out),
-        .h_wr(h_wr),
+        .h_data_out     (h_data_out     ),
+        .h_wr           (h_wr           ),
 
-        .inv_addr(h_inv_addr),
-        .inv(h_inv),
+        .inv_addr       (h_inv_addr     ),
+        .inv            (h_inv          ),
 
-        .stall_hmem(stall_hmem),
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .stall_hmem     (stall_hmem     ),
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
     /* CONTROL UNIT */
 
-    cu u_cu(
-        .ir_id(bpd_ir),
-        .ir_ex(bdx_ir),
-        .ir_mem(bxm_ir),
-        .ir_wb(bmw_ir),
+    cu u_cu (
+        .ir_id          (bpd_ir         ),
+        .ir_ex          (bdx_ir         ),
+        .ir_mem         (bxm_ir         ),
+        .ir_wb          (bmw_ir         ),
 
-        .stall_if(stall_if),
-        .stall_pd(stall_pd),
-        .stall_id(stall_id),
-        .stall_ex(stall_ex),
-        .stall_mem(stall_mem),
-        .stall_wb(stall_wb),
+        .stall_if       (stall_if       ),
+        .stall_pd       (stall_pd       ),
+        .stall_id       (stall_id       ),
+        .stall_ex       (stall_ex       ),
+        .stall_mem      (stall_mem      ),
+        .stall_wb       (stall_wb       ),
 
-	    .stall_imem(stall_imem),
-        .stall_dmem(stall_dmem),
-        .stall_hmem(stall_hmem),
+	    .stall_imem     (stall_imem     ),
+        .stall_dmem     (stall_dmem     ),
+        .stall_hmem     (stall_hmem     ),
 
-        .amo_req(h_amo_req),
-        .amo_ack(h_amo_ack),
+        .amo_req        (h_amo_req      ),
+        .amo_ack        (h_amo_ack      ),
 
-        .b_rd_i(b_rd_i),
-        .b_rd_d(b_rd_d),
+        .b_rd_i         (b_rd_i         ),
+        .b_rd_d         (b_rd_d         ),
 
-        .s_mx_a_fw(s_mx_a_fw),
-        .a_fw(a_fw),
+        .s_mx_a_fw      (s_mx_a_fw      ),
+        .a_fw           (a_fw           ),
 
-        .s_mx_b_fw(s_mx_b_fw),
-        .b_fw(b_fw),
+        .s_mx_b_fw      (s_mx_b_fw      ),
+        .b_fw           (b_fw           ),
 
-        .rst_n(h_rst_n),
-        .clk(h_clk)
+        .rst_n          (h_rst_n        ),
+        .clk            (h_clk          )
     );
 
 endmodule
