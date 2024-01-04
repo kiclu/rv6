@@ -7,6 +7,7 @@
 - [Core Architecture](https://github.com/kiclu/rv6#core-architecture)
 - [Project Structure](https://github.com/kiclu/rv6#project-structure)
 - [Parameters](https://github.com/kiclu/rv6#parameters)
+- [Prerequisites](https://github.com/kiclu/rv6#prerequisites)
 - [License](https://github.com/kiclu/rv6#license)
 
 ## Features
@@ -122,6 +123,11 @@ During the Write Back stage, the result from previous stages is written back int
 | `bpu_static_btaken`                                                       | ifdef flag    | Branch predict static backward taken              |
 
 *Parameters labeled with `ifdef flag` type are conditional compilation flags and are included in the project only if corresponding flag is defined in `config.v` file.
+
+## Prerequisites
+- [riscv-collab/riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain)
+- [riscv-software-src/riscv-tests](https://github.com/riscv-software-src/riscv-tests)
+- [chipsalliance/dromajo](https://github.com/chipsalliance/dromajo)
 
 ## License
 The hardware is licensed under the [CERN Open Hardware Licence Version 2 - Strongly Reciprocal](https://ohwr.org/cern_ohl_s_v2.txt).
