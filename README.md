@@ -67,7 +67,7 @@ During the Write Back stage, the result from previous stages is written back int
 .
 ├─ doc/             # Documentation files
 ├─ hdl/             # Synthesis source files
-│   ├─ hart/            # Hart top-level & submodules
+│   ├─ hart/            # HART top-level & submodules
 │   │   ├─ alu.v            # Integer ALU
 │   │   ├─ bpu.v            # Branch Prediction Unit
 │   │   ├─ br_alu.v         # Branch ALU
@@ -75,7 +75,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ cu.v             # Control Unit
 │   │   ├─ dmem.v           # Data Memory (L1d cache)
 │   │   ├─ hart.v           # Core top-level module
-│   │   ├─ hmem.v           # Hart Memory (L2 cache)
+│   │   ├─ hmem.v           # HART Memory (L2 cache)
 │   │   ├─ imem.v           # Instruction Memory (L1i cache)
 │   │   ├─ pc.v             # Program Counter
 │   │   ├─ pd.v             # Instruction Pre-Decoder
@@ -85,9 +85,7 @@ During the Write Back stage, the result from previous stages is written back int
 ├─ simulation/      # ModelSim project files
 ├─ synthesis/       # Vivado & Quartus II project files
 ├─ test/            # Testbench source files
-│   ├─ auto/            # Automated tests
-│   ├─ c/               # C source files for automated tests
-│   └─ tb_hart.sv       # Hart testbench module
+│   └─ tb_hart.sv       # HART testbench
 ├─ LICENSE
 ├─ Makefile
 └─ README.md
