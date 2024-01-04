@@ -77,7 +77,7 @@ module alu (
                 3'b101:  alu_out[31:0] = op_ir[13] ? `swa >>> b[4:0] : `swa >> b[4:0];
                 default: alu_out[31:0] = `wa + `wb;
             endcase
-            alu_out[63:32] = (op_ir[9:7] == 3'b001 || op_ir[9:7] == 3'b101) ? 32'b0 : {32{alu_out[31]}};
+            alu_out[63:32] = {32{alu_out[31]}};
         end
     end
 
