@@ -43,7 +43,7 @@ module alu (
 
     `define swa $signed(a[31:0])
 
-    always @(a, b, op_ir) begin
+    always @(*) begin
         alu_out = a + b;
         if(op_ir[6:0] == `op_lui) alu_out = b;
         else if(op_ir[6:0] == `op_amo) begin
@@ -72,12 +72,11 @@ module alu (
         end
         else if(op_ir[6:0] == `op_rtype_w || op_ir[6:0] == `op_itype_w) begin
             case(op_ir[9:7])
-                3'b000:  alu_out[31:0] = op_ir[6:0] == `op_rtype_w && op_ir[13] ? `wa - `wb : `wa + `wb;
-                3'b001:  alu_out[31:0] = `wa << b[4:0];
-                3'b101:  alu_out[31:0] = op_ir[13] ? `swa >>> b[4:0] : `swa >> b[4:0];
-                default: alu_out[31:0] = `wa + `wb;
+                3'b000:  alu_out = $signed(op_ir[6:0] == `op_rtype_w && op_ir[13] ? `wa - `wb : `wa + `wb);
+                3'b001:  alu_out = $signed(`wa << b[4:0]);
+                3'b101:  alu_out = $signed(op_ir[13] ? `swa >>> b[4:0] : `swa >> b[4:0]);
+                default: alu_out = $signed(`wa + `wb);
             endcase
-            alu_out[63:32] = (op_ir[9:7] == 3'b001 || op_ir[9:7] == 3'b101) ? 32'b0 : {32{alu_out[31]}};
         end
     end
 

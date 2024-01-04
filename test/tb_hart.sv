@@ -22,6 +22,7 @@
 `define tb_mem_size 64'h10_0000
 
 `define ANSI_COLORS
+`define DROMAJO_VERBOSE
 
 `timescale 1ns/1ps
 
@@ -234,18 +235,16 @@ module tb_hart;
             integer k;
             this.elf = elf;
             for(integer i = 0; i < elf.len(); ++i) begin
-                if(elf.getc(i) == 8'h2F) begin
-                    k = i;
-                end
+                if(elf.getc(i) == 8'h2F) k = i+1;
             end
-            this.name = elf.substr(k+1, elf.len()-1);
+            this.name = elf.substr(k, elf.len()-1);
         endfunction
 
         local string elf;
 
         local bit [31:0] ir_retired;
         local integer fd;
-        local Instruction pipeline [1:5];
+        Instruction pipeline [1:5];
 
         local task dromajo_cosim();
             //$system({`dromajo, " --trace 0 ", this.elf, " 2> check.trace"});
@@ -329,7 +328,11 @@ module tb_hart;
                     if(this.ir_retired == 32'hfc3f2223) begin
                         $fclose(this.fd);
                         this.fd = 0;
+`ifdef DROMAJO_VERBOSE
+                        this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " 2> ", this.name, ".dromajo.log > ", this.name, ".dromajo.log"}) == 0;
+`else
                         this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
+`endif
                         break;
                     end
                 end
