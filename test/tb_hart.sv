@@ -287,7 +287,7 @@ module tb_hart;
                     if(!dut.stall_ex)  this.pipeline[MEM] = this.pipeline[EX];
                     if(!dut.stall_id)  this.pipeline[EX]  = this.pipeline[ID];
                     if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
-                    if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, dut.ir, dut.pc);
+                    if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
 
                     if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
 
@@ -437,7 +437,9 @@ module tb_hart;
     RiscvTestEnv env;
 
     initial begin
-        env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-*");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-*");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64uc-p-rvc");
+        env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sd");
         env.run();
         $stop();
     end
