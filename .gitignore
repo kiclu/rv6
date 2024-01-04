@@ -7,3 +7,6 @@
 
 # backup files
 *.bak
+
+# verification logs/traces
+simulation/*trace*
