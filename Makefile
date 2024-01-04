@@ -19,5 +19,6 @@ syn_all: ${SOURCES_SYN}
 ut: | ${SOURCES_SYN} ${SOURCES_SIM}
 	@cd simulation/ && vsim -c tb_hart -do 'run -all; quit -f;'
 
-# Clean all
-# clean:
+clean:
+	rm -rf simulation/*.trace
+	rm -rf simulation/*.dromajo.log

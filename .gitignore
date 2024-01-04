@@ -9,4 +9,6 @@
 *.bak
 
 # verification logs/traces
-simulation/*trace*
+simulation/*.trace
+simulation/*.dromajo.log
+simulation/transcript
