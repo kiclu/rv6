@@ -376,7 +376,7 @@ module csr #(parameter HART_ID = 0) (
             // mvendorid
             `mvendorid_reg  <= 64'h0000000000000000;
             // marchid
-            `marchid_reg    <= 64'h0000000000000000;
+            `marchid_reg    <= 64'h0000000000000027;
             // mimpid
             `mimpid_reg     <= 64'h0000000000000000;
             // mhartid
