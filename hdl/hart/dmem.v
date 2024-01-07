@@ -20,343 +20,238 @@
 
 `include "../config.v"
 
-`define dmem_read_valid_delay 3'd2
-
 module dmem(
-    input                [63:0] addr,
-    input                [ 2:0] len,
+    input                    [63:0] addr,
+    input                    [ 2:0] len,
 
-    output               [63:0] data_out,
-    input                       rd,
+    input                    [63:0] data_in,
+    input                           wr,
 
-    input                [63:0] data_in,
-    input                       wr,
+    output reg               [63:0] data_out,
+    input                           rd,
 
     // misaligned access
-    output                      ld_ma,
-    output                      st_ma,
+    output                          ld_ma,
+    output                          st_ma,
 
     // external bus signals
-    output reg           [63:0] b_addr_d,
+    output reg  [`DMEM_BLK_LEN-1:0] b_addr_d,
 
-    input      [`dmem_line-1:0] b_data_in_d,
-    output reg                  b_rd_d,
-    input                       b_dv_d,
-
-    output reg [`dmem_line-1:0] b_data_out_d,
-    output reg                  b_wr_d,
+    input          [`DMEM_LINE-1:0] b_data_in_d,
+    output reg                      b_rd_d,
+    input                           b_dv_d,
 
     // cache invalidaton
-    input                [63:0] inv_addr,
-    input                       inv,
+    input       [`DMEM_BLK_LEN-1:0] inv_addr,
+    input                           inv,
 
     // control signals
-    output                      stall_dmem,
-    input                       rst_n,
-    input                       clk
+    output                          stall_dmem,
+    input                           rst_n,
+    input                           clk
 );
 
-    wire dmem_op = rd || wr;
+`ifdef  DMEM_SET_ASSOC
 
-    wire [ `dmem_tag_len-1:0] addr_tag  = addr[63:64-`dmem_tag_len];
-    wire [ `dmem_set_len-1:0] addr_set  = addr[`dmem_set_len+`dmem_offs_len-1:`dmem_offs_len];
-    wire [`dmem_offs_len-1:0] addr_offs = addr[`dmem_offs_len-1:0];
-
-    localparam dmem_size = `dmem_sets * `dmem_ways;
+    wire [  `DMEM_TAG_LEN-1:0] addr_tag  = addr[`DMEM_ADDR_TAG_RANGE ];
+    wire [  `DMEM_SET_LEN-1:0] addr_set  = addr[`DMEM_ADDR_SET_RANGE ];
+    wire [ `DMEM_OFFS_LEN-1:0] addr_offs = addr[`DMEM_ADDR_OFFS_RANGE];
 
     (* ram_style = "block" *)
-    reg  [    `dmem_line-1:0] data [0: dmem_size-1];
-    reg  [ `dmem_tag_len-1:0] tag  [0:`dmem_sets-1][0:`dmem_ways-1];
-    reg                       v    [0:`dmem_sets-1][0:`dmem_ways-1];
+    reg [   `DMEM_LINE-1:0] data [0:`DMEM_LINES-1];
+    reg [`DMEM_TAG_LEN-1:0] tag  [0:`DMEM_LINES-1];
+    reg                     v    [0:`DMEM_LINES-1];
 
-    // replacement entry
-    reg [`dmem_way_len-1:0] re [0:`dmem_sets-1];
+    reg [`DMEM_WAY_LEN-1:0] re;
+    reg hit;
 
-    reg hit_q;
+    /* BRAM WRITE */
 
-    reg [`dmem_line-1:0] cache_line_out;
-    reg [`dmem_line-1:0] cache_line_in;
+    reg [`DMEM_TAG_LEN-1:0] tag_d;
+    reg [`DMEM_SET_LEN-1:0] set_d;
+    reg [`DMEM_WAY_LEN-1:0] way_d;
+    reg [   `DMEM_LINE-1:0] d;
+    reg wre;
+    always @(posedge clk) if(wre) data[`DMEM_WAYS * set_d + way_d] <= d;
 
-    /* READ BUFFER */
+    /* BRAM READ */
 
-    reg [`dmem_tag_len-1:0] r_tag;
-    reg [`dmem_set_len-1:0] r_set;
-    reg [   `dmem_line-1:0] r_data;
-
-    wire r_hit_q = r_tag == addr_tag && r_set == addr_set;
-
-    /* CACHE DATA READ */
-
-    reg [`dmem_set_len-1:0] set_q;
-    reg [`dmem_way_len-1:0] way_q;
-
+    reg [`DMEM_TAG_LEN-1:0] tag_q;
+    reg [`DMEM_SET_LEN-1:0] set_q;
+    reg [`DMEM_WAY_LEN-1:0] way_q;
+    reg [   `DMEM_LINE-1:0] q;
     reg rde;
-    always @(posedge clk) if(rde) cache_line_out <= data[`dmem_ways*set_q + way_q];
+    always @(posedge clk) if(rde) q <= data[`DMEM_WAYS * set_q + way_q];
 
     /* WRITE BUFFER */
 
-    reg                [1:0] w_len;
-    reg [ `dmem_tag_len-1:0] w_tag;
-    reg [ `dmem_set_len-1:0] w_set;
-    reg [ `dmem_way_len-1:0] w_way;
-    reg [`dmem_offs_len-1:0] w_offs;
-    reg               [63:0] w_data;
-
+    reg [`DMEM_TAG_LEN-1:0] wb_tag;
+    reg [`DMEM_TAG_LEN-1:0] wb_set;
+    reg [   `DMEM_LINE-1:0] wb_data;
+    reg [              2:0] wb_len;
     reg wr_pend;
 
-    always @(posedge clk) begin
-        if(wr) begin
-            w_len  <= len[1:0];
-            w_tag  <= addr_tag;
-            w_set  <= addr_set;
-            w_way  <= hit_q ? way_q : re[addr_set];
-            w_offs <= addr_offs;
-            w_data <= data_in;
-        end
-    end
+    /* READ BUFFER */
 
-    /* CACHE DATA WRITE */
+    reg [`DMEM_TAG_LEN-1:0] rb_tag;
+    reg [`DMEM_SET_LEN-1:0] rb_set;
+    reg                     rb_v;
 
-    reg [`dmem_set_len-1:0] set_d;
-    reg [`dmem_way_len-1:0] way_d;
-
-    reg wre;
-    always @(posedge clk) if(wre) data[`dmem_ways*set_d + way_d] <= cache_line_in;
-
-    reg [`dmem_line-1:0] cache_line_in_w;
-    always @(*) begin
-        cache_line_in_w = r_data;
-        case(w_len[1:0])
-            2'b00: cache_line_in_w[8*w_offs +:  8] = w_data[ 7:0];
-            2'b01: cache_line_in_w[8*w_offs +: 16] = w_data[15:0];
-            2'b10: cache_line_in_w[8*w_offs +: 32] = w_data[31:0];
-            2'b11: cache_line_in_w[8*w_offs +: 64] = w_data[63:0];
-        endcase
-    end
+    wire rb_hit = rb_tag == addr_tag && rb_set == addr_set;
 
     /* FSM */
 
-    reg [1:0] dmem_fsm;
-    reg [1:0] dmem_fsm_next;
+    reg [3:0] ld_cnt;
 
-    reg [2:0] ld_cnt;
+    reg [1:0] dmem_fsm_state;
+    reg [1:0] dmem_fsm_state_next;
+
+`define S_READY 2'd0
+`define S_FETCH 2'd1
+`define S_LOAD  2'd2
+`define S_WRITE 2'd3
 
     always @(*) begin
-        cache_line_in = {`dmem_line{1'bZ}};
-        rde = 0;
-        wre = 0;
-        set_d = w_set;
-        way_d = re[w_set];
-        set_q = addr_set;
+        wre     = 0;
+        rde     = 0;
+        b_rd_d  = 0;
+        way_d   = way_q;
+        dmem_fsm_state_next = dmem_fsm_state;
+        case(dmem_fsm_state)
+            `S_READY: begin
+                if(rd &&   !hit) dmem_fsm_state_next = `S_FETCH;
+                if(wr &&   !hit) dmem_fsm_state_next = `S_FETCH;
 
-        b_data_out_d = {`dmem_line{1'bZ}};
-        b_rd_d = 0;
-        b_wr_d = 0;
+                if(rd &&    hit) dmem_fsm_state_next = `S_LOAD;
+                if(wr &&    hit) dmem_fsm_state_next = `S_LOAD;
 
-        dmem_fsm_next = dmem_fsm;
-        case(dmem_fsm)
-            // READY
-            2'd0: begin
-                if(dmem_op && !hit_q) dmem_fsm_next = 2'd1;
-                if(dmem_op &&  hit_q) dmem_fsm_next = 2'd2;
-                if(wr && r_hit_q) dmem_fsm_next = 2'd3;
-                if(rd && r_hit_q) dmem_fsm_next = 2'd0;
+                if(rd && rb_hit) dmem_fsm_state_next = `S_READY;
+                if(wr && rb_hit) dmem_fsm_state_next = `S_WRITE;
             end
-            // FETCH
-            2'd1: begin
-                b_rd_d = 1;
-
-                cache_line_in = b_data_in_d;
-                set_d = wr_pend ? w_set : addr_set;
-                way_d = re[set_d];
-                wre   = b_dv_d && !wr_pend;
-
-                if(b_dv_d && rd)      dmem_fsm_next = 2'd0;
-                if(b_dv_d && wr_pend) dmem_fsm_next = 2'd3;
+            `S_FETCH: begin
+                b_rd_d  = 1;
+                way_d   = re;
+                wre     = b_dv_d;
+                if(b_dv_d) dmem_fsm_state_next = `S_LOAD;
             end
-            // LOAD
-            2'd2: begin
-                rde = ld_cnt == `dmem_read_valid_delay;
+            `S_LOAD: begin
+                rde = ld_cnt == `DMEM_READ_VALID_DELAY;
 
-                if(ld_cnt == 2'd0 && rd)      dmem_fsm_next = 2'd0;
-                if(ld_cnt == 2'd0 && wr_pend) dmem_fsm_next = 2'd3;
+                if(!ld_cnt) dmem_fsm_state_next = wr_pend ? `S_WRITE : `S_READY;
             end
-            // WRITE
-            2'd3: begin
-                cache_line_in = cache_line_in_w;
-                wre = 1;
-                set_d = w_set;
-                way_d = w_way;
+            `S_WRITE: begin
+                wre     = 1;
 
-                b_data_out_d = cache_line_in_w;
-                b_wr_d = 1;
-
-                dmem_fsm_next = 2'd0;
+                dmem_fsm_state_next = `S_READY;
             end
         endcase
     end
 
     always @(posedge clk) begin
         if(!rst_n) begin
-            wr_pend  <= 0;
-            ld_cnt   <= `dmem_read_valid_delay;
-            dmem_fsm <= 2'd0;
-            r_tag <= 0;
-            r_set <= 0;
+            dmem_fsm_state  <= `S_READY;
+            wr_pend         <= 0;
         end
         else begin
-            case(dmem_fsm)
-                // READY
-                2'd0: begin
-                    if(dmem_op) b_addr_d <= {addr[63:`dmem_offs_len], {`dmem_offs_len{1'b0}}};
-                    wr_pend <= wr;
+            case(dmem_fsm_state)
+                `S_READY: begin
+                    ld_cnt   <= `DMEM_READ_VALID_DELAY;
 
-                    dmem_fsm <= dmem_fsm_next;
-                end
-                // FETCH
-                2'd1: begin
-                    if(b_dv_d) begin
-                        r_tag  <= wr_pend ? w_tag : addr_tag;
-                        r_set  <= wr_pend ? w_set : addr_set;
-                        r_data <= b_data_in_d;
+                    if(wr) begin
+                        wb_tag  <= addr_tag;
+                        wb_set  <= addr_set;
+                        wb_data <= data_in;
+                        wb_len  <= len;
+                        wr_pend <= 1;
                     end
-
-                    dmem_fsm <= dmem_fsm_next;
                 end
-                // LOAD
-                2'd2: begin
-                    if(ld_cnt == 2'd0) begin
-                        r_tag  <= wr_pend ? w_tag : addr_tag;
-                        r_set  <= wr_pend ? w_set : addr_set;
-                        r_data <= cache_line_out;
-                        ld_cnt <= `dmem_read_valid_delay;
-                    end
-
-                    if(ld_cnt) ld_cnt <= ld_cnt - 1;
-
-                    dmem_fsm <= dmem_fsm_next;
+                `S_FETCH: begin
+                    b_addr_d <= {addr_tag, addr_set};
                 end
-                // WRITE
-                2'd3: begin
-                    r_data  <= cache_line_in;
-                    wr_pend <= 0;
-
-                    dmem_fsm <= dmem_fsm_next;
+                `S_LOAD: begin
+                    ld_cnt   <= ld_cnt - 1;
+                    rb_tag   <= wr_pend ? wb_tag : addr_tag;
+                    rb_set   <= wr_pend ? wb_set : addr_set;
+                    rb_v     <= 1;
                 end
+                `S_WRITE: begin
+                    wr_pend  <= 0;
+                    rb_v     <= 0;
+                end
+            endcase
+            dmem_fsm_state <= dmem_fsm_state_next;
+        end
+    end
+
+    always @(posedge clk) begin
+        if(!rst_n) begin : dmem_reset
+            integer i;
+            for(i = 0; i < `DMEM_LINES; i = i + 1) begin
+                tag[i] <= 0;
+                v  [0] <= 0;
+            end
+        end
+        else begin
+            if(wre && dmem_fsm_state == `S_FETCH) begin
+                tag[`DMEM_WAYS * set_d + way_d] <= tag_d;
+                v  [`DMEM_WAYS * set_d + way_d] <= 1;
+            end
+        end
+    end
+
+    always @(*) begin
+        if(dmem_fsm_state == `S_FETCH) d = b_data_in_d;
+        else begin
+            d = q;
+            case(wb_len[1:0])
+                2'b00: d[8*addr_offs +:  8] = wb_data[ 7:0];
+                2'b01: d[8*addr_offs +: 16] = wb_data[15:0];
+                2'b10: d[8*addr_offs +: 32] = wb_data[31:0];
+                2'b11: d[8*addr_offs +: 64] = wb_data[63:0];
             endcase
         end
     end
 
-    assign stall_dmem = (rd && !r_hit_q) || (wr_pend && dmem_op);
-
-    /* OUTPUT MUX */
-
-    wire [63:0] data_mux [0:6];
-    assign data_mux[0] =   $signed(r_data[8*addr_offs +:  8]);  // signed byte
-    assign data_mux[1] =   $signed(r_data[8*addr_offs +: 16]);  // signed half word
-    assign data_mux[2] =   $signed(r_data[8*addr_offs +: 32]);  // signed word
-    assign data_mux[3] =           r_data[8*addr_offs +: 64];   // double word
-    assign data_mux[4] = $unsigned(r_data[8*addr_offs +:  8]);  // unsigned byte
-    assign data_mux[5] = $unsigned(r_data[8*addr_offs +: 16]);  // unsigned half word
-    assign data_mux[6] = $unsigned(r_data[8*addr_offs +: 32]);  // unsigned word
-    assign data_out = data_mux[len];
-
-    /* CACHE METADATA UPDATE */
-
-    wire [`dmem_tag_len-1:0] inv_tag = inv_addr[63:64-`dmem_tag_len];
-    wire [`dmem_set_len-1:0] inv_set = inv_addr[`dmem_set_len+`dmem_offs_len-1:`dmem_offs_len];
-
-    always @(posedge clk) begin
-        if(!rst_n) begin : dmem_rst
-            integer s, w;
-            for(s = 0; s < `dmem_sets; s = s + 1) begin
-                for(w = 0; w < `dmem_ways; w = w + 1) begin
-                    v[s][w] <= 0;
-                end
-            end
-        end
-        else begin
-            if(wre) begin
-                v  [set_d][way_d] <= 1'b1;
-                tag[set_d][way_d] <= w_tag;
-            end
-
-            // cache invalidation
-            if(inv) begin : dmem_inv
-                integer i;
-                for(i = 0; i < `dmem_ways; i = i + 1) begin
-                    if(inv_tag == tag[inv_set][i]) v[inv_set][i] <= 0;
-                end
-            end
-        end
-    end
-
-    /* HIT DETECTION */
-
-    always @(*) begin : dmem_cache_hit_q_check
-        integer i;
-        hit_q = 0; way_q = 0;
-        for(i = 0; i < `dmem_ways; i = i + 1) begin
-            if(tag[addr_set][i] == addr_tag && v[addr_set][i]) begin
-                hit_q = 1; way_q = i;
-            end
-        end
-    end
-
-    /* MISALIGNED ACCESS DETECTION */
-
-    reg [63:0] addr_2;
     always @(*) begin
-        case(len[1:0])
-            2'b00: addr_2 = addr + 64'd0;
-            2'b01: addr_2 = addr + 64'd1;
-            2'b10: addr_2 = addr + 64'd3;
-            2'b11: addr_2 = addr + 64'd7;
+        case(len)
+            3'b000: data_out =   $signed(q[8*addr_offs +:  8]);
+            3'b001: data_out =   $signed(q[8*addr_offs +: 16]);
+            3'b010: data_out =   $signed(q[8*addr_offs +: 32]);
+            3'b011: data_out =   $signed(q[8*addr_offs +: 64]);
+            3'b100: data_out = $unsigned(q[8*addr_offs +:  8]);
+            3'b101: data_out = $unsigned(q[8*addr_offs +: 16]);
+            3'b110: data_out = $unsigned(q[8*addr_offs +: 32]);
+            3'b111: data_out = $unsigned(q[8*addr_offs +: 64]);
         endcase
     end
-    assign ld_ma = rd && (addr_2[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
-    assign st_ma = wr && (addr_2[63:`dmem_offs_len] != addr[63:`dmem_offs_len]);
 
+    always @(*) begin : dmem_cache_hit
+        integer w;
+        way_q = 'bZ; hit = 0;
+        for(w = 0; w < `DMEM_WAYS; w = w + 1) begin
+            if(tag[`DMEM_WAYS * set_q + w] == tag_q && v[`DMEM_WAYS * set_q + w]) begin
+                way_q = w; hit = 1;
+            end
+        end
+    end
+
+    always @(*) begin
+        tag_d = wr_pend ? wb_tag : addr_tag;
+        set_d = wr_pend ? wb_set : addr_set;
+    end
+
+    always @(*) begin
+        tag_q = wr_pend ? wb_tag : addr_tag;
+        set_q = wr_pend ? wb_set : addr_set;
+    end
+
+    assign stall_dmem = (rd && dmem_fsm_state_next) || (wr_pend && (rd || wr));
+
+`endif//DMEM_SET_ASSOC
+
+    // TODO:
     /* REPLACEMENT POLICY */
 
-    // LRU tree
-    localparam lru_size = `dmem_ways - 1;
-    reg [lru_size-1:0] lru_tree [0:`dmem_sets-1];
-
-    wire lru_update = dmem_fsm == 2'd0 && dmem_fsm_next != 2'd0;
-    wire re_update  = dmem_fsm != 2'd0 && dmem_fsm_next == 2'd0;
-
-    // update LRU tree
-    always @(posedge clk) begin
-        if(!rst_n) begin : dmem_clr_lru
-            integer i;
-            for(i = 0; i < `dmem_sets; i = i + 1) lru_tree[i] = {lru_size{1'b1}};
-        end
-        else if(lru_update) begin : dmem_lru_update
-            integer i, l, i_parent;
-            i = (hit_q ? way_q : re[addr_set]) + lru_size;
-            for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                i_parent = (i[0] ? i-1 : i-2) >> 1;
-                lru_tree[addr_set][i_parent] = !i[0];
-                i = i_parent;
-            end
-        end
-    end
-
-    // update replacement entry
-    always @(posedge clk) begin
-        if(!rst_n) begin : dmem_clr_re
-            integer i;
-            for(i = 0; i < `dmem_sets; i = i + 1) re[i] = 0;
-        end
-        else if(re_update) begin : dmem_re_update
-            integer i, l;
-            i = 0;
-            for(l = 0; l < $clog2(`dmem_ways); l = l + 1) begin
-                i = lru_tree[addr_set][i] ? (i<<1) + 1 : (i<<1) + 2;
-            end
-            re[addr_set] = i - `dmem_ways + 1;
-        end
-    end
+    always @(posedge clk) re <= $random() % `DMEM_SETS;
 
 endmodule

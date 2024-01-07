@@ -29,17 +29,17 @@ module bpu (
     input             rst_n
 );
 
-`ifdef bpu_static_taken
+`ifdef BPU_STATIC_TAKEN
     // static branch prediction, all jumps taken
     assign pr_taken = ir[6:0] == 7'b1100011;
 `endif
 
-`ifdef bpu_static_ntaken
+`ifdef BPU_STATIC_NTAKEN
     // static branch prediction, all jumps not taken
     assign pr_taken = 0;
 `endif
 
-`ifdef bpu_static_btaken
+`ifdef BPU_STATIC_BTAKEN
     // static branch prediction, backward jumps taken, forward jumps not taken
     assign pr_taken = ir[6:0] == 7'b1100011 && ir[31];
 `endif

@@ -14,82 +14,74 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-/* CACHE */
+/*----------------------------------------------------------------------------*/
 
-// Instruction cache structure
-`define imem_struct_set_assoc
-// `define imem_struct_full_assoc
-// `define imem_struct_direct
+/* CACHE PARAMETERS */
 
-// Instruction cache line size in bits
-`define imem_line 128
-`define imem_offs_len $clog2(`imem_line/8)
+`define IMEM_SET_ASSOC
+`define IMEM_LINE               128
+`define IMEM_SETS               2
+`define IMEM_WAYS               2
+`define IMEM_READ_VALID_DELAY   2
 
-// Set associative L1i cache parameter configuration
-`ifdef imem_struct_set_assoc
-    // Set count
-    `define imem_sets 2
-    `define imem_set_len $clog2(`imem_sets)
+`define DMEM_SET_ASSOC
+`define DMEM_LINE               128
+`define DMEM_SETS               2
+`define DMEM_WAYS               2
+`define DMEM_READ_VALID_DELAY   2
 
-    // Ways per set
-    `define imem_ways 2
-    `define imem_way_len $clog2(`imem_ways)
-
-    `define imem_tag_len (64 - `imem_set_len - `imem_offs_len)
-`endif
-
-// Data cache structure
-`define dmem_struct_set_assoc
-// `define dmem_struct_full_assoc
-// `define dmem_struct_direct
-
-// Data cache line size in bits
-`define dmem_line 128
-`define dmem_offs_len $clog2(`dmem_line/8)
-
-// Set associative L1d cache parameter configuration
-`ifdef dmem_struct_set_assoc
-    // Set count
-    `define dmem_sets 2
-    `define dmem_set_len $clog2(`dmem_sets)
-
-    // Ways per set
-    `define dmem_ways 2
-    `define dmem_way_len $clog2(`dmem_ways)
-
-    `define dmem_tag_len (64 - `dmem_set_len - `dmem_offs_len)
-`endif
-
-// Hart cache structure
-`define hmem_struct_set_assoc
-// `define hmem_struct_full_assoc
-// `define hmem_struct_direct
-
-// Hart cache line size in bits
-`define hmem_line 256
-`define hmem_offs_len $clog2(`hmem_line/8)
-
-// Set associative L2 cache parameter configuration
-`ifdef hmem_struct_set_assoc
-    // Set count
-    `define hmem_sets 2
-    `define hmem_set_len $clog2(`hmem_sets)
-
-    // Ways per set
-    `define hmem_ways 2
-    `define hmem_way_len $clog2(`hmem_ways)
-
-    `define hmem_tag_len (64 - `hmem_set_len - `hmem_offs_len)
-`endif
-
+`define HMEM_SET_ASSOC
+`define HMEM_LINE               256
+`define HMEM_SETS               2
+`define HMEM_WAYS               2
+`define HMEM_READ_VALID_DELAY   2
 
 /* BRANCH PREDICTION */
 
-// Branch predict static taken
-// `define bpu_static_taken
+`define BPU_STATIC_BTAKEN
 
-// Branch predict static not taken
-// `define bpu_static_ntaken
+/*----------------------------------------------------------------------------*/
 
-// Branch predict static backward taken, forward not taken
-`define bpu_static_btaken
+`define XLEN                    64
+
+`ifdef  IMEM_SET_ASSOC
+`define IMEM_LINES              `IMEM_SETS * `IMEM_WAYS
+`define IMEM_SET_LEN            $clog2(`IMEM_SETS)
+`define IMEM_WAY_LEN            $clog2(`IMEM_WAYS)
+`define IMEM_OFFS_LEN           $clog2(`IMEM_LINE/8)
+`define IMEM_BLK_LEN            (`XLEN - `IMEM_OFFS_LEN                )
+`define IMEM_TAG_LEN            (`XLEN - `IMEM_OFFS_LEN - `IMEM_SET_LEN)
+`define IMEM_ADDR_TAG_RANGE     `XLEN                 - 1 -: `IMEM_TAG_LEN
+`define IMEM_ADDR_SET_RANGE     `XLEN - `IMEM_TAG_LEN - 1 -: `IMEM_SET_LEN
+`define IMEM_ADDR_OFFS_RANGE    `XLEN - `IMEM_BLK_LEN - 1 -: `IMEM_OFFS_LEN
+`endif//IMEM_SET_ASSOC
+
+/*----------------------------------------------------------------------------*/
+
+`ifdef  DMEM_SET_ASSOC
+`define DMEM_LINES              `DMEM_SETS * `DMEM_WAYS
+`define DMEM_SET_LEN            $clog2(`DMEM_SETS)
+`define DMEM_WAY_LEN            $clog2(`DMEM_WAYS)
+`define DMEM_OFFS_LEN           $clog2(`DMEM_LINE/8)
+`define DMEM_BLK_LEN            (`XLEN - `DMEM_OFFS_LEN                )
+`define DMEM_TAG_LEN            (`XLEN - `DMEM_OFFS_LEN - `DMEM_SET_LEN)
+`define DMEM_ADDR_TAG_RANGE     `XLEN                 - 1 -: `DMEM_TAG_LEN
+`define DMEM_ADDR_SET_RANGE     `XLEN - `DMEM_TAG_LEN - 1 -: `DMEM_SET_LEN
+`define DMEM_ADDR_OFFS_RANGE    `XLEN - `DMEM_BLK_LEN - 1 -: `DMEM_OFFS_LEN
+`endif//DMEM_SET_ASSOC
+
+/*----------------------------------------------------------------------------*/
+
+`ifdef  HMEM_SET_ASSOC
+`define HMEM_LINES              `HMEM_SETS * `HMEM_WAYS
+`define HMEM_SET_LEN            $clog2(`HMEM_SETS)
+`define HMEM_WAY_LEN            $clog2(`HMEM_WAYS)
+`define HMEM_OFFS_LEN           $clog2(`HMEM_LINE/8)
+`define HMEM_BLK_LEN            (`XLEN - `HMEM_OFFS_LEN                )
+`define HMEM_TAG_LEN            (`XLEN - `HMEM_OFFS_LEN - `HMEM_SET_LEN)
+`define HMEM_ADDR_TAG_RANGE     `XLEN                 - 1 -: `HMEM_TAG_LEN
+`define HMEM_ADDR_SET_RANGE     `XLEN - `HMEM_TAG_LEN - 1 -: `HMEM_SET_LEN
+`define HMEM_ADDR_OFFS_RANGE    `XLEN - `HMEM_BLK_LEN - 1 -: `HMEM_OFFS_LEN
+`endif//HMEM_SET_ASSOC
+
+/*----------------------------------------------------------------------------*/

@@ -19,11 +19,11 @@
 module hart #(parameter HART_ID = 0) (
     output           [63:0] h_addr,
 
-    input  [`hmem_line-1:0] h_data_in,
+    input  [`HMEM_LINE-1:0] h_data_in,
     output                  h_rd,
     input                   h_dv,
 
-    output [`hmem_line-1:0] h_data_out,
+    output           [63:0] h_data_out,
     output                  h_wr,
 
     input                   h_irq_e,
@@ -116,7 +116,7 @@ module hart #(parameter HART_ID = 0) (
     // instruction memory / L1i cache
 
     wire [63:0] b_addr_i;
-    wire [`imem_line-1:0] b_data_i;
+    wire [`IMEM_LINE-1:0] b_data_i;
     wire b_rd_i;
     wire b_dv_i;
     wire stall_imem;
@@ -362,10 +362,10 @@ module hart #(parameter HART_ID = 0) (
     // data memory / L1d cache
 
     wire [63:0] b_addr_d;
-    wire [`dmem_line-1:0] b_data_in_d;
+    wire [`DMEM_LINE-1:0] b_data_in_d;
     wire b_rd_d;
     wire b_dv_d;
-    wire [`dmem_line-1:0] b_data_out_d;
+    wire [`DMEM_LINE-1:0] b_data_out_d;
     wire b_wr_d;
 
     wire stall_dmem;

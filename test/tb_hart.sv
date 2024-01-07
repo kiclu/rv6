@@ -16,21 +16,24 @@
 
 `include "../hdl/config.v"
 
-`define tb_entry    64'h8000_0000
-`define tb_mem_size 64'h10_0000
+`define TB_ENTRY    64'h8000_0000
+`define TB_MEM_SIZE 64'h10_0000
 
 `define ANSI_COLORS
 `define DROMAJO_VERBOSE
 
-`timescale 1ns/1ps
+`define DROMAJO             "/opt/riscv/bin/dromajo"
+`define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
+`define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
+`timescale 1ns/1ps
 module tb_hart;
 
     wire             [63:0] h_addr;
-    reg    [`hmem_line-1:0] h_data_in;
+    reg    [`HMEM_LINE-1:0] h_data_in;
     wire                    h_rd;
     reg                     h_dv;
-    wire   [`hmem_line-1:0] h_data_out;
+    wire   [`HMEM_LINE-1:0] h_data_out;
     wire                    h_wr;
     reg                     h_irq_e;
     reg                     h_irq_t;
@@ -70,11 +73,7 @@ module tb_hart;
         h_inv_addr  = 64'bZ;
         h_inv       = 0;
         h_amo_ack   = 0;
-    end
-
-    // reset signal
-    initial begin
-        h_rst_n = 1;
+        h_rst_n     = 1;
     end
 
     // clock generator
@@ -87,12 +86,12 @@ module tb_hart;
 
     /* MEMORY MODEL */
 
-    reg [7:0] mem [`tb_entry : `tb_entry+`tb_mem_size-1];
+    reg [7:0] mem [`TB_ENTRY : `TB_ENTRY+`TB_MEM_SIZE-1];
 
     // initialize memory
     task read_hex(string filename);
-        $readmemh(filename, mem, `tb_entry);
-        for(integer i = `tb_entry; i < `tb_entry+`tb_mem_size; ++i) begin
+        $readmemh(filename, mem, `TB_ENTRY);
+        for(integer i = `TB_ENTRY; i < `TB_ENTRY+`TB_MEM_SIZE; ++i) begin
             if(mem[i] === 8'hX) mem[i] = 8'h00;
         end
     endtask
@@ -101,12 +100,12 @@ module tb_hart;
     always @(h_rd) begin
         if(h_rd) begin
             #800
-            for(integer i = 0; i < `hmem_line/8; ++i) begin
+            for(integer i = 0; i < `HMEM_LINE/8; ++i) begin
                 h_data_in[8*i +: 8] = mem[h_addr + i];
             end
             h_dv = 1;
             #20
-            h_data_in = `hmem_line'bZ;
+            h_data_in = `HMEM_LINE'bZ;
             h_dv = 0;
         end
         else begin
@@ -118,7 +117,7 @@ module tb_hart;
     // memory write op
     always @(posedge clk) begin
         if(h_wr) begin
-            for(integer i = 0; i < `hmem_line/8; ++i) begin
+            for(integer i = 0; i < `HMEM_LINE/8; ++i) begin
                 mem[h_addr + i] = h_data_out[8*i +: 8];
             end
         end
@@ -126,11 +125,6 @@ module tb_hart;
 
     /* MONITOR */
 
-    string _elf = "/opt/riscv/target/share/riscv-tests/isa/rv64ui-p-xor";
-
-`define dromajo             "/opt/riscv/bin/dromajo"
-`define dromajo_cosim_test  "/opt/riscv/bin/dromajo_cosim_test"
-`define objcopy             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
     class Exception;
         bit [63:0] cause;
@@ -245,8 +239,8 @@ module tb_hart;
         Instruction pipeline [1:5];
 
         local task dromajo_cosim();
-            //$system({`dromajo, " --trace 0 ", this.elf, " 2> check.trace"});
-            $system({`objcopy, " -O verilog ", this.elf, " temp.hex"});
+            //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
+            $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
             read_hex("temp.hex");
 
             // probably some debug section or some other kind of bootrom?? not documented anywhere
@@ -331,9 +325,9 @@ module tb_hart;
                         $fclose(this.fd);
                         this.fd = 0;
 `ifdef DROMAJO_VERBOSE
-                        this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " 2> ", this.name, ".dromajo.log > ", this.name, ".dromajo.log"}) == 0;
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim ", this.name, ".trace ", this.elf, " 2> ", this.name, ".dromajo.log > ", this.name, ".dromajo.log"}) == 0;
 `else
-                        this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim ", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
 `endif
                         break;
                     end
