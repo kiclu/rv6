@@ -53,63 +53,63 @@ module dmem(
 
 `ifdef  DMEM_SET_ASSOC
 
-    wire [  `DMEM_TAG_LEN-1:0] addr_tag  = addr[`DMEM_ADDR_TAG_RANGE ];
-    wire [  `DMEM_SET_LEN-1:0] addr_set  = addr[`DMEM_ADDR_SET_RANGE ];
-    wire [ `DMEM_OFFS_LEN-1:0] addr_offs = addr[`DMEM_ADDR_OFFS_RANGE];
+    wire [ `DMEM_TAG_LEN-1:0] addr_tag  = addr[`DMEM_ADDR_TAG_RANGE ];
+    wire [ `DMEM_SET_LEN-1:0] addr_set  = addr[`DMEM_ADDR_SET_RANGE ];
+    wire [`DMEM_OFFS_LEN-1:0] addr_offs = addr[`DMEM_ADDR_OFFS_RANGE];
 
     (* ram_style = "block" *)
-    reg [   `DMEM_LINE-1:0] data [0:`DMEM_LINES-1];
-    reg [`DMEM_TAG_LEN-1:0] tag  [0:`DMEM_LINES-1];
-    reg                     v    [0:`DMEM_LINES-1];
+    reg  [   `DMEM_LINE-1:0] data [0:`DMEM_LINES-1];
+    reg  [`DMEM_TAG_LEN-1:0] tag  [0:`DMEM_LINES-1];
+    reg                      v    [0:`DMEM_LINES-1];
 
-    reg [`DMEM_WAY_LEN-1:0] re;
-    reg hit;
+    reg  [`DMEM_WAY_LEN-1:0] re;
+    reg  hit;
 
     /* BRAM WRITE */
 
-    reg [`DMEM_TAG_LEN-1:0] tag_d;
-    reg [`DMEM_SET_LEN-1:0] set_d;
-    reg [`DMEM_WAY_LEN-1:0] way_d;
-    reg [   `DMEM_LINE-1:0] d;
-    reg wre;
+    reg  [`DMEM_TAG_LEN-1:0] tag_d;
+    reg  [`DMEM_SET_LEN-1:0] set_d;
+    reg  [`DMEM_WAY_LEN-1:0] way_d;
+    reg  [   `DMEM_LINE-1:0] d;
+    reg  wre;
     always @(posedge clk) if(wre) data[`DMEM_WAYS * set_d + way_d] <= d;
 
     /* BRAM READ */
 
-    reg [`DMEM_TAG_LEN-1:0] tag_q;
-    reg [`DMEM_SET_LEN-1:0] set_q;
-    reg [`DMEM_WAY_LEN-1:0] way_q;
-    reg [   `DMEM_LINE-1:0] q;
-    reg rde;
+    reg  [`DMEM_TAG_LEN-1:0] tag_q;
+    reg  [`DMEM_SET_LEN-1:0] set_q;
+    reg  [`DMEM_WAY_LEN-1:0] way_q;
+    reg  [   `DMEM_LINE-1:0] q;
+    reg  rde;
     always @(posedge clk) if(rde) q <= data[`DMEM_WAYS * set_q + way_q];
 
     /* WRITE BUFFER */
 
-    reg [`DMEM_TAG_LEN-1:0] wb_tag;
-    reg [`DMEM_TAG_LEN-1:0] wb_set;
-    reg [   `DMEM_LINE-1:0] wb_data;
-    reg [              2:0] wb_len;
-    reg wr_pend;
+    reg  [`DMEM_TAG_LEN-1:0] wb_tag;
+    reg  [`DMEM_TAG_LEN-1:0] wb_set;
+    reg  [   `DMEM_LINE-1:0] wb_data;
+    reg  [              2:0] wb_len;
+    reg  wr_pend;
 
     /* READ BUFFER */
 
-    reg [`DMEM_TAG_LEN-1:0] rb_tag;
-    reg [`DMEM_SET_LEN-1:0] rb_set;
-    reg                     rb_v;
+    reg  [`DMEM_TAG_LEN-1:0] rb_tag;
+    reg  [`DMEM_SET_LEN-1:0] rb_set;
+    reg                      rb_v;
 
     wire rb_hit = rb_tag == addr_tag && rb_set == addr_set;
 
     /* FSM */
 
-    reg [3:0] ld_cnt;
+    reg  [3:0] ld_cnt;
 
-    reg [1:0] dmem_fsm_state;
-    reg [1:0] dmem_fsm_state_next;
+    reg  [1:0] dmem_fsm_state;
+    reg  [1:0] dmem_fsm_state_next;
 
-`define S_READY 2'd0
-`define S_FETCH 2'd1
-`define S_LOAD  2'd2
-`define S_WRITE 2'd3
+    `define S_READY 2'd0
+    `define S_FETCH 2'd1
+    `define S_LOAD  2'd2
+    `define S_WRITE 2'd3
 
     always @(*) begin
         wre     = 0;
@@ -132,6 +132,7 @@ module dmem(
                 b_rd_d  = 1;
                 way_d   = re;
                 wre     = b_dv_d;
+
                 if(b_dv_d) dmem_fsm_state_next = `S_LOAD;
             end
             `S_LOAD: begin
@@ -147,48 +148,49 @@ module dmem(
         endcase
     end
 
+    // FSM state update
     always @(posedge clk) begin
-        if(!rst_n) begin
-            dmem_fsm_state  <= `S_READY;
-            wr_pend         <= 0;
-        end
-        else begin
-            case(dmem_fsm_state)
-                `S_READY: begin
-                    ld_cnt   <= `DMEM_READ_VALID_DELAY;
+        if(!rst_n) dmem_fsm_state  <= `S_READY;
+        else dmem_fsm_state <= dmem_fsm_state_next;
+    end
 
-                    if(wr) begin
-                        wb_tag  <= addr_tag;
-                        wb_set  <= addr_set;
-                        wb_data <= data_in;
-                        wb_len  <= len;
-                        wr_pend <= 1;
-                    end
-                end
-                `S_FETCH: begin
-                    b_addr_d <= {addr_tag, addr_set};
-                end
-                `S_LOAD: begin
-                    ld_cnt   <= ld_cnt - 1;
-                    rb_tag   <= wr_pend ? wb_tag : addr_tag;
-                    rb_set   <= wr_pend ? wb_set : addr_set;
-                    rb_v     <= 1;
-                end
-                `S_WRITE: begin
-                    wr_pend  <= 0;
-                    rb_v     <= 0;
-                end
-            endcase
-            dmem_fsm_state <= dmem_fsm_state_next;
+    // read buffer
+    always @(posedge clk) begin
+        if(dmem_fsm_state == `S_WRITE) rb_v <= 0;
+        if(dmem_fsm_state == `S_LOAD) begin
+            rb_tag <= wr_pend ? wb_tag : addr_tag;
+            rb_set <= wr_pend ? wb_set : addr_set;
+            rb_v   <= 1;
+        end
+        ld_cnt <= dmem_fsm_state == `S_LOAD ? ld_cnt - 1 : `DMEM_READ_VALID_DELAY;
+    end
+
+    // write buffer
+    always @(posedge clk) begin
+        if(!rst_n || dmem_fsm_state == `S_WRITE) wr_pend <= 0;
+        else if(wr && dmem_fsm_state == `S_READY) begin
+            wb_tag  <= addr_tag;
+            wb_set  <= addr_set;
+            wb_data <= data_in;
+            wb_len  <= len;
+            wr_pend <= 1;
         end
     end
 
+    // L2 request address
+    always @(posedge clk) begin
+        if(dmem_fsm_state == `S_FETCH) begin
+            b_addr_d <= wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
+        end
+    end
+
+    // cache metadata update
     always @(posedge clk) begin
         if(!rst_n) begin : dmem_reset
             integer i;
             for(i = 0; i < `DMEM_LINES; i = i + 1) begin
                 tag[i] <= 0;
-                v  [0] <= 0;
+                v  [i] <= 0;
             end
         end
         else begin
@@ -199,6 +201,7 @@ module dmem(
         end
     end
 
+    // input mux
     always @(*) begin
         if(dmem_fsm_state == `S_FETCH) d = b_data_in_d;
         else begin
@@ -212,6 +215,7 @@ module dmem(
         end
     end
 
+    // output mux
     always @(*) begin
         case(len)
             3'b000: data_out =   $signed(q[8*addr_offs +:  8]);
@@ -225,6 +229,7 @@ module dmem(
         endcase
     end
 
+    // cache hit detection
     always @(*) begin : dmem_cache_hit
         integer w;
         way_q = 'bZ; hit = 0;
@@ -235,17 +240,19 @@ module dmem(
         end
     end
 
+    // BRAM write address
     always @(*) begin
         tag_d = wr_pend ? wb_tag : addr_tag;
         set_d = wr_pend ? wb_set : addr_set;
     end
 
+    // BRAM read address
     always @(*) begin
         tag_q = wr_pend ? wb_tag : addr_tag;
         set_q = wr_pend ? wb_set : addr_set;
     end
 
-    assign stall_dmem = (rd && dmem_fsm_state_next) || (wr_pend && (rd || wr));
+    assign stall_dmem = (rd && dmem_fsm_state_next) || (wr && wr_pend);
 
 `endif//DMEM_SET_ASSOC
 
@@ -253,5 +260,8 @@ module dmem(
     /* REPLACEMENT POLICY */
 
     always @(posedge clk) re <= $random() % `DMEM_SETS;
+
+    // TODO:
+    /* MISALIGNED ACCESS DETECTION */
 
 endmodule
