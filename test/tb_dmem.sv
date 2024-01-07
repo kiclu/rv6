@@ -104,7 +104,7 @@
             end
             else begin
                 // WRITE
-                data_in <= {$random, $random()};
+                data_in <= {$random, $random};
 
                 wr <= 1;
                 while(stall_dmem) #20;
