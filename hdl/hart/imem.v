@@ -29,8 +29,6 @@ module imem(
     output reg                      b_rd_i,
     input                           b_dv_i,
 
-    // control signals
-    input                           stall,
     output reg                      stall_imem,
     input                           rst_n,
     input                           clk

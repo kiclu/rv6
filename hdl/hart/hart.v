@@ -131,7 +131,6 @@ module hart #(parameter HART_ID = 0) (
         .b_rd_i         (b_rd_i         ),
         .b_dv_i         (b_dv_i         ),
 
-        .stall          (stall_if       ),
         .stall_imem     (stall_imem     ),
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
