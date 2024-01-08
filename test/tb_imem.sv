@@ -25,7 +25,6 @@
     reg        [`IMEM_LINE-1:0] b_data_i;
     wire                        b_rd_i;
     reg                         b_dv_i;
-    reg                         stall;
     wire                        stall_imem;
     reg                         rst_n;
     reg                         clk;
@@ -37,7 +36,6 @@
         .b_data_i       (b_data_i       ),
         .b_rd_i         (b_rd_i         ),
         .b_dv_i         (b_dv_i         ),
-        .stall          (stall          ),
         .stall_imem     (stall_imem     ),
         .rst_n          (rst_n          ),
         .clk            (clk            )
@@ -48,7 +46,6 @@
         pc          = 64'h8000_0000;
         b_data_i    = 'bZ;
         b_dv_i      = 0;
-        stall       = 0;
         rst_n       = 0;
         #80
         rst_n       = 1;
@@ -60,15 +57,22 @@
         forever #10 clk = ~clk;
     end
 
+    bit signed [63:0] offs;
+    bit b;
+    bit jump;
+
     initial begin
         #160
-        repeat(50) begin
-            integer d;
+        repeat(200) begin
 
-            // random delay
-            d <= $random() % 30;
-            for(integer i = 0; i < d; ++i) #20;
-
+            if(!stall_imem) begin
+                offs <= $random() % 'h1000;
+                b    <= $random() % 2;
+                offs <= b ? -offs : offs;
+                jump <= ($random() % 'h1000) < 'h50;
+                pc <= pc + (jump ? offs : 2);
+            end
+            #20;
         end
 
         $stop();
@@ -76,6 +80,15 @@
 
     always @(posedge clk) begin
         if(b_rd_i) begin
+            #80
+            b_data_i    <= $random();
+            b_dv_i      <= 1;
+            #20
+            b_data_i    <= 'bZ;
+            b_dv_i      <= 0;
+            #40
+            b_data_i    <= 'bZ;
+            b_dv_i      <= 0;
         end
         else begin
             b_data_i <= 'bZ;
