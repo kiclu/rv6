@@ -14,41 +14,39 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-/*
- * Configurable, write-allocated L2 hart cache with write-through policy
- */
+`include "../config.vh"
 
-`include "../config.v"
+module cmem(
+    // write bus
+    input                   [63:0] addr,
+    input                   [ 2:0] len,
+    input                   [63:0] wdata,
+    input                          wr,
 
-module hmem(
-    // internal instruction bus
+    // imem read bus
     input      [`IMEM_BLK_LEN-1:0] b_addr_i,
     output        [`IMEM_LINE-1:0] b_data_i,
     input                          b_rd_i,
     output                         b_dv_i,
 
-    // internal data bus
-    input                   [63:0] b_addr_d,
-
-    output        [`DMEM_LINE-1:0] b_data_d,
+    // dmem read bus
+    input      [`DMEM_BLK_LEN-1:0] b_addr_d,
+    output        [`DMEM_LINE-1:0] b_rdata_d,
     input                          b_rd_d,
     output                         b_dv_d,
 
     // external bus
-    output reg              [63:0] h_addr,
+    output     [`CMEM_BLK_LEN-1:0] b_addr_c,
+    input         [`CMEM_LINE-1:0] b_rdata_c,
+    output                         b_rd_c,
+    input                          b_dv_c,
 
-    input         [`HMEM_LINE-1:0] h_data_in,
-    output reg                     h_rd,
-    input                          h_dv,
-
-    output reg    [`HMEM_LINE-1:0] h_data_out,
-    output reg                     h_wr,
-
-    // control signals
-    input                   [63:0] inv_addr,
+    // cache invalidation
+    input      [`CMEM_BLK_LEN-1:0] inv_addr,
     input                          inv,
 
-    output                         stall_hmem,
+    // control signals
+    output                         stall_cmem,
     input                          rst_n,
     input                          clk
 );

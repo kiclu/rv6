@@ -18,7 +18,7 @@
  * Configurable L1 instruction cache
  */
 
-`include "../config.v"
+`include "../config.vh"
 
 module imem(
     input                    [63:0] pc,

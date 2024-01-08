@@ -14,10 +14,10 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../hdl/config.v"
+`include "../hdl/config.vh"
 
 `timescale 1ns/1ps
-module tb_hmem();
+module tb_cmem();
 
     reg               [63:0] b_addr_i;
     wire    [`IMEM_LINE-1:0] b_data_i;
@@ -30,17 +30,17 @@ module tb_hmem();
     reg     [`DMEM_LINE-1:0] b_data_out_d;
     reg                      b_wr_d;
     wire              [63:0] h_addr;
-    reg     [`HMEM_LINE-1:0] h_data_in;
+    reg     [`CMEM_LINE-1:0] h_data_in;
     wire                     h_rd;
     reg                      h_dv;
-    wire    [`HMEM_LINE-1:0] h_data_out;
+    wire    [`CMEM_LINE-1:0] h_data_out;
     wire                     h_wr;
     reg               [63:0] inv_addr;
     reg                      inv;
     reg                      rst_n;
     reg                      clk;
 
-    hmem dut(
+    cmem dut(
         .b_addr_i       (b_addr_i       ),
         .b_data_i       (b_data_i       ),
         .b_rd_i         (b_rd_i         ),

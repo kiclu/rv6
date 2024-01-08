@@ -14,30 +14,37 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../config.v"
+`include "../config.vh"
 
-module hart #(parameter HART_ID = 0) (
-    output           [63:0] h_addr,
+module rv6_core #(parameter HART_ID = 0) (
+    // data bus signals
+    output           [63:0] c_addr,
+    output                  c_ext,
 
-    input  [`HMEM_LINE-1:0] h_data_in,
-    output                  h_rd,
-    input                   h_dv,
+    input  [`CMEM_LINE-1:0] c_rdata,
+    output                  c_rd,
+    input                   c_dv,
 
-    output           [63:0] h_data_out,
-    output                  h_wr,
+    output           [63:0] c_wdata,
+    output           [ 1:0] c_len,
+    output                  c_wr,
 
-    input                   h_irq_e,
-    input                   h_irq_t,
-    input                   h_irq_s,
+    // interrupt signals
+    input                   c_irq_e,
+    input                   c_irq_t,
+    input                   c_irq_s,
 
-    input            [63:0] h_inv_addr,
-    input                   h_inv,
+    // cache invalidation signals
+    input            [63:0] c_inv_addr,
+    input                   c_inv,
 
-    output                  h_amo_req,
-    input                   h_amo_ack,
+    // atomic operation signals
+    output                  c_amo_req,
+    input                   c_amo_ack,
 
-    input                   h_rst_n,
-    input                   h_clk
+    // control signals
+    input                   c_rst_n,
+    input                   c_clk
 );
 
     // pipeline flush
@@ -77,24 +84,17 @@ module hart #(parameter HART_ID = 0) (
     // program counter
     pc u_pc (
         .pc             (pc             ),
-
         .trap_taken     (trap_taken     ),
         .trap_addr      (trap_addr      ),
-
         .jalr_taken     (jalr_taken     ),
         .jalr_addr      (jalr_addr      ),
-
         .pr_miss        (pr_miss        ),
         .br_addr        (br_addr        ),
-
         .jal_taken      (jal_taken      ),
         .jal_addr       (jal_addr       ),
-
         .pr_taken       (pr_taken       ),
         .pr_offs        (pr_offs        ),
-
         .c_ins          (c_ins          ),
-
         .stall          (stall_if       ),
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
@@ -104,12 +104,10 @@ module hart #(parameter HART_ID = 0) (
     bpu u_bpu (
         .pc             (pc             ),
         .ir             (ir             ),
-
         .jal_taken      (jal_taken      ),
         .jal_addr       (jal_addr       ),
         .pr_taken       (pr_taken       ),
         .pr_offs        (pr_offs        ),
-
         .rst_n          (h_rst_n        )
     );
 
@@ -124,13 +122,10 @@ module hart #(parameter HART_ID = 0) (
     imem u_imem (
         .pc             (pc             ),
         .ir             (ir             ),
-
         .b_addr_i       (b_addr_i       ),
-
         .b_data_i       (b_data_i       ),
         .b_rd_i         (b_rd_i         ),
         .b_dv_i         (b_dv_i         ),
-
         .stall_imem     (stall_imem     ),
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
@@ -168,12 +163,9 @@ module hart #(parameter HART_ID = 0) (
     pd u_pd (
         .pc_in          (bfp_pc         ),
         .ir_in          (bfp_ir         ),
-
         .ir_out         (pd_ir          ),
-
         .amo_req        (h_amo_req      ),
         .amo_ack        (h_amo_ack      ),
-
         .stall          (stall_pd       ),
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
@@ -217,14 +209,11 @@ module hart #(parameter HART_ID = 0) (
     regfile u_regfile (
         .r1             (r1             ),
         .rs1            (rs1            ),
-
         .r2             (r2             ),
         .rs2            (rs2            ),
-
         .d              (d              ),
         .rd             (rd             ),
         .wr             (wr             ),
-
         .clk            (h_clk          )
     );
 
@@ -234,18 +223,13 @@ module hart #(parameter HART_ID = 0) (
     br_alu u_br_alu (
         .pc             (bpd_pc         ),
         .ir             (bpd_ir         ),
-
         .r1             (r1             ),
         .r2             (r2             ),
-
         .jalr_taken     (jalr_taken     ),
         .jalr_addr      (jalr_addr      ),
-
         .pr_miss        (pr_miss        ),
         .br_addr        (br_addr        ),
-
         .pr_taken       (bpd_pr_taken   ),
-
         .stall          (stall_id       )
     );
 
@@ -369,34 +353,27 @@ module hart #(parameter HART_ID = 0) (
 
     wire stall_dmem;
 
-    wire op_load  = bxm_ir[6:0] == 7'b0000011;
-    wire op_write = bxm_ir[6:0] == 7'b0100011;
+    wire op_load   = bxm_ir[6:0] == 7'b0000011;
+    wire op_write  = bxm_ir[6:0] == 7'b0100011;
+    wire [2:0] len = bxm_ir[14:12];
 
     dmem u_dmem (
         .addr           (bxm_alu_out    ),
-        .len            (bxm_ir[14:12]  ),
-
-        .data_out       (dmem_out       ),
+        .len            (len            ),
+        .rdata          (dmem_out       ),
         .rd             (op_load        ),
-
-        .data_in        (bxm_r2         ),
+        .wdata          (bxm_r2         ),
         .wr             (op_write       ),
-
         .ld_ma          (dmem_ld_ma     ),
         .st_ma          (dmem_st_ma     ),
-
         .b_addr_d       (b_addr_d       ),
-
         .b_data_in_d    (b_data_in_d    ),
         .b_rd_d         (b_rd_d         ),
         .b_dv_d         (b_dv_d         ),
-
         .b_data_out_d   (b_data_out_d   ),
         .b_wr_d         (b_wr_d         ),
-
         .inv_addr       (h_inv_addr     ),
         .inv            (h_inv          ),
-
         .stall_dmem     (stall_dmem     ),
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
@@ -410,33 +387,25 @@ module hart #(parameter HART_ID = 0) (
 
     csr #(.HART_ID(HART_ID)) u_csr (
         .ir             (bxm_ir         ),
-
         .csr_in         (bxm_alu_out    ),
         .csr_out        (csr_out        ),
-
         .trap_taken     (trap_taken     ),
         .trap_addr      (trap_addr      ),
-
         .irq_e          (h_irq_e        ),
         .irq_t          (h_irq_t        ),
         .irq_s          (h_irq_s        ),
-
         .dmem_ld_ma     (dmem_ld_ma     ),
         .dmem_st_ma     (dmem_st_ma     ),
-
         .dmem_addr      (bxm_alu_out    ),
-
         .flush_pd       (t_flush_pd     ),
         .flush_id       (t_flush_id     ),
         .flush_ex       (t_flush_ex     ),
         .flush_mem      (t_flush_mem    ),
-
         .pc_if          (pc             ),
         .pc_pd          (bfp_pc         ),
         .pc_id          (bpd_pc         ),
         .pc_ex          (bdx_pc         ),
         .pc_mem         (bxm_pc         ),
-
         .stall          (stall_mem      ),
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
@@ -495,38 +464,29 @@ module hart #(parameter HART_ID = 0) (
 
     /* L2 CACHE */
 
-    wire stall_hmem;
+    wire stall_cmem;
 
-    hmem u_hmem (
-        .b_addr_i       (b_addr_i       ),
-        .b_data_i       (b_data_i       ),
-        .b_rd_i         (b_rd_i         ),
-        .b_dv_i         (b_dv_i         ),
 
-        .b_addr_d       (b_addr_d       ),
+    /* DATA BUS ARBITER */
 
-        .b_data_in_d    (b_data_in_d    ),
-        .b_rd_d         (b_rd_d         ),
-        .b_dv_d         (b_dv_d         ),
-
-        .b_data_out_d   (b_data_out_d   ),
-        .b_wr_d         (b_wr_d         ),
-
-        .h_addr         (h_addr         ),
-
-        .h_data_in      (h_data_in      ),
-        .h_rd           (h_rd           ),
-        .h_dv           (h_dv           ),
-
-        .h_data_out     (h_data_out     ),
-        .h_wr           (h_wr           ),
-
-        .inv_addr       (h_inv_addr     ),
-        .inv            (h_inv          ),
-
-        .stall_hmem     (stall_hmem     ),
-        .rst_n          (h_rst_n        ),
-        .clk            (h_clk          )
+    dba u_dba (
+        .addr           (addr           ),
+        .len            (len            ),
+        .rdata          (rdata          ),
+        .rd             (rd             ),
+        .wdata          (wdata          ),
+        .wr             (wr             ),
+        .b_addr_c       (b_addr_c       ),
+        .b_rd_c         (b_rd_c         ),
+        .b_dv_c         (b_dv_c         ),
+        .c_addr         (c_addr         ),
+        .c_ext          (c_ext          ),
+        .c_rdata        (c_rdata        ),
+        .c_rd           (c_rd           ),
+        .c_dv           (c_dv           ),
+        .c_wdata        (c_wdata        ),
+        .c_len          (c_len          ),
+        .c_wr           (c_wr           )
     );
 
     /* CONTROL UNIT */
@@ -536,30 +496,20 @@ module hart #(parameter HART_ID = 0) (
         .ir_ex          (bdx_ir         ),
         .ir_mem         (bxm_ir         ),
         .ir_wb          (bmw_ir         ),
-
         .stall_if       (stall_if       ),
         .stall_pd       (stall_pd       ),
         .stall_id       (stall_id       ),
         .stall_ex       (stall_ex       ),
         .stall_mem      (stall_mem      ),
         .stall_wb       (stall_wb       ),
-
-	    .stall_imem     (stall_imem     ),
+        .stall_imem     (stall_imem     ),
         .stall_dmem     (stall_dmem     ),
-        .stall_hmem     (stall_hmem     ),
-
         .amo_req        (h_amo_req      ),
         .amo_ack        (h_amo_ack      ),
-
-        .b_rd_i         (b_rd_i         ),
-        .b_rd_d         (b_rd_d         ),
-
         .s_mx_a_fw      (s_mx_a_fw      ),
         .a_fw           (a_fw           ),
-
         .s_mx_b_fw      (s_mx_b_fw      ),
         .b_fw           (b_fw           ),
-
         .rst_n          (h_rst_n        ),
         .clk            (h_clk          )
     );

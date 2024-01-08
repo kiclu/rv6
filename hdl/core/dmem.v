@@ -14,21 +14,17 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-/*
- * Configurable, write-allocated L1 data cache with write-through policy
- */
-
-`include "../config.v"
+`include "../config.vh"
 
 module dmem(
     input                    [63:0] addr,
     input                    [ 2:0] len,
 
-    input                    [63:0] data_in,
-    input                           wr,
-
-    output reg               [63:0] data_out,
+    output reg               [63:0] rdata,
     input                           rd,
+
+    input                    [63:0] wdata,
+    input                           wr,
 
     // misaligned access
     output                          ld_ma,
@@ -37,7 +33,7 @@ module dmem(
     // external bus signals
     output reg  [`DMEM_BLK_LEN-1:0] b_addr_d,
 
-    input          [`DMEM_LINE-1:0] b_data_in_d,
+    input          [`DMEM_LINE-1:0] b_rdata_d,
     output reg                      b_rd_d,
     input                           b_dv_d,
 
@@ -171,7 +167,7 @@ module dmem(
         else if(wr && dmem_fsm_state == `S_READY) begin
             wb_tag  <= addr_tag;
             wb_set  <= addr_set;
-            wb_data <= data_in;
+            wb_data <= wdata;
             wb_len  <= len;
             wr_pend <= 1;
         end
@@ -203,7 +199,7 @@ module dmem(
 
     // input mux
     always @(*) begin
-        if(dmem_fsm_state == `S_FETCH) d = b_data_in_d;
+        if(dmem_fsm_state == `S_FETCH) d = b_rdata_d;
         else begin
             d = q;
             case(wb_len[1:0])
@@ -218,14 +214,14 @@ module dmem(
     // output mux
     always @(*) begin
         case(len)
-            3'b000: data_out =   $signed(q[8*addr_offs +:  8]);
-            3'b001: data_out =   $signed(q[8*addr_offs +: 16]);
-            3'b010: data_out =   $signed(q[8*addr_offs +: 32]);
-            3'b011: data_out =   $signed(q[8*addr_offs +: 64]);
-            3'b100: data_out = $unsigned(q[8*addr_offs +:  8]);
-            3'b101: data_out = $unsigned(q[8*addr_offs +: 16]);
-            3'b110: data_out = $unsigned(q[8*addr_offs +: 32]);
-            3'b111: data_out = $unsigned(q[8*addr_offs +: 64]);
+            3'b000: rdata =   $signed(q[8*addr_offs +:  8]);
+            3'b001: rdata =   $signed(q[8*addr_offs +: 16]);
+            3'b010: rdata =   $signed(q[8*addr_offs +: 32]);
+            3'b011: rdata =   $signed(q[8*addr_offs +: 64]);
+            3'b100: rdata = $unsigned(q[8*addr_offs +:  8]);
+            3'b101: rdata = $unsigned(q[8*addr_offs +: 16]);
+            3'b110: rdata = $unsigned(q[8*addr_offs +: 32]);
+            3'b111: rdata = $unsigned(q[8*addr_offs +: 64]);
         endcase
     end
 

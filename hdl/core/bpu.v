@@ -14,7 +14,7 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../config.v"
+`include "../config.vh"
 
 module bpu (
     input      [63:0] pc,

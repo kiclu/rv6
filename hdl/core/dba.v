@@ -14,18 +14,34 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`define phy_addr 48
+`include "../config.vh"
 
-module rv6(
-    output [`phy_addr-1:0] addr,
-    input           [15:0] data_in,
-    output          [15:0] data_out,
-    output                 rd,
-    output                 wr,
-    input                  dbv,
+module dba(
+    input                [63:0] addr,
+    input                [ 2:0] len,
+    output               [63:0] rdata,
+    input                       rd,
+    input                [63:0] wdata,
+    input                       wr,
 
-    input                  rst_n,
-    input                  clk
+    // cmem read bus
+    input                [63:0] b_addr_c,
+    input                       b_rd_c,
+    output                      b_dv_c,
+
+    // external bus
+    output               [63:0] c_addr,
+    output                      c_ext,
+
+    input      [`CMEM_LINE-1:0] c_rdata,
+    output                      c_rd,
+    input                       c_dv,
+
+    output               [63:0] c_wdata,
+    output               [ 1:0] c_len,
+    output                      c_wr
 );
+
+    assign c_ext   = (addr < `EXT_MMAP_RANGE) && (rd || wr);
 
 endmodule

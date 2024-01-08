@@ -14,7 +14,7 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
- `include "../hdl/config.v"
+ `include "../hdl/config.vh"
 
  `timescale 1ns/1ps
  module tb_dmem();

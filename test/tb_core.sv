@@ -14,7 +14,7 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../hdl/config.v"
+`include "../hdl/config.vh"
 
 `define TB_ENTRY    64'h8000_0000
 `define TB_MEM_SIZE 64'h10_0000
@@ -45,21 +45,35 @@ module tb_core();
     reg                     h_rst_n;
     wire                    h_clk;
 
-    core #(.HART_ID(0)) dut (
-
+    rv6_core #(.HART_ID(0)) dut (
+        .h_addr         (h_addr         ),
+        .h_data_in      (h_data_in      ),
+        .h_rd           (h_rd           ),
+        .h_dv           (h_dv           ),
+        .h_data_out     (h_data_out     ),
+        .h_wr           (h_wr           ),
+        .h_irq_e        (h_irq_e        ),
+        .h_irq_t        (h_irq_t        ),
+        .h_irq_s        (h_irq_s        ),
+        .h_inv_addr     (h_inv_addr     ),
+        .h_inv          (h_inv          ),
+        .h_amo_req      (h_amo_req      ),
+        .h_amo_ack      (h_amo_ack      ),
+        .h_rst_n        (h_rst_n        ),
+        .h_clk          (h_clk          )
     );
 
     // initial signal values
     initial begin
-        c_data_in   = 64'bZ;
-        c_dv        = 0;
-        c_irq_e     = 0;
-        c_irq_t     = 0;
-        c_irq_s     = 0;
-        c_inv_addr  = 64'bZ;
-        c_inv       = 0;
-        c_amo_ack   = 0;
-        c_rst_n     = 1;
+        h_data_in   = 64'bZ;
+        h_dv        = 0;
+        h_irq_e     = 0;
+        h_irq_t     = 0;
+        h_irq_s     = 0;
+        h_inv_addr  = 64'bZ;
+        h_inv       = 0;
+        h_amo_ack   = 0;
+        h_rst_n     = 1;
     end
 
     // clock generator

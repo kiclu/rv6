@@ -46,10 +46,9 @@ module cu (
     output            stall_mem,
     output            stall_wb,
 
-    // input stall causes
+    // cache miss stall signals
     input             stall_imem,
     input             stall_dmem,
-    input             stall_hmem,
 
     // atomic instruction signals
     input             amo_req,
@@ -62,16 +61,15 @@ module cu (
     // forwarding signals
     output reg [ 1:0] s_mx_a_fw,
     output reg        a_fw,
-
     output reg [ 1:0] s_mx_b_fw,
     output reg        b_fw,
 
+    // control signals
     input             rst_n,
-
     input             clk
 );
 
-    wire stall_all = !rst_n || stall_hmem || stall_imem || stall_dmem || (amo_req && !amo_ack);
+    wire stall_all = !rst_n || stall_imem || stall_dmem || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
 
