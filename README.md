@@ -67,7 +67,7 @@ During the Write Back stage, the result from previous stages is written back int
 .
 ├─ doc/             # Documentation files
 ├─ hdl/             # Synthesis source files
-│   ├─ hart/            # HART top-level & submodules
+│   ├─ hart/            # Hart top-level & submodules
 │   │   ├─ alu.v            # Integer ALU
 │   │   ├─ bpu.v            # Branch Prediction Unit
 │   │   ├─ br_alu.v         # Branch ALU
@@ -75,7 +75,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ cu.v             # Control Unit
 │   │   ├─ dmem.v           # Data Memory (L1d cache)
 │   │   ├─ hart.v           # Core top-level module
-│   │   ├─ hmem.v           # HART Memory (L2 cache)
+│   │   ├─ hmem.v           # Hart Memory (L2 cache)
 │   │   ├─ imem.v           # Instruction Memory (L1i cache)
 │   │   ├─ pc.v             # Program Counter
 │   │   ├─ pd.v             # Instruction Pre-Decoder
@@ -85,7 +85,9 @@ During the Write Back stage, the result from previous stages is written back int
 ├─ simulation/      # ModelSim project files
 ├─ synthesis/       # Vivado & Quartus II project files
 ├─ test/            # Testbench source files
-│   └─ tb_hart.sv       # HART testbench
+│   ├─ auto/            # Automated tests
+│   ├─ c/               # C source files for automated tests
+│   └─ tb_hart.sv       # Hart testbench module
 ├─ LICENSE
 ├─ Makefile
 └─ README.md
@@ -95,32 +97,26 @@ During the Write Back stage, the result from previous stages is written back int
 | Parameter                                                             	  | Type    	    | Description                                      	|
 |---------------------------------------------------------------------------|---------------|---------------------------------------------------|
 |  **Instruction memory (L1i cache)**                                       |               |                                                   |
-| `imem_struct_set_assoc`  	                                                | ifdef flag    | L1i cache set associative architecture          	|
-| `imem_struct_direct`                                                      | ifdef flag    | L1i cache direct mapped architecture              |
-| `imem_struct_full_assoc`                                                  | ifdef flag    | L1i cache fully associative architecture          |
-| `imem_line`                                                           	  | integer 	    | L1i cache line size in bits 	                    |
-| `imem_sets`                                                           	  | integer 	    | L1i cache set count         	                    |
-| `imem_ways`                                                           	  | integer 	    | L1i cache ways per set      	                    |
+| `IMEM_SET_ASSOC` `IMEM_DIRECT` `IMEM_FULL_ASSOC`                          | ifdef flag    | L1i cache associativity                         	|
+| `IMEM_LINE`                                                           	  | integer 	    | L1i cache line size in bits 	                    |
+| `IMEM_SETS`                                                           	  | integer 	    | L1i cache set count         	                    |
+| `IMEM_WAYS`                                                           	  | integer 	    | L1i cache ways per set      	                    |
 | **Data memory (L1d cache)**                                               |               |                                                   |
-| `dmem_struct_set_assoc`  	                                                | ifdef flag    | L1d cache set associative architecture          	|
-| `dmem_struct_direct`                                                      | ifdef flag    | L1d cache direct mapped architecture              |
-| `dmem_struct_full_assoc`                                                  | ifdef flag    | L1d cache fully associative architecture          |
-| `dmem_line`                                                           	  | integer 	    | L1d cache line size in bits 	                    |
-| `dmem_sets`                                                           	  | integer 	    | L1d cache set count         	                    |
-| `dmem_ways`                                                           	  | integer 	    | L1d cache ways per set      	                    |
+| `DMEM_SET_ASSOC` `DMEM_DIRECT` `DMEM_FULL_ASSOC`                          | ifdef flag    | L1d cache associativity          	                |
+| `DMEM_LINE`                                                           	  | integer 	    | L1d cache line size in bits 	                    |
+| `DMEM_SETS`                                                           	  | integer 	    | L1d cache set count         	                    |
+| `DMEM_WAYS`                                                           	  | integer 	    | L1d cache ways per set      	                    |
 | **Hart memory (L2 cache)**                                                |               |                                                   |
-| `hmem_struct_set_assoc`  	                                                | ifdef flag    | L2 cache set associative architecture          	  |
-| `hmem_struct_direct`                                                      | ifdef flag    | L2 cache direct mapped architecture               |
-| `hmem_struct_full_assoc`                                                  | ifdef flag    | L2 cache fully associative architecture           |
-| `hmem_line`                                                           	  | integer 	    | L2 cache line size in bits 	                      |
-| `hmem_sets`                                                           	  | integer 	    | L2 cache set count         	                      |
-| `hmem_ways`                                                           	  | integer 	    | L2 cache ways per set      	                      |
+| `HMEM_SET_ASSOC` `HMEM_DIRECT` `HMEM_FULL_ASSOC`                          | ifdef flag    | L2 cache associativity                        	  |
+| `HMEM_LINE`                                                           	  | integer 	    | L2 cache line size in bits 	                      |
+| `HMEM_SETS`                                                           	  | integer 	    | L2 cache set count         	                      |
+| `HMEM_WAYS`                                                           	  | integer 	    | L2 cache ways per set      	                      |
 | **Branch Prediction**                                                     |               |                                                   |
-| `bpu_static_taken`                                                        | ifdef flag    | Branch predict static taken                       |
-| `bpu_static_ntaken`                                                       | ifdef flag    | Branch predict static not taken                   |
-| `bpu_static_btaken`                                                       | ifdef flag    | Branch predict static backward taken              |
+| `BPU_STATIC_TAKEN`                                                        | ifdef flag    | Branch predict static taken                       |
+| `BPU_STATIC_NTAKEN`                                                       | ifdef flag    | Branch predict static not taken                   |
+| `BPU_STATIC_BTAKEN`                                                       | ifdef flag    | Branch predict static backward taken              |
 
-*Parameters labeled with `ifdef flag` type are conditional compilation flags and are included in the project only if corresponding flag is defined in `config.v` file.
+*Parameters labeled with `ifdef flag` type are mutually exclusive
 
 ## Prerequisites
 - [riscv-collab/riscv-gnu-toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain)
