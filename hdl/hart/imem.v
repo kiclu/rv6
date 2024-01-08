@@ -101,6 +101,11 @@ module imem(
     /* FSM */
 
     always @(*) begin
+        b_rd_i  = 0;
+        wre     = 0;
+        rde     = 0;
+        way_d   = 0;
+
         imem_fsm_state_next = imem_fsm_state;
         case(imem_fsm_state)
             `S_READY: begin
@@ -114,7 +119,7 @@ module imem(
                 way_d   = re;
                 wre     = b_dv_i;
 
-                if(b_dv_i) imem_fsm_state_next = ma_pend ? `S_MA : `S_READY;
+                if(b_dv_i) imem_fsm_state_next = ma_pend ? `S_MA : `S_LOAD;
             end
             `S_LOAD: begin
                 rde = ld_cnt == `IMEM_READ_VALID_DELAY;
@@ -167,6 +172,9 @@ module imem(
         end
     end
 
+    // input mux
+    always @(*) d = b_data_i;
+
     // output mux
     always @(*) begin
         if(ma) ir = {q[15:0], ma_reg};
@@ -218,5 +226,10 @@ module imem(
 `endif//IMEM_SET_ASSOC
 
     assign stall_imem = imem_fsm_state != `S_READY || imem_fsm_state_next != `S_READY;
+
+    // TODO:
+    /* REPLACEMENT ENTRY */
+
+    always @(posedge clk) re <= $random() % `DMEM_SETS;
 
 endmodule
