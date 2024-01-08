@@ -82,6 +82,7 @@ module imem(
     reg  [15:0] ma_reg;
     reg         ma_pend;
     reg         ma_acc;
+    wire        ma_re;
     wire        ma;
 
     /* FSM */
@@ -109,8 +110,8 @@ module imem(
             `S_READY: begin
                 if(!hit) imem_fsm_state_next = `S_FETCH;
                 if( hit) imem_fsm_state_next = `S_LOAD;
-                if(rb_hit && !ma) imem_fsm_state_next = `S_READY;
-                if(rb_hit &&  ma) imem_fsm_state_next = `S_MA;
+                if(rb_hit && !ma_re) imem_fsm_state_next = `S_READY;
+                if(rb_hit &&  ma_re) imem_fsm_state_next = `S_MA;
             end
             `S_FETCH: begin
                 b_rd_i  = 1;
@@ -205,7 +206,7 @@ module imem(
     // misaligned access
     always @(posedge clk) begin
         if(imem_fsm_state == `S_READY) begin
-            ma_pend <= ma;
+            ma_pend <= ma_re;
         end
         else if(imem_fsm_state == `S_MA) begin
             ma_reg  <= q[`IMEM_LINE-1 -: 16];
@@ -218,7 +219,12 @@ module imem(
         end
     end
 
+    reg ma_d;
+    always @(posedge clk) ma_d <= ma;
+
     assign ma = ma_pc[63 -: `IMEM_BLK_LEN] != pc[63 -: `IMEM_BLK_LEN];
+    assign ma_re = ma && !ma_d;
+
     assign addr = ma_acc ? ma_pc : pc;
 
 `endif//IMEM_SET_ASSOC
