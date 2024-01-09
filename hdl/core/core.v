@@ -464,8 +464,28 @@ module rv6_core #(parameter HART_ID = 0) (
 
     /* L2 CACHE */
 
-    wire stall_cmem;
-
+    cmem u_cmem (
+        .addr           (addr           ),
+        .len            (len            ),
+        .wdata          (wdata          ),
+        .wr             (wr             ),
+        .b_addr_i       (b_addr_i       ),
+        .b_data_i       (b_data_i       ),
+        .b_rd_i         (b_rd_i         ),
+        .b_dv_i         (b_dv_i         ),
+        .b_addr_d       (b_addr_d       ),
+        .b_rdata_d      (b_rdata_d      ),
+        .b_rd_d         (b_rd_d         ),
+        .b_dv_d         (b_dv_d         ),
+        .b_addr_c       (b_addr_c       ),
+        .b_rdata_c      (b_rdata_c      ),
+        .b_rd_c         (b_rd_c         ),
+        .b_rd_c         (b_rd_c         ),
+        .inv_addr       (inv_addr       ),
+        .inv            (inv            ),
+        .rst_n          (rst_n          ),
+        .clk            (clk            )
+    );
 
     /* DATA BUS ARBITER */
 
