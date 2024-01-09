@@ -17,7 +17,7 @@
 - Three level cache hierarchy
 - Branch prediction
 - Instruction pre-decoding for compressed & atomic instruction support
-- Parametrized branch prediction, cache sizes and architectures
+- Parametrized branch prediction, cache size and associativity
 
 ## Compatibility
 RV6 core is compatible with following RISC-V Foundation specifications:
