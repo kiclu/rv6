@@ -131,13 +131,15 @@ module imem(
         endcase
     end
 
-    // FSM state update
+    /* FSM UPDATE */
+
     always @(posedge clk) begin
         if(!rst_n) imem_fsm_state <= `S_READY;
         else imem_fsm_state <= imem_fsm_state_next;
     end
 
-    // read buffer
+    /* READ BUFFER */
+
     always @(posedge clk) begin
         if(ld_cnt == 0 && imem_fsm_state == `S_LOAD) begin
             rb_tag  <= addr_tag;
@@ -147,14 +149,16 @@ module imem(
         ld_cnt <= imem_fsm_state == `S_LOAD ? ld_cnt - 1 : `IMEM_READ_VALID_DELAY;
     end
 
-    // L2 request address
+    /* REQUEST ADDRESS */
+
     always @(posedge clk) begin
         if(imem_fsm_state == `S_FETCH) begin
             b_addr_i <= {addr_tag, addr_set};
         end
     end
 
-    // cache metadata update
+    /* METADATA UPDATE */
+
     always @(posedge clk) begin
         if(!rst_n) begin : imem_reset
             integer i;
@@ -171,16 +175,19 @@ module imem(
         end
     end
 
-    // input mux
+    /* INPUT MUX */
+
     always @(*) d = b_data_i;
 
-    // output mux
+    /* OUTPUT MUX */
+
     always @(*) begin
         if(ma) ir = {q[15:0], ma_reg};
         else ir = q[8*addr_offs +: 32];
     end
 
-    // cache hit detection
+    /* HIT DETECTION */
+
     always @(*) begin : imem_cache_hit
         integer w;
         way_q = 'bZ; hit = 0;
@@ -191,19 +198,22 @@ module imem(
         end
     end
 
-    // BRAM write address
-    always @(*) begin
-        tag_d = addr_tag;
-        set_d = addr_set;
-    end
+    /* BRAM READ */
 
-    // BRAM read address
     always @(*) begin
         tag_q = addr_tag;
         set_q = addr_set;
     end
 
-    // misaligned access
+    /* BRAM WRITE */
+
+    always @(*) begin
+        tag_d = addr_tag;
+        set_d = addr_set;
+    end
+
+    /* MISALIGNED ACCESS */
+
     always @(posedge clk) begin
         if(imem_fsm_state == `S_READY) begin
             ma_pend <= ma_re;
@@ -234,6 +244,6 @@ module imem(
     // TODO:
     /* REPLACEMENT ENTRY */
 
-    always @(posedge clk) re <= $random() % `DMEM_SETS;
+    always @(posedge clk) re <= $random() % `DMEM_WAYS;
 
 endmodule
