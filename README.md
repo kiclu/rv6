@@ -91,23 +91,23 @@ During the Write Back stage, the result from previous stages is written back int
 ```
 
 ## Parameters
-| Parameter                                                             	  | Type    	    | Description                                      	|
+| Parameter                                                                 | Type          | Description                                       |
 |---------------------------------------------------------------------------|---------------|---------------------------------------------------|
 |  **L1i cache**                                                            |               |                                                   |
-| `IMEM_SET_ASSOC` `IMEM_DIRECT` `IMEM_FULL_ASSOC`                          | ifdef flag    | L1i cache associativity                         	|
-| `IMEM_LINE`                                                           	  | integer 	    | L1i cache line size in bits 	                    |
-| `IMEM_SETS`                                                           	  | integer 	    | L1i cache set count         	                    |
-| `IMEM_WAYS`                                                           	  | integer 	    | L1i cache ways per set      	                    |
+| `IMEM_SET_ASSOC` `IMEM_DIRECT` `IMEM_FULL_ASSOC`                          | ifdef flag    | L1i cache associativity                           |
+| `IMEM_LINE`                                                               | integer       | L1i cache line size in bits                       |
+| `IMEM_SETS`                                                               | integer       | L1i cache set count                               |
+| `IMEM_WAYS`                                                               | integer       | L1i cache ways per set                            |
 | **L1d cache**                                                             |               |                                                   |
-| `DMEM_SET_ASSOC` `DMEM_DIRECT` `DMEM_FULL_ASSOC`                          | ifdef flag    | L1d cache associativity          	                |
-| `DMEM_LINE`                                                           	  | integer 	    | L1d cache line size in bits 	                    |
-| `DMEM_SETS`                                                           	  | integer 	    | L1d cache set count         	                    |
-| `DMEM_WAYS`                                                           	  | integer 	    | L1d cache ways per set      	                    |
+| `DMEM_SET_ASSOC` `DMEM_DIRECT` `DMEM_FULL_ASSOC`                          | ifdef flag    | L1d cache associativity                           |
+| `DMEM_LINE`                                                               | integer       | L1d cache line size in bits                       |
+| `DMEM_SETS`                                                               | integer       | L1d cache set count                               |
+| `DMEM_WAYS`                                                               | integer       | L1d cache ways per set                            |
 | **L2 cache**                                                              |               |                                                   |
-| `CMEM_SET_ASSOC` `CMEM_DIRECT` `CMEM_FULL_ASSOC`                          | ifdef flag    | L2 cache associativity                        	  |
-| `CMEM_LINE`                                                           	  | integer 	    | L2 cache line size in bits 	                      |
-| `CMEM_SETS`                                                           	  | integer 	    | L2 cache set count         	                      |
-| `CMEM_WAYS`                                                           	  | integer 	    | L2 cache ways per set      	                      |
+| `CMEM_SET_ASSOC` `CMEM_DIRECT` `CMEM_FULL_ASSOC`                          | ifdef flag    | L2 cache associativity                            |
+| `CMEM_LINE`                                                               | integer       | L2 cache line size in bits                        |
+| `CMEM_SETS`                                                               | integer       | L2 cache set count                                |
+| `CMEM_WAYS`                                                               | integer       | L2 cache ways per set                             |
 | **Branch Prediction**                                                     |               |                                                   |
 | `BPU_STATIC_TAKEN`                                                        | ifdef flag    | Branch predict static taken                       |
 | `BPU_STATIC_NTAKEN`                                                       | ifdef flag    | Branch predict static not taken                   |
