@@ -54,10 +54,6 @@ module cu (
     input             amo_req,
     input             amo_ack,
 
-    // instruction/data bus signals
-    input             b_rd_i,
-    input             b_rd_d,
-
     // forwarding signals
     output reg [ 1:0] s_mx_a_fw,
     output reg        a_fw,

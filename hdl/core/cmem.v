@@ -19,30 +19,30 @@
 module cmem(
     // write bus
     input                   [63:0] b_addr_w,
-    input                   [ 2:0] b_len_w,
     input                   [63:0] b_wdata_w,
+    input                   [ 1:0] b_len_w,
     input                          b_wr_w,
 
     // imem read bus
     input      [`IMEM_BLK_LEN-1:0] b_addr_i,
-    output        [`IMEM_LINE-1:0] b_data_i,
+    output reg [   `IMEM_LINE-1:0] b_data_i,
     input                          b_rd_i,
-    output                         b_dv_i,
+    output reg                     b_dv_i,
 
     // dmem read bus
     input      [`DMEM_BLK_LEN-1:0] b_addr_d,
-    output        [`DMEM_LINE-1:0] b_rdata_d,
+    output reg [   `DMEM_LINE-1:0] b_rdata_d,
     input                          b_rd_d,
-    output                         b_dv_d,
+    output reg                     b_dv_d,
 
     // external bus
-    output     [`CMEM_BLK_LEN-1:0] b_addr_c,
-    input         [`CMEM_LINE-1:0] b_rdata_c,
-    output                         b_rd_c,
+    output reg [`CMEM_BLK_LEN-1:0] b_addr_c,
+    input      [   `CMEM_LINE-1:0] b_rdata_c,
+    output reg                     b_rd_c,
     input                          b_dv_c,
 
     // cache invalidation
-    input      [`CMEM_BLK_LEN-1:0] inv_addr,
+    input      [`CMEM_BLK_LEN-1:0] b_inv_addr_c,
     input                          inv,
 
     // control signals
@@ -53,17 +53,17 @@ module cmem(
 
 `ifdef  CMEM_SET_ASSOC
 
-    wire [ `CMEM_TAG_LEN-1:0] addr_i_tag  = b_addr_i[`CMEM_ADDR_TAG_RANGE ];
-    wire [ `CMEM_SET_LEN-1:0] addr_i_set  = b_addr_i[`CMEM_ADDR_SET_RANGE ];
-    wire [`CMEM_OFFS_LEN-1:0] addr_i_offs = b_addr_i[`CMEM_ADDR_OFFS_RANGE];
+    wire [   `CMEM_TAG_LEN-1:0] addr_i_tag  = b_addr_i[`CMEM_I_ADDR_TAG_RANGE ];
+    wire [   `CMEM_SET_LEN-1:0] addr_i_set  = b_addr_i[`CMEM_I_ADDR_SET_RANGE ];
+    wire [`CMEM_I_OFFS_LEN-1:0] addr_i_offs = b_addr_i[`CMEM_I_ADDR_OFFS_RANGE];
 
-    wire [ `CMEM_TAG_LEN-1:0] addr_d_tag  = b_addr_d[`CMEM_ADDR_TAG_RANGE ];
-    wire [ `CMEM_SET_LEN-1:0] addr_d_set  = b_addr_d[`CMEM_ADDR_SET_RANGE ];
-    wire [`CMEM_OFFS_LEN-1:0] addr_d_offs = b_addr_d[`CMEM_ADDR_OFFS_RANGE];
+    wire [   `CMEM_TAG_LEN-1:0] addr_d_tag  = b_addr_d[`CMEM_D_ADDR_TAG_RANGE ];
+    wire [   `CMEM_SET_LEN-1:0] addr_d_set  = b_addr_d[`CMEM_D_ADDR_SET_RANGE ];
+    wire [`CMEM_D_OFFS_LEN-1:0] addr_d_offs = b_addr_d[`CMEM_D_ADDR_OFFS_RANGE];
 
-    wire [ `CMEM_TAG_LEN-1:0] addr_w_tag  = b_addr_w[`CMEM_ADDR_TAG_RANGE ];
-    wire [ `CMEM_SET_LEN-1:0] addr_w_set  = b_addr_w[`CMEM_ADDR_SET_RANGE ];
-    wire [`CMEM_OFFS_LEN-1:0] addr_w_offs = b_addr_w[`CMEM_ADDR_OFFS_RANGE];
+    wire [   `CMEM_TAG_LEN-1:0] addr_w_tag  = b_addr_w[`CMEM_W_ADDR_TAG_RANGE ];
+    wire [   `CMEM_SET_LEN-1:0] addr_w_set  = b_addr_w[`CMEM_W_ADDR_SET_RANGE ];
+    wire [`CMEM_W_OFFS_LEN-1:0] addr_w_offs = b_addr_w[`CMEM_W_ADDR_OFFS_RANGE];
 
     (* ram_style = "block" *)
     reg  [   `CMEM_LINE-1:0] data [0:`CMEM_LINES-1];
@@ -108,20 +108,22 @@ module cmem(
     reg  [`CMEM_SET_LEN-1:0] rb_set_i;
     reg                      rb_v_i;
 
-    wire rb_hit_i = rb_tag_i == addr_i_tag && rb_set_i == addr_i_set;
+    wire rb_hit_i = rb_v_i && rb_tag_i == addr_i_tag && rb_set_i == addr_i_set;
 
     reg  [`CMEM_TAG_LEN-1:0] rb_tag_d;
     reg  [`CMEM_SET_LEN-1:0] rb_set_d;
     reg                      rb_v_d;
 
-    wire rb_hit_d = rb_tag_d == addr_d_tag && rb_set_d == addr_d_set;
+    wire rb_hit_d = rb_v_d && rb_tag_d == addr_d_tag && rb_set_d == addr_d_set;
+    wire rb_hit_w = rb_v_d && rb_tag_d == addr_w_tag && rb_set_d == addr_w_set;
 
     /* WRITE BUFFER */
 
-    reg  [`CMEM_TAG_LEN-1:0] wb_tag;
-    reg  [`CMEM_SET_LEN-1:0] wb_set;
-    reg  [             63:0] wb_data;
-    reg  [              2:0] wb_len;
+    reg  [ `CMEM_TAG_LEN-1:0] wb_tag;
+    reg  [ `CMEM_SET_LEN-1:0] wb_set;
+    reg  [`CMEM_OFFS_LEN-1:0] wb_offs;
+    reg  [              63:0] wb_data;
+    reg  [               1:0] wb_len;
     reg  wr_pend;
 
     /* FSM */
@@ -146,6 +148,10 @@ module cmem(
 
     always @(*) begin
         // TODO: latch inference
+        b_rd_c  = 0;
+        rde_i   = 0;
+        rde_d   = 0;
+        wre     = 0;
 
         pend_next = pend;
         cmem_fsm_state_next = cmem_fsm_state;
@@ -168,15 +174,16 @@ module cmem(
             end
             `S_FETCH: begin
                 b_rd_c = 1;
-                way_d  = re;
                 wre    = b_dv_c;
 
                 if(b_dv_c) cmem_fsm_state_next = `S_LOAD;
             end
             `S_LOAD: begin
-                rde = ld_cnt == `CMEM_READ_VALID_DELAY;
+                if(pend == `PEND_RD_I) rde_i = ld_cnt == `CMEM_READ_VALID_DELAY;
+                else rde_d = ld_cnt == `CMEM_READ_VALID_DELAY;
 
-                if(!ld_cnt) cmem_fsm_state_next = `PEND_WR_D ? `S_WRITE : `S_READY;
+                pend_next = `PEND_WR_D ? `PEND_WR_D : `PEND_NOP;
+                if(!ld_cnt) cmem_fsm_state_next = pend == `PEND_WR_D ? `S_WRITE : `S_READY;
             end
             `S_WRITE: begin
                 wre = 1;
@@ -193,10 +200,22 @@ module cmem(
         else cmem_fsm_state <= cmem_fsm_state_next;
     end
 
+    /* PENDING OP UPDATE */
+
+    always @(posedge clk) begin
+        if(!rst_n) pend <= `PEND_NOP;
+        else pend <= pend_next;
+    end
+
     /* READ BUFFER */
 
     always @(posedge clk) begin
-        if(cmem_fsm_state == `S_LOAD && `PEND_RD_I) begin
+        if(!rst_n) begin
+            rb_tag_i <= 0;
+            rb_set_i <= 0;
+            rb_v_i   <= 0;
+        end
+        else if(cmem_fsm_state == `S_LOAD && pend == `PEND_RD_I) begin
             rb_tag_i <= addr_i_tag;
             rb_set_i <= addr_i_set;
             rb_v_i   <= 1;
@@ -204,14 +223,19 @@ module cmem(
     end
 
     always @(posedge clk) begin
-        if(cmem_fsm_state == `S_WRITE) rb_v_d <= 0;
-        if(cmem_fsm_state == `S_LOAD) begin
-            if(`PEND_RD_D) begin
+        if(!rst_n) begin
+            rb_tag_d <= 0;
+            rb_set_d <= 0;
+            rb_v_d   <= 0;
+        end
+        else if(cmem_fsm_state == `S_WRITE) rb_v_d <= 0;
+        else if(cmem_fsm_state == `S_LOAD) begin
+            if(pend == `PEND_RD_D) begin
                 rb_tag_d <= addr_d_tag;
                 rb_set_d <= addr_d_set;
                 rb_v_d   <= 1;
             end
-            if(`PEND_WR_D) begin
+            if(pend == `PEND_WR_D) begin
                 rb_tag_d <= wb_tag;
                 rb_set_d <= wb_set;
                 rb_v_d   <= 1;
@@ -223,10 +247,18 @@ module cmem(
     /* WRITE BUFFER */
 
     always @(posedge clk) begin
-        if(!rst_n || cmem_fsm_state == `S_WRITE) wr_pend <= 0;
-        else if(wr && cmem_fsm_state == `S_READY) begin
+        if(!rst_n || cmem_fsm_state == `S_WRITE) begin
+            wb_tag  <= 0;
+            wb_set  <= 0;
+            wb_offs <= 0;
+            wb_data <= 0;
+            wb_len  <= 0;
+            wr_pend <= 0;
+        end
+        else if(b_wr_w && cmem_fsm_state == `S_READY) begin
             wb_tag  <= addr_w_tag;
             wb_set  <= addr_w_set;
+            wb_offs <= addr_w_offs;
             wb_data <= b_wdata_w;
             wb_len  <= b_len_w;
             wr_pend <= 1;
@@ -235,15 +267,26 @@ module cmem(
 
     /* REQUEST ADDRESS */
 
+    // fails on same tests either way, needs more testing
+    // also needs update to support different size of L1i and L1d cache lines
+
     always @(posedge clk) begin
-        if(cmem_fsm_state == `S_FETCH) begin
-            case(pend)
-                `PEND_RD_I: b_addr_c <= {};
-                `PEND_RD_D: b_addr_c <= {};
-                `PEND_WR_D: b_addr_c <= {};
+        if(cmem_fsm_state_next == `S_FETCH) begin
+            case(pend_next)
+                `PEND_RD_I: b_addr_c <= {addr_i_tag, addr_i_set};
+                `PEND_RD_D: b_addr_c <= {addr_d_tag, addr_d_set};
+                `PEND_WR_D: b_addr_c <= {addr_d_tag, addr_d_set};
             endcase
         end
     end
+
+//    always @(*) begin
+//        case(pend_next)
+//            `PEND_RD_I: b_addr_c = {addr_i_tag, addr_i_set};
+//            `PEND_RD_D: b_addr_c = {addr_d_tag, addr_d_set};
+//            `PEND_WR_D: b_addr_c = {addr_d_tag, addr_d_set};
+//        endcase
+//    end
 
     /* METADATA UPDATE */
 
@@ -266,8 +309,7 @@ module cmem(
     /* INPUT MUX */
 
     always @(*) begin
-        if(cmem_fsm_state == `S_FETCH) d = b_rdata_c;
-        else begin
+        if(cmem_fsm_state == `S_WRITE) begin
             d = qd;
             case(wb_len)
                 2'b00: d[8*wb_offs +:  8] = wb_data[ 7:0];
@@ -276,12 +318,20 @@ module cmem(
                 2'b11: d[8*wb_offs +: 64] = wb_data[63:0];
             endcase
         end
+        else d = b_rdata_c;
     end
 
     /* OUTPUT MUX */
 
-    always @(*) b_data_i = qi[8*addr_i_offs +: `IMEM_LINE];
-    always @(*) b_data_d = qd[8*addr_d_offs +: `DMEM_LINE];
+    always @(*) begin
+        b_data_i  = qi[`IMEM_LINE*addr_i_offs +: `IMEM_LINE];
+        b_dv_i = rb_hit_i;
+    end
+
+    always @(*) begin
+        b_rdata_d = qd[`DMEM_LINE*addr_d_offs +: `DMEM_LINE];
+        b_dv_d = rb_hit_d;
+    end
 
     /* HIT DETECTION */
 
@@ -301,6 +351,14 @@ module cmem(
                 way_qd = w; hit_d = 1;
             end
         end
+
+        hit_w = 0;
+        for(w = 0; w < `CMEM_WAYS; w = w + 1) begin
+            if(tag[`CMEM_WAYS * wb_set + w] == wb_tag && v[`CMEM_WAYS * wb_set + w]) begin
+                if(pend_next == `PEND_WR_D) way_qd = w;
+                hit_w = 1;
+            end
+        end
     end
 
     /* BRAM READ */
@@ -308,12 +366,11 @@ module cmem(
     always @(*) begin
         tag_qi = addr_i_tag;
         set_qi = addr_i_set;
-
     end
 
     always @(*) begin
-        tag_qd = `PEND_WR_D ? wb_tag : addr_d_tag;
-        set_qd = `PEND_WR_D ? wb_set : addr_d_set;
+        tag_qd = pend == `PEND_WR_D ? wb_tag : addr_d_tag;
+        set_qd = pend == `PEND_WR_D ? wb_set : addr_d_set;
     end
 
     /* BRAM WRITE */
@@ -334,6 +391,10 @@ module cmem(
                 set_d = wb_set;
             end
         endcase
+    end
+
+    always @(*) begin
+        way_d = cmem_fsm_state == `S_WRITE ? way_qd : re;
     end
 
 `endif//CMEM_SET_ASSOC

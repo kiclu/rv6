@@ -82,11 +82,24 @@
 `define CMEM_SET_LEN            $clog2(`CMEM_SETS)
 `define CMEM_WAY_LEN            $clog2(`CMEM_WAYS)
 `define CMEM_OFFS_LEN           $clog2(`CMEM_LINE/8)
-`define CMEM_BLK_LEN            (`XLEN - `CMEM_OFFS_LEN                )
 `define CMEM_TAG_LEN            (`XLEN - `CMEM_OFFS_LEN - `CMEM_SET_LEN)
-`define CMEM_ADDR_TAG_RANGE     `XLEN                 - 1 -: `CMEM_TAG_LEN
-`define CMEM_ADDR_SET_RANGE     `XLEN - `CMEM_TAG_LEN - 1 -: `CMEM_SET_LEN
-`define CMEM_ADDR_OFFS_RANGE    `XLEN - `CMEM_BLK_LEN - 1 -: `CMEM_OFFS_LEN
+`define CMEM_BLK_LEN            `CMEM_TAG_LEN + `CMEM_SET_LEN
+
+`define CMEM_I_OFFS_LEN         `CMEM_OFFS_LEN - `IMEM_OFFS_LEN
+`define CMEM_I_ADDR_TAG_RANGE   `IMEM_BLK_LEN                 - 1 -: `CMEM_TAG_LEN
+`define CMEM_I_ADDR_SET_RANGE   `IMEM_BLK_LEN - `CMEM_TAG_LEN - 1 -: `CMEM_SET_LEN
+`define CMEM_I_ADDR_OFFS_RANGE  `CMEM_I_OFFS_LEN - 1 : 0
+
+`define CMEM_D_OFFS_LEN         `CMEM_OFFS_LEN - `DMEM_OFFS_LEN
+`define CMEM_D_ADDR_TAG_RANGE   `DMEM_BLK_LEN                 - 1 -: `CMEM_TAG_LEN
+`define CMEM_D_ADDR_SET_RANGE   `DMEM_BLK_LEN - `CMEM_TAG_LEN - 1 -: `CMEM_SET_LEN
+`define CMEM_D_ADDR_OFFS_RANGE  `CMEM_D_OFFS_LEN - 1 : 0
+
+`define CMEM_W_OFFS_LEN         `CMEM_OFFS_LEN
+`define CMEM_W_ADDR_TAG_RANGE   `XLEN                 - 1 -: `CMEM_TAG_LEN
+`define CMEM_W_ADDR_SET_RANGE   `XLEN - `CMEM_TAG_LEN - 1 -: `CMEM_SET_LEN
+`define CMEM_W_ADDR_OFFS_RANGE  `CMEM_W_OFFS_LEN - 1 : 0
+
 `endif//CMEM_SET_ASSOC
 
 /*----------------------------------------------------------------------------*/

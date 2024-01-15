@@ -29,51 +29,55 @@
 `timescale 1ns/1ps
 module tb_core();
 
-    wire             [63:0] h_addr;
-    reg    [`CMEM_LINE-1:0] h_data_in;
-    wire                    h_rd;
-    reg                     h_dv;
-    wire   [`CMEM_LINE-1:0] h_data_out;
-    wire                    h_wr;
-    reg                     h_irq_e;
-    reg                     h_irq_t;
-    reg                     h_irq_s;
-    reg              [63:0] h_inv_addr;
-    reg                     h_inv;
-    wire                    h_amo_req;
-    reg                     h_amo_ack;
-    reg                     h_rst_n;
-    wire                    h_clk;
+    wire             [63:0] c_addr;
+    wire                    c_ext;
+    reg    [`CMEM_LINE-1:0] c_rdata;
+    wire                    c_rd;
+    reg                     c_dv;
+    wire             [63:0] c_wdata;
+    wire             [ 1:0] c_len;
+    wire                    c_wr;
+    reg                     c_irq_e;
+    reg                     c_irq_t;
+    reg                     c_irq_s;
+    reg              [63:0] c_inv_addr;
+    reg                     c_inv;
+    wire                    c_amo_req;
+    reg                     c_amo_ack;
+    reg                     c_rst_n;
+    wire                    c_clk;
 
     rv6_core #(.HART_ID(0)) dut (
-        .h_addr         (h_addr         ),
-        .h_data_in      (h_data_in      ),
-        .h_rd           (h_rd           ),
-        .h_dv           (h_dv           ),
-        .h_data_out     (h_data_out     ),
-        .h_wr           (h_wr           ),
-        .h_irq_e        (h_irq_e        ),
-        .h_irq_t        (h_irq_t        ),
-        .h_irq_s        (h_irq_s        ),
-        .h_inv_addr     (h_inv_addr     ),
-        .h_inv          (h_inv          ),
-        .h_amo_req      (h_amo_req      ),
-        .h_amo_ack      (h_amo_ack      ),
-        .h_rst_n        (h_rst_n        ),
-        .h_clk          (h_clk          )
+        .c_addr         (c_addr         ),
+        .c_ext          (c_ext          ),
+        .c_rdata        (c_rdata        ),
+        .c_rd           (c_rd           ),
+        .c_dv           (c_dv           ),
+        .c_wdata        (c_wdata        ),
+        .c_len          (c_len          ),
+        .c_wr           (c_wr           ),
+        .c_irq_e        (c_irq_e        ),
+        .c_irq_t        (c_irq_t        ),
+        .c_irq_s        (c_irq_s        ),
+        .c_inv_addr     (c_inv_addr     ),
+        .c_inv          (c_inv          ),
+        .c_amo_req      (c_amo_req      ),
+        .c_amo_ack      (c_amo_ack      ),
+        .c_rst_n        (c_rst_n        ),
+        .c_clk          (c_clk          )
     );
 
     // initial signal values
     initial begin
-        h_data_in   = 64'bZ;
-        h_dv        = 0;
-        h_irq_e     = 0;
-        h_irq_t     = 0;
-        h_irq_s     = 0;
-        h_inv_addr  = 64'bZ;
-        h_inv       = 0;
-        h_amo_ack   = 0;
-        h_rst_n     = 1;
+        c_rdata     = 64'bZ;
+        c_dv        = 0;
+        c_irq_e     = 0;
+        c_irq_t     = 0;
+        c_irq_s     = 0;
+        c_inv_addr  = 64'bZ;
+        c_inv       = 0;
+        c_amo_ack   = 0;
+        c_rst_n     = 1;
     end
 
     // clock generator
@@ -82,7 +86,7 @@ module tb_core();
         clk = 1;
         forever #10 clk = ~clk;
     end
-    assign h_clk = clk;
+    assign c_clk = clk;
 
     /* MEMORY MODEL */
 
@@ -97,34 +101,33 @@ module tb_core();
     endtask
 
     // memory read op
-    always @(h_rd) begin
-        if(h_rd) begin
+    always @(c_rd) begin
+        if(c_rd) begin
             #800
             for(integer i = 0; i < `CMEM_LINE/8; ++i) begin
-                h_data_in[8*i +: 8] = mem[h_addr + i];
+                c_rdata[8*i +: 8] = mem[c_addr + i];
             end
-            h_dv = 1;
+            c_dv = 1;
             #20
-            h_data_in = `CMEM_LINE'bZ;
-            h_dv = 0;
+            c_rdata = `CMEM_LINE'bZ;
+            c_dv = 0;
         end
         else begin
-            h_data_in = 'bZ;
-            h_dv = 0;
+            c_rdata = 'bZ;
+            c_dv = 0;
         end
     end
 
     // memory write op
     always @(posedge clk) begin
-        if(h_wr) begin
-            for(integer i = 0; i < `CMEM_LINE/8; ++i) begin
-                mem[h_addr + i] = h_data_out[8*i +: 8];
+        if(c_wr) begin
+            for(integer i = 0; i < 2**c_len; i = i + 1) begin
+                mem[c_addr + i] <= c_wdata[8*i +: 8];
             end
         end
     end
 
     /* MONITOR */
-
 
     class Exception;
         bit [63:0] cause;
@@ -281,7 +284,9 @@ module tb_core();
                     if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
                     if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
 
-                    if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
+                    if(this.pipeline[MEM]) begin
+                        if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
+                    end
 
                     if(dut.t_flush_ex)  this.pipeline[EX] = null;
 
@@ -343,9 +348,9 @@ module tb_core();
 
             // hart reset signal
             #80
-            h_rst_n = 0;
+            c_rst_n = 0;
             #80;
-            h_rst_n = 1;
+            c_rst_n = 1;
 
             // trace file handle init
             this.fd = $fopen({this.name, ".trace"}, "w");
@@ -430,8 +435,18 @@ module tb_core();
 
     initial begin
         //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-*");
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64uc-p-rvc");
+
         env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sd");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-fence_i");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-ma_data");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sh");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sw");
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sb");
+
+
+
+
+        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64uc-p-rvc");
         env.run();
         $stop();
     end

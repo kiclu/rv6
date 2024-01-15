@@ -29,7 +29,7 @@ module imem(
     output reg                      b_rd_i,
     input                           b_dv_i,
 
-    output reg                      stall_imem,
+    output                          stall_imem,
     input                           rst_n,
     input                           clk
 );
@@ -141,7 +141,10 @@ module imem(
     /* READ BUFFER */
 
     always @(posedge clk) begin
-        if(ld_cnt == 0 && imem_fsm_state == `S_LOAD) begin
+        if(!rst_n) begin
+            rb_v    <= 0;
+        end
+        else if(ld_cnt == 0 && imem_fsm_state == `S_LOAD) begin
             rb_tag  <= addr_tag;
             rb_set  <= addr_set;
             rb_v    <= 1;
@@ -151,10 +154,8 @@ module imem(
 
     /* REQUEST ADDRESS */
 
-    always @(posedge clk) begin
-        if(imem_fsm_state == `S_FETCH) begin
-            b_addr_i <= {addr_tag, addr_set};
-        end
+    always @(*) begin
+        b_addr_i = {addr_tag, addr_set};
     end
 
     /* METADATA UPDATE */

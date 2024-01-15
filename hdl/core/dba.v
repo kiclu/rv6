@@ -17,15 +17,15 @@
 `include "../config.vh"
 
 module dba(
-    input                [63:0] addr,
-    input                [ 2:0] len,
-    output               [63:0] rdata,
-    input                       rd,
-    input                [63:0] wdata,
-    input                       wr,
+    // write bus
+    input                [63:0] b_addr_w,
+    input                [63:0] b_wdata_w,
+    input                [ 1:0] b_len_w,
+    input                       b_wr_w,
 
-    // cmem read bus
-    input                [63:0] b_addr_c,
+    // read bus
+    input   [`CMEM_BLK_LEN-1:0] b_addr_c,
+    output  [   `CMEM_LINE-1:0] b_rdata_c,
     input                       b_rd_c,
     output                      b_dv_c,
 
@@ -42,6 +42,15 @@ module dba(
     output                      c_wr
 );
 
-    assign c_ext   = (addr < `EXT_MMAP_RANGE) && (rd || wr);
+    assign b_rdata_c    = c_rdata;
+    assign b_dv_c       = c_dv;
+
+    assign c_addr   = {b_addr_c, {`CMEM_OFFS_LEN{1'b0}}};
+    assign c_ext    = (c_addr < `EXT_MMAP_RANGE) && (c_rd || c_wr);
+    assign c_rd     = b_rd_c;
+
+    assign c_wdata  = b_wdata_w;
+    assign c_len    = b_len_w;
+    assign c_wr     = b_wr_w;
 
 endmodule

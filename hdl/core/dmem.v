@@ -38,7 +38,7 @@ module dmem(
     input                           b_dv_d,
 
     // cache invalidaton
-    input       [`DMEM_BLK_LEN-1:0] inv_addr,
+    input       [`DMEM_BLK_LEN-1:0] b_inv_addr_d,
     input                           inv,
 
     // control signals
@@ -184,6 +184,10 @@ module dmem(
             b_addr_d <= wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
         end
     end
+
+    //always @(*) begin
+    //    b_addr_d = wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
+    //end
 
     /* METADATA UPDATE */
 

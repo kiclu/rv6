@@ -13,11 +13,11 @@ all: syn_all ut
 # Compile all source files
 syn_all: ${SOURCES_SYN}
 	@echo "Makefile: Compiling synthesis modules"
-	@cd simulation/ && vsim -c tb_hart -do 'quit -sim; project open rv6; project compileall; quit -f;'
+	@cd simulation/ && vsim -c tb_core -do 'quit -sim; project open rv6; project compileall; quit -f;'
 	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
 ut: | ${SOURCES_SYN} ${SOURCES_SIM}
-	@cd simulation/ && vsim -c tb_hart -do 'run -all; quit -f;'
+	@cd simulation/ && vsim -c tb_core -do 'run -all; quit -f;'
 
 clean:
 	rm -rf simulation/*.trace
