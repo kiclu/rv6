@@ -1,0 +1,88 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c tb_core -do "run -all; quit -f;" 
+# Start time: 21:34:41 on Jan 15,2024
+# Loading sv_std.std
+# Loading work.tb_core
+# Loading work.rv6_core
+# Loading work.pc
+# Loading work.bpu
+# Loading work.imem
+# Loading work.pd
+# Loading work.regfile
+# Loading work.br_alu
+# Loading work.alu
+# Loading work.dmem
+# Loading work.csr
+# Loading work.cmem
+# Loading work.dba
+# Loading work.cu
+# ** Warning: (vsim-PLI-3691) Expected a system task, not a system function '$fgets'.
+#    Time: 0 ps  Iteration: 0  Region: /tb_core/RiscvTestEnv::run File: /home/kiclu/projects/rv6/test/tb_core.sv Line: 397
+# ** Warning: (vsim-2685) [TFMPC] - Too few port connections for 'u_cmem'.  Expected 21, found 20.
+#    Time: 0 ps  Iteration: 0  Instance: /tb_core/dut/u_cmem File: /home/kiclu/projects/rv6/hdl/core/core.v Line: 483
+# ** Warning: (vsim-3722) /home/kiclu/projects/rv6/hdl/core/core.v(483): [TFMPC] - Missing connection for port 'stall_cmem'.
+# run -all
+# Running riscv-tests...
+# rv64ui-p-sltu            : [1;32mpassed[0m
+# rv64ui-p-srliw           : [1;32mpassed[0m
+# rv64ui-p-bge             : [1;32mpassed[0m
+# rv64ui-p-srl             : [1;32mpassed[0m
+# rv64ui-p-addw            : [1;32mpassed[0m
+# rv64ui-p-bltu            : [1;32mpassed[0m
+# rv64ui-p-slt             : [1;32mpassed[0m
+# rv64ui-p-srlw            : [1;32mpassed[0m
+# rv64ui-p-srli            : [1;32mpassed[0m
+# rv64ui-p-andi            : [1;32mpassed[0m
+# rv64ui-p-lb              : [1;32mpassed[0m
+# rv64ui-p-lui             : [1;32mpassed[0m
+# rv64ui-p-sd              : [1;31mfailed[0m
+# rv64ui-p-fence_i         : [1;31mfailed[0m
+# rv64ui-p-ma_data         : [1;31mfailed[0m
+# rv64ui-p-xori            : [1;32mpassed[0m
+# rv64ui-p-sh              : [1;31mfailed[0m
+# rv64ui-p-sraw            : [1;32mpassed[0m
+# rv64ui-p-slliw           : [1;32mpassed[0m
+# rv64ui-p-bgeu            : [1;32mpassed[0m
+# rv64ui-p-addi            : [1;32mpassed[0m
+# rv64ui-p-sraiw           : [1;32mpassed[0m
+# rv64ui-p-sra             : [1;32mpassed[0m
+# rv64ui-p-subw            : [1;32mpassed[0m
+# rv64ui-p-ori             : [1;32mpassed[0m
+# rv64ui-p-jal             : [1;32mpassed[0m
+# rv64ui-p-slli            : [1;32mpassed[0m
+# rv64ui-p-lw              : [1;32mpassed[0m
+# rv64ui-p-and             : [1;32mpassed[0m
+# rv64ui-p-lhu             : [1;32mpassed[0m
+# rv64ui-p-jalr            : [1;32mpassed[0m
+# rv64ui-p-simple          : [1;32mpassed[0m
+# rv64ui-p-xor             : [1;32mpassed[0m
+# rv64ui-p-lbu             : [1;32mpassed[0m
+# rv64ui-p-or              : [1;32mpassed[0m
+# rv64ui-p-lwu             : [1;32mpassed[0m
+# rv64ui-p-sllw            : [1;32mpassed[0m
+# rv64ui-p-sll             : [1;32mpassed[0m
+# rv64ui-p-add             : [1;32mpassed[0m
+# rv64ui-p-sub             : [1;32mpassed[0m
+# rv64ui-p-slti            : [1;32mpassed[0m
+# rv64ui-p-sltiu           : [1;32mpassed[0m
+# rv64ui-p-ld              : [1;32mpassed[0m
+# rv64ui-p-blt             : [1;32mpassed[0m
+# rv64ui-p-bne             : [1;32mpassed[0m
+# rv64ui-p-addiw           : [1;32mpassed[0m
+# rv64ui-p-beq             : [1;32mpassed[0m
+# rv64ui-p-auipc           : [1;32mpassed[0m
+# rv64ui-p-sw              : [1;31mfailed[0m
+# rv64ui-p-srai            : [1;32mpassed[0m
+# rv64ui-p-lh              : [1;32mpassed[0m
+# rv64ui-p-sb              : [1;31mfailed[0m
+# riscv-tests finished: [1;32m         46[0m passed, [1;31m          6[0m failed!
+# ** Note: $stop    : /home/kiclu/projects/rv6/test/tb_core.sv(451)
+#    Time: 5010230 ns  Iteration: 1  Instance: /tb_core
+# Break in Module tb_core at /home/kiclu/projects/rv6/test/tb_core.sv line 451
+# Stopped at /home/kiclu/projects/rv6/test/tb_core.sv line 451
+#  quit -f
+# End time: 21:34:46 on Jan 15,2024, Elapsed time: 0:00:05
+# Errors: 0, Warnings: 3
