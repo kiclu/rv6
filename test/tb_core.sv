@@ -90,42 +90,17 @@ module tb_core();
 
     /* MEMORY MODEL */
 
-    reg [7:0] mem [`TB_ENTRY : `TB_ENTRY+`TB_MEM_SIZE-1];
-
-    // initialize memory
-    task read_hex(string filename);
-        $readmemh(filename, mem, `TB_ENTRY);
-        for(integer i = `TB_ENTRY; i < `TB_ENTRY+`TB_MEM_SIZE; ++i) begin
-            if(mem[i] === 8'hX) mem[i] = 8'h00;
-        end
-    endtask
-
-    // memory read op
-    always @(c_rd) begin
-        if(c_rd) begin
-            #800
-            for(integer i = 0; i < `CMEM_LINE/8; ++i) begin
-                c_rdata[8*i +: 8] = mem[c_addr + i];
-            end
-            c_dv = 1;
-            #20
-            c_rdata = `CMEM_LINE'bZ;
-            c_dv = 0;
-        end
-        else begin
-            c_rdata = 'bZ;
-            c_dv = 0;
-        end
-    end
-
-    // memory write op
-    always @(posedge clk) begin
-        if(c_wr) begin
-            for(integer i = 0; i < 2**c_len; i = i + 1) begin
-                mem[c_addr + i] <= c_wdata[8*i +: 8];
-            end
-        end
-    end
+    mem tb_mem (
+        .addr           (c_addr         ),
+        .wdata          (c_wdata        ),
+        .rdata          (c_rdata        ),
+        .len            (c_len          ),
+        .rd             (c_rd           ),
+        .wr             (c_wr           ),
+        .dv             (c_dv           ),
+        .rst_n          (c_rst_n        ),
+        .clk            (c_clk          )
+    );
 
     /* MONITOR */
 
@@ -244,7 +219,7 @@ module tb_core();
         local task dromajo_cosim();
             //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
             $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
-            read_hex("temp.hex");
+            tb_mem.read_hex("temp.hex");
 
             // probably some debug section or some other kind of bootrom?? not documented anywhere
             // fdisplay here just so trace comparison works
