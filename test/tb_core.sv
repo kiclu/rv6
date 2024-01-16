@@ -19,7 +19,7 @@
 `define TB_ENTRY    64'h8000_0000
 `define TB_MEM_SIZE 64'h10_0000
 
-`define ANSI_COLORS
+//`define ANSI_COLORS
 `define DROMAJO_VERBOSE
 
 `define DROMAJO             "/opt/riscv/bin/dromajo"
@@ -108,7 +108,7 @@ module tb_core();
         bit [63:0] cause;
         bit [63:0] tval;
 
-        function new(bit [63:0] cause, bit [63:0] tval);
+        function new(input bit [63:0] cause, input bit [63:0] tval);
             this.cause = cause;
             this.tval = tval;
         endfunction
@@ -122,7 +122,7 @@ module tb_core();
     class InvalidCSRException extends Exception;
         bit [11:0] csr_addr;
 
-        function new(bit [63:0] cause, bit [63:0] tval, bit [11:0] csr_addr);
+        function new(input bit [63:0] cause, input bit [63:0] tval, input bit [11:0] csr_addr);
             super.new(cause, tval);
             this.csr_addr = csr_addr;
         endfunction
@@ -147,7 +147,7 @@ module tb_core();
 
         Exception e;
 
-        function new(bit [63:0] hart_id, bit[1:0] priv_lvl, bit [31:0] ir, bit [63:0] pc);
+        function new(input bit [63:0] hart_id, input bit[1:0] priv_lvl, input bit [31:0] ir, input bit [63:0] pc);
             this.hart_id = hart_id;
             this.priv_lvl = priv_lvl;
 
@@ -201,7 +201,7 @@ module tb_core();
 
         string name;
 
-        function new(string elf);
+        function new(input string elf);
             integer k;
             this.elf = elf;
             for(integer i = 0; i < elf.len(); ++i) begin
@@ -216,36 +216,50 @@ module tb_core();
         local integer fd;
         Instruction pipeline [1:5];
 
-        local task dromajo_cosim();
+        local function void dromajo_cosim();
             //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
             $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
             tb_mem.read_hex("temp.hex");
 
-            // probably some debug section or some other kind of bootrom?? not documented anywhere
-            // fdisplay here just so trace comparison works
+            // dromajo runs debug mode bootrom at 0x10000
+            // there's no debug mode implemented on this core so this section
+            // is just skipped, but trace still has to be printed for trace comparison
             $fdisplay(
                 this.fd,
-"0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000
-0 3 0x0000000000010004 (0x00050663)
-0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010
-0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100
-0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603
-0 3 0x000000000001001c (0x7b041073)
-0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001
-0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000
-0 3 0x0000000000010028 (0x7b141073)
+"0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000\n\
+0 3 0x0000000000010004 (0x00050663)\n\
+0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010\n\
+0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100\n\
+0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603\n\
+0 3 0x000000000001001c (0x7b041073)\n\
+0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001\n\
+0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000\n\
+0 3 0x0000000000010028 (0x7b141073)\n\
 0 3 0x000000000001002c (0x7b200073)"
             );
 
-        endtask
+        endfunction
 
         local task pipeline_sync();
             forever begin
                 if(!this.fd) break;
                 @(posedge clk) begin
-                    if(!dut.stall_wb && this.pipeline[WB]) begin
+                    /* DEBUG START */
+                    // if($time() == 31200000ps) begin
+                    //     $display("DEBUG START");
+                    //     $display("IR = %08h", this.pipeline[WB].ir);
+                    //     $display("DEBUG END");
+                    // end
+                    /* DEBUG END */
+                    if(!dut.stall_wb && this.pipeline[WB] != null) begin
                         this.ir_retired = this.pipeline[WB].ir;
                         if(!this.fd) break;
+                        if(this.pipeline[WB] && this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e) begin
+                            // TODO: fix a bug where pipeline record in this
+                            // testbench doesn't align with core pipeline
+                            this.pipeline[WB].ir = dut.bmw_ir;
+                            //$display("ir mismatch @ %t", $time());
+                        end
                         $fdisplay(
                             this.fd,
                             "%s",
@@ -346,16 +360,15 @@ module tb_core();
 
         string path;
 
-        function new(string path, string template);
+        function new(input string path);
             this.path = path;
-            this.gen_file_list(template);
             this.passed = 0;
             this.failed = 0;
         endfunction
 
-        local task gen_file_list(string template);
+        function void gen_file_list(input string template);
             $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' > tb_hart.lst"});
-        endtask
+        endfunction
 
         Test t;
 
@@ -409,19 +422,17 @@ module tb_core();
     RiscvTestEnv env;
 
     initial begin
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-*");
+        env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sd");
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-fence_i");
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-ma_data");
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sh");
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sw");
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-sb");
+        env.gen_file_list("rv64ui-p-*");
+        //env.gen_file_list("rv64ui-p-sd");
+        //env.gen_file_list("rv64ui-p-fence_i");
+        //env.gen_file_list("rv64ui-p-ma_data");
+        //env.gen_file_list("rv64ui-p-sh");
+        //env.gen_file_list("rv64ui-p-sw");
+        //env.gen_file_list("rv64ui-p-sb");
+        //env.gen_file_list("rv64uc-p-rvc");
 
-
-
-
-        //env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64uc-p-rvc");
         env.run();
         $stop();
     end

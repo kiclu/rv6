@@ -286,7 +286,7 @@ module dmem(
         set_d = wr_pend ? wb_set : addr_set;
     end
 
-    assign stall_dmem = (rd && dmem_fsm_state_next) || ((rd ||wr) && wr_pend);
+    assign stall_dmem = (rd && dmem_fsm_state_next) || ((rd ||wr) && wr_pend) || (dmem_fsm_state == `S_READY && dmem_fsm_state_next == `S_WRITE);
 
 `endif//DMEM_SET_ASSOC
 

@@ -17,50 +17,6 @@ add wave -noupdate -radix hexadecimal /tb_core/dut/c_amo_req
 add wave -noupdate -radix hexadecimal /tb_core/dut/c_amo_ack
 add wave -noupdate -radix hexadecimal /tb_core/dut/c_rst_n
 add wave -noupdate -radix hexadecimal /tb_core/dut/c_clk
-add wave -noupdate -radix hexadecimal /tb_core/dut/pc
-add wave -noupdate -radix hexadecimal /tb_core/dut/ir
-add wave -noupdate /tb_core/dut/stall_if
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pc
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/trap_taken
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/trap_addr
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jalr_taken
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jalr_addr
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_miss
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/br_addr
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jal_taken
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jal_addr
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_taken
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_offs
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/c_ins
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/stall
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/rst_n
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/clk
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_addr
-add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/n_pc
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/pc
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/ir
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/jal_taken
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/jal_addr
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/pr_taken
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/pr_offs
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/rst_n
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/j_taken
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/j_taken_c
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/j_addr
-add wave -noupdate -group bpu -radix hexadecimal /tb_core/dut/u_bpu/j_addr_c
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/r1
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/rs1
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/r2
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/rs2
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/d
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/rd
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/wr
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/clk
-add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/_reg
-add wave -noupdate -group alu -radix hexadecimal /tb_core/dut/u_alu/a
-add wave -noupdate -group alu -radix hexadecimal /tb_core/dut/u_alu/b
-add wave -noupdate -group alu -radix hexadecimal /tb_core/dut/u_alu/alu_out
-add wave -noupdate -group alu -radix hexadecimal /tb_core/dut/u_alu/op_ir
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/pc
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/ir
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/b_addr_i
@@ -74,7 +30,7 @@ add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/addr
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/addr_tag
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/addr_set
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/addr_offs
-add wave -noupdate -group imem -radix hexadecimal -childformat {{{/tb_core/dut/u_imem/data[0]} -radix hexadecimal} {{/tb_core/dut/u_imem/data[1]} -radix hexadecimal} {{/tb_core/dut/u_imem/data[2]} -radix hexadecimal} {{/tb_core/dut/u_imem/data[3]} -radix hexadecimal}} -expand -subitemconfig {{/tb_core/dut/u_imem/data[0]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_imem/data[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_imem/data[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_imem/data[3]} {-height 16 -radix hexadecimal}} /tb_core/dut/u_imem/data
+add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/data
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/tag
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/v
 add wave -noupdate -group imem -radix hexadecimal /tb_core/dut/u_imem/re
@@ -118,6 +74,7 @@ add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/b_dv_d
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/b_inv_addr_d
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/inv
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/stall_dmem
+add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/stall_mem
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/rst_n
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/clk
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/addr_tag
@@ -151,6 +108,9 @@ add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/rb_hit
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/ld_cnt
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/dmem_fsm_state
 add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/dmem_fsm_state_next
+add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/wr_nstall
+add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/wr_nstall_d
+add wave -noupdate -group dmem -radix hexadecimal /tb_core/dut/u_dmem/wr_nstall_re
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/b_addr_w
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/b_wdata_w
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/b_len_w
@@ -181,8 +141,8 @@ add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/addr_d_off
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/addr_w_tag
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/addr_w_set
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/addr_w_offs
-add wave -noupdate -group cmem -radix hexadecimal -childformat {{{/tb_core/dut/u_cmem/data[0]} -radix hexadecimal} {{/tb_core/dut/u_cmem/data[1]} -radix hexadecimal} {{/tb_core/dut/u_cmem/data[2]} -radix hexadecimal} {{/tb_core/dut/u_cmem/data[3]} -radix hexadecimal}} -expand -subitemconfig {{/tb_core/dut/u_cmem/data[0]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_cmem/data[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_cmem/data[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_cmem/data[3]} {-height 16 -radix hexadecimal}} /tb_core/dut/u_cmem/data
-add wave -noupdate -group cmem -radix hexadecimal -childformat {{{/tb_core/dut/u_cmem/tag[0]} -radix hexadecimal} {{/tb_core/dut/u_cmem/tag[1]} -radix hexadecimal} {{/tb_core/dut/u_cmem/tag[2]} -radix hexadecimal} {{/tb_core/dut/u_cmem/tag[3]} -radix hexadecimal}} -expand -subitemconfig {{/tb_core/dut/u_cmem/tag[0]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_cmem/tag[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_cmem/tag[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_cmem/tag[3]} {-height 16 -radix hexadecimal}} /tb_core/dut/u_cmem/tag
+add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/data
+add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/tag
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/v
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/re
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/hit_i
@@ -223,10 +183,11 @@ add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/cmem_fsm_s
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/cmem_fsm_state_next
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/pend
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/pend_next
+add wave -noupdate -childformat {{/tb_core/env.t.ir_retired -radix hexadecimal} {/tb_core/env.t.fd -radix hexadecimal} {/tb_core/env.t.pipeline -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[1]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[1].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[2]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[2].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[3]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[3].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[4]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[4].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[5]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[5].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].e} -radix hexadecimal}}}}}} -subitemconfig {/tb_core/env.t.ir_retired {-height 16 -radix hexadecimal} /tb_core/env.t.fd {-height 16 -radix hexadecimal} /tb_core/env.t.pipeline {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[1]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[1].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[2]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[2].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[3]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[3].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[4]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[4].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].e} -radix hexadecimal}}} {{/tb_core/env.t.pipeline[5]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[5].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].e} -radix hexadecimal}}}} -expand} {/tb_core/env.t.pipeline[1]} {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[1].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[1].e} -radix hexadecimal}}} {/tb_core/env.t.pipeline[1].ir} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[1].pc} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[1].hart_id} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[1].priv_lvl} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[1].e} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[2]} {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[2].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[2].e} -radix hexadecimal}}} {/tb_core/env.t.pipeline[2].ir} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[2].pc} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[2].hart_id} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[2].priv_lvl} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[2].e} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[3]} {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[3].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[3].e} -radix hexadecimal}}} {/tb_core/env.t.pipeline[3].ir} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[3].pc} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[3].hart_id} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[3].priv_lvl} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[3].e} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[4]} {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[4].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[4].e} -radix hexadecimal}}} {/tb_core/env.t.pipeline[4].ir} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[4].pc} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[4].hart_id} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[4].priv_lvl} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[4].e} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5]} {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[5].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].e} -radix hexadecimal}}} {/tb_core/env.t.pipeline[5].ir} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].pc} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].hart_id} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].priv_lvl} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].e} {-height 16 -radix hexadecimal}} /tb_core/env.t
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {51020000 ps} 1} {{Cursor 2} {22060000 ps} 0}
+WaveRestoreCursors {{trace log error} {31040000 ps} 1} {{Cursor 4} {31200000 ps} 0}
 quietly wave cursor active 2
-configure wave -namecolwidth 241
+configure wave -namecolwidth 262
 configure wave -valuecolwidth 158
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
@@ -240,4 +201,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {0 ps} {71887767 ps}
+WaveRestoreZoom {0 ps} {777015 ps}
