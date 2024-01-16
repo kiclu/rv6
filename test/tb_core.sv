@@ -19,9 +19,6 @@
 `define TB_ENTRY    64'h8000_0000
 `define TB_MEM_SIZE 64'h10_0000
 
-//`define ANSI_COLORS
-`define DROMAJO_VERBOSE
-
 `define DROMAJO             "/opt/riscv/bin/dromajo"
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
 `define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
@@ -216,7 +213,7 @@ module tb_core();
         local integer fd;
         Instruction pipeline [1:5];
 
-        local function void dromajo_cosim();
+        local task dromajo_cosim();
             //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
             $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
             tb_mem.read_hex("temp.hex");
@@ -238,7 +235,7 @@ module tb_core();
 0 3 0x000000000001002c (0x7b200073)"
             );
 
-        endfunction
+        endtask
 
         local task pipeline_sync();
             forever begin
@@ -366,9 +363,9 @@ module tb_core();
             this.failed = 0;
         endfunction
 
-        function void gen_file_list(input string template);
+        task gen_file_list(input string template);
             $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' > tb_hart.lst"});
-        endfunction
+        endtask
 
         Test t;
 
