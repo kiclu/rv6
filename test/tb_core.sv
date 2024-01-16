@@ -16,9 +16,6 @@
 
 `include "../hdl/config.vh"
 
-`define TB_ENTRY    64'h8000_0000
-`define TB_MEM_SIZE 64'h10_0000
-
 `define DROMAJO             "/opt/riscv/bin/dromajo"
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
 `define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
