@@ -157,19 +157,19 @@ module cmem(
         cmem_fsm_state_next = cmem_fsm_state;
         case(cmem_fsm_state)
             `S_READY: begin
-                if(b_rd_i &&   !hit_i  && !pend_next) cmem_fsm_state_next = `S_FETCH;
-                if(b_rd_i &&    hit_i  && !pend_next) cmem_fsm_state_next = `S_LOAD;
-                if(b_rd_i && rb_hit_i  && !pend_next) cmem_fsm_state_next = `S_READY;
+                if(b_rd_i &&    !hit_i && !pend_next) cmem_fsm_state_next = `S_FETCH;
+                if(b_rd_i &&     hit_i && !pend_next) cmem_fsm_state_next = `S_LOAD;
+                if(b_rd_i &&  rb_hit_i && !pend_next) cmem_fsm_state_next = `S_READY;
                 if(cmem_fsm_state_next && !pend_next) pend_next = `PEND_RD_I;
 
-                if(b_rd_d &&   !hit_d  && !pend_next) cmem_fsm_state_next = `S_FETCH;
-                if(b_rd_d &&    hit_d  && !pend_next) cmem_fsm_state_next = `S_LOAD;
-                if(b_rd_d && rb_hit_d  && !pend_next) cmem_fsm_state_next = `S_READY;
+                if(b_rd_d &&    !hit_d && !pend_next) cmem_fsm_state_next = `S_FETCH;
+                if(b_rd_d &&     hit_d && !pend_next) cmem_fsm_state_next = `S_LOAD;
+                if(b_rd_d &&  rb_hit_d && !pend_next) cmem_fsm_state_next = `S_READY;
                 if(cmem_fsm_state_next && !pend_next) pend_next = `PEND_RD_D;
 
-                if(b_wr_w &&   !hit_d  && !pend_next) cmem_fsm_state_next = `S_FETCH;
-                if(b_wr_w &&    hit_d  && !pend_next) cmem_fsm_state_next = `S_LOAD;
-                if(b_wr_w && rb_hit_w  && !pend_next) cmem_fsm_state_next = `S_WRITE;
+                if(b_wr_w &&    !hit_d && !pend_next) cmem_fsm_state_next = `S_FETCH;
+                if(b_wr_w &&     hit_d && !pend_next) cmem_fsm_state_next = `S_LOAD;
+                if(b_wr_w &&  rb_hit_w && !pend_next) cmem_fsm_state_next = `S_WRITE;
                 if(cmem_fsm_state_next && !pend_next) pend_next = `PEND_WR_D;
             end
             `S_FETCH: begin
