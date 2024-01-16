@@ -376,6 +376,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .b_inv_addr_d   (b_inv_addr_d   ),
         .inv            (c_inv          ),
         .stall_dmem     (stall_dmem     ),
+        .stall_mem      (stall_mem      ),
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
     );

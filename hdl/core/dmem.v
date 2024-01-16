@@ -43,6 +43,7 @@ module dmem(
 
     // control signals
     output                          stall_dmem,
+    input                           stall_mem,
     input                           rst_n,
     input                           clk
 );
@@ -94,7 +95,7 @@ module dmem(
     reg  [`DMEM_SET_LEN-1:0] rb_set;
     reg                      rb_v;
 
-    wire rb_hit = rb_tag == addr_tag && rb_set == addr_set;
+    wire rb_hit = rb_tag == addr_tag && rb_set == addr_set && rb_v;
 
     /* FSM */
 
@@ -155,22 +156,35 @@ module dmem(
     /* READ BUFFER */
 
     always @(posedge clk) begin
-        if(dmem_fsm_state == `S_WRITE) rb_v <= 0;
-        if(dmem_fsm_state == `S_LOAD) begin
-            rb_tag <= wr_pend ? wb_tag : addr_tag;
-            rb_set <= wr_pend ? wb_set : addr_set;
-            rb_v   <= 1;
+        if(!rst_n) begin
+            rb_tag  <= 0;
+            rb_set  <= 0;
+            rb_v    <= 0;
+        end
+        else begin
+            if(dmem_fsm_state == `S_WRITE) rb_v <= 0;
+            if(dmem_fsm_state == `S_LOAD) begin
+                rb_tag <= wr_pend ? wb_tag : addr_tag;
+                rb_set <= wr_pend ? wb_set : addr_set;
+                rb_v   <= 1;
+            end
         end
         ld_cnt <= dmem_fsm_state == `S_LOAD ? ld_cnt - 1 : `DMEM_READ_VALID_DELAY;
     end
 
     /* WRITE BUFFER */
 
+    wire wr_nstall = wr && !stall_mem;
+    reg wr_nstall_d;
+    always @(posedge clk) wr_nstall_d <= wr_nstall;
+    wire wr_nstall_re = wr_nstall && !wr_nstall_d;
+
     always @(posedge clk) begin
         if(!rst_n || dmem_fsm_state == `S_WRITE) wr_pend <= 0;
-        else if(wr && dmem_fsm_state == `S_READY) begin
+        else if(wr_nstall_re && !rb_hit) begin
             wb_tag  <= addr_tag;
             wb_set  <= addr_set;
+            wb_offs <= addr_offs;
             wb_data <= wdata;
             wb_len  <= len;
             wr_pend <= 1;
@@ -179,15 +193,15 @@ module dmem(
 
     /* REQUEST ADDRESS */
 
-    always @(posedge clk) begin
-        if(dmem_fsm_state == `S_FETCH) begin
-            b_addr_d <= wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
-        end
-    end
-
-    //always @(*) begin
-    //    b_addr_d = wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
+    //always @(posedge clk) begin
+    //    if(dmem_fsm_state == `S_FETCH) begin
+    //        b_addr_d <= wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
+    //    end
     //end
+
+    always @(*) begin
+        b_addr_d = wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
+    end
 
     /* METADATA UPDATE */
 
@@ -211,13 +225,22 @@ module dmem(
 
     always @(*) begin
         if(dmem_fsm_state == `S_FETCH) d = b_rdata_d;
-        else begin
+        else if(wr_pend) begin
             d = q;
             case(wb_len)
                 2'b00: d[8*wb_offs +:  8] = wb_data[ 7:0];
                 2'b01: d[8*wb_offs +: 16] = wb_data[15:0];
                 2'b10: d[8*wb_offs +: 32] = wb_data[31:0];
                 2'b11: d[8*wb_offs +: 64] = wb_data[63:0];
+            endcase
+        end
+        else begin
+            d = q;
+            case(len)
+                2'b00: d[8*addr_offs +:  8] = wdata[ 7:0];
+                2'b01: d[8*addr_offs +: 16] = wdata[15:0];
+                2'b10: d[8*addr_offs +: 32] = wdata[31:0];
+                2'b11: d[8*addr_offs +: 64] = wdata[63:0];
             endcase
         end
     end
@@ -263,7 +286,7 @@ module dmem(
         set_d = wr_pend ? wb_set : addr_set;
     end
 
-    assign stall_dmem = (rd && dmem_fsm_state_next) || (wr && wr_pend);
+    assign stall_dmem = (rd && dmem_fsm_state_next) || ((rd ||wr) && wr_pend);
 
 `endif//DMEM_SET_ASSOC
 
