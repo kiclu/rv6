@@ -297,11 +297,12 @@ module dmem(
 
     /* MISALIGNED ACCESS DETECTION */
 
-`ifdef DMEM_MA_NONE
+`ifdef  DMEM_MA_NONE
+    // DEBUG PURPOSES ONLY
     wire ma = 0;
-`endif
+`endif//DMEM_MA_NONE
 
-`ifdef DMEM_MA_CLINE
+`ifdef  DMEM_MA_CLINE
     reg  [63:0] ma_addr;
     wire [`DMEM_TAG_LEN-1:0] ma_addr_tag = ma_addr[`DMEM_ADDR_TAG_RANGE];
     wire [`DMEM_SET_LEN-1:0] ma_addr_set = ma_addr[`DMEM_ADDR_SET_RANGE];
@@ -315,9 +316,9 @@ module dmem(
             2'b11: ma_addr = addr + 7;
         endcase
     end
-`endif
+`endif//DMEM_MA_CLINE
 
-`ifdef DMEM_MA_STRICT
+`ifdef  DMEM_MA_NATURAL
     reg ma;
     always @(*) begin
         case(len[1:0])
@@ -327,7 +328,7 @@ module dmem(
             2'b11: ma = |addr[3:0];
         endcase
     end
-`endif
+`endif//DMEM_MA_NATURAL
 
     assign ld_ma = ma && rd;
     assign st_ma = ma && wr;

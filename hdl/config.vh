@@ -45,7 +45,7 @@
 
 /* CACHE MISALIGNED DATA */
 
-`define DMEM_MA_CLINE
+`define DMEM_MA_NATURAL
 
 /*----------------------------------------------------------------------------*/
 
