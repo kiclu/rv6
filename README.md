@@ -113,7 +113,7 @@ During the Write Back stage, the result from previous stages is written back int
 | `BPU_STATIC_NTAKEN`                                                       | ifdef flag    | Branch predict static not taken                                       |
 | `BPU_STATIC_BTAKEN`                                                       | ifdef flag    | Branch predict static backward taken                                  |
 | **Misaligned Access**                                                     |               |                                                                       |
-| `DMEM_MA_CLINE`                                                           | ifdef flag    | L1d misaligned access exception on cache line boundary violation      |
+| `DMEM_MA_CACHE_LINE`                                                      | ifdef flag    | L1d misaligned access exception on cache line boundary violation      |
 | `DMEM_MA_NATURAL`                                                         | ifdef flag    | L1d misaligned access exception on natural alignment violation        |
 
 *Parameters labeled with `ifdef flag` type are mutually exclusive

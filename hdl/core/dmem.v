@@ -302,7 +302,7 @@ module dmem(
     wire ma = 0;
 `endif//DMEM_MA_NONE
 
-`ifdef  DMEM_MA_CLINE
+`ifdef  DMEM_MA_CACHE_LINE
     reg  [63:0] ma_addr;
     wire [`DMEM_TAG_LEN-1:0] ma_addr_tag = ma_addr[`DMEM_ADDR_TAG_RANGE];
     wire [`DMEM_SET_LEN-1:0] ma_addr_set = ma_addr[`DMEM_ADDR_SET_RANGE];
@@ -316,7 +316,7 @@ module dmem(
             2'b11: ma_addr = addr + 7;
         endcase
     end
-`endif//DMEM_MA_CLINE
+`endif//DMEM_MA_CACHE_LINE
 
 `ifdef  DMEM_MA_NATURAL
     reg ma;
