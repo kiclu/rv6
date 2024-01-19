@@ -18,19 +18,16 @@
 `define op_auipc    7'b0010111
 `define op_jal      7'b1101111
 `define op_jalr     7'b1100111
-
 `define op_load     7'b0000011
 `define op_store    7'b0100011
-
 `define op_itype    7'b0010011
 `define op_itype_w  7'b0011011
-
 `define op_rtype    7'b0110011
 `define op_rtype_w  7'b0111011
-
 `define op_branch   7'b1100011
-
 `define op_system   7'b1110011
+
+`include "../config.vh"
 
 module cu (
     input      [31:0] ir_id,

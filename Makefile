@@ -16,10 +16,10 @@ syn_all: ${SOURCES_SYN}
 	@cd simulation/ && vsim -c tb_core -do 'quit -sim; project open rv6; project compileall; quit -f;'
 	@echo "Makefile: Compiled sysntesis modules successfully\n"
 
-syn_cli_unit_test:
+core_unit_test: | ${SOURCES_SYN} ${SOURCES_SIM}
+	# compile
 	@cd simulation/ && vsim -c tb_core -do 'quit -sim; project open rv6; project compileall; vlog -work work ../test/tb_core.sv +define+ANSI_COLORS +define+DROMAJO_VERBOSE; quit -f;'
-
-core_unit_test: syn_cli_unit_test | ${SOURCES_SYN} ${SOURCES_SIM}
+	# run simulation
 	@cd simulation/ && vsim -c tb_core -do 'run -all; quit -f;'
 
 core_unit_test_report: syn_all | ${SOURCES_SYN} ${SOURCES_SIM}
@@ -28,5 +28,5 @@ core_unit_test_report: syn_all | ${SOURCES_SYN} ${SOURCES_SIM}
 	@echo Report file written successfully
 
 clean:
-	rm -rf simulation/*.trace
-	rm -rf simulation/*.dromajo.log
+	rm -rf simulation/trace/*.trace
+	rm -rf simulation/dromajo/*.dromajo.log

@@ -16,12 +16,14 @@
 
 `include "../hdl/config.vh"
 
+//`define DROMAJO_VERBOSE
+
 `define DROMAJO             "/opt/riscv/bin/dromajo"
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
 `define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
 `timescale 1ns/1ps
-module tb_core();
+module tb_core;
 
     wire             [63:0] c_addr;
     wire                    c_ext;
@@ -167,7 +169,7 @@ module tb_core();
 
                 return {exc, ret};
             end
-            else if(dut.wr && dut.rd) begin
+            else if(dut.we && dut.rd) begin
                 return $sformatf(
                     "%-d %-d 0x%16h (0x%8h) x%2d 0x%16h",
                     this.hart_id,
@@ -175,7 +177,7 @@ module tb_core();
                     this.pc,
                     this.ir,
                     dut.rd,
-                    dut.d
+                    dut.rd_data
                 );
             end
             else begin
@@ -246,8 +248,8 @@ module tb_core();
                     // end
                     /* DEBUG END */
                     if(!dut.stall_wb && this.pipeline[WB] != null) begin
-                        this.ir_retired = this.pipeline[WB].ir;
                         if(!this.fd) break;
+                        this.ir_retired = this.pipeline[WB].ir;
                         if(this.pipeline[WB] && this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e) begin
                             // TODO: fix a bug where pipeline record in this
                             // testbench doesn't align with core pipeline
@@ -313,9 +315,9 @@ module tb_core();
                         $fclose(this.fd);
                         this.fd = 0;
 `ifdef DROMAJO_VERBOSE
-                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim ", this.name, ".trace ", this.elf, " 2> ", this.name, ".dromajo.log > ", this.name, ".dromajo.log"}) == 0;
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"}) == 0;
 `else
-                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim ", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
 `endif
                         break;
                     end
@@ -336,7 +338,7 @@ module tb_core();
             c_rst_n = 1;
 
             // trace file handle init
-            this.fd = $fopen({this.name, ".trace"}, "w");
+            this.fd = $fopen({"trace/", this.name, ".trace"}, "w");
 
             // run co-sim
             this.dromajo_cosim();
@@ -346,6 +348,7 @@ module tb_core();
                 this.tohost_monitor();
                 this.timeout();
             join_any
+            $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"});
         endtask
 
     endclass
@@ -418,14 +421,8 @@ module tb_core();
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        env.gen_file_list("rv64ui-p-*");
-        //env.gen_file_list("rv64ui-p-sd");
-        //env.gen_file_list("rv64ui-p-fence_i");
-        //env.gen_file_list("rv64ui-p-ma_data");
-        //env.gen_file_list("rv64ui-p-sh");
-        //env.gen_file_list("rv64ui-p-sw");
-        //env.gen_file_list("rv64ui-p-sb");
-        //env.gen_file_list("rv64uc-p-rvc");
+        //env.gen_file_list("rv64ui-p-*");
+        env.gen_file_list("rv64ui-p-ma_data");
 
         env.run();
         $stop();

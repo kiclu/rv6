@@ -15,25 +15,40 @@
  * external case of any product you make using this documentation. */
 
 module regfile (
-    output [63:0] r1,
-    input   [4:0] rs1,
+    output  [63:0] rs1_data,
+    input   [ 4:0] rs1,
 
-    output [63:0] r2,
-    input   [4:0] rs2,
+    output  [63:0] rs2_data,
+    input   [ 4:0] rs2,
 
-    input  [63:0] d,
-    input   [4:0] rd,
-    input         wr,
+    input   [63:0] rd_data,
+    input   [ 4:0] rd,
+    input          we,
 
-    input         clk
+    input          clk
 );
 
     (* ram_style = "registers" *)
-    reg [63:0] _reg [1:31];
+    reg [63:0] reg_data [1:31];
 
-    assign r1 = rs1 ? _reg[rs1] : 64'b0;
-    assign r2 = rs2 ? _reg[rs2] : 64'b0;
+    /* REGISTER OUTPUT */
 
-    always @(posedge clk) if(wr && rd) _reg[rd] <= d;
+    wire [63:0] reg_data_out [0:31];
+    genvar i;
+    generate
+        for(i = 1; i < 32; i = i + 1) begin
+            assign reg_data_out[i] = reg_data[i];
+        end
+    endgenerate
+    assign reg_data_out[0] = 64'b0;
+
+    /* OUTPUT MUX */
+
+    assign rs1_data = reg_data_out[rs1];
+    assign rs2_data = reg_data_out[rs2];
+
+    /* REGISTER WRITE */
+
+    always @(posedge clk) if(we) reg_data[rd] <= rd_data;
 
 endmodule

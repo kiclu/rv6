@@ -14,6 +14,8 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
+`include "../config.vh"
+
 module pd(
     input      [63:0] pc_in,
     input      [31:0] ir_in,
