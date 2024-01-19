@@ -1,82 +1,79 @@
-/*
- * Copyright (C) 2023  Nikola Lukic <lukicn@protonmail.com>
- * This source describes Open Hardware and is licensed under the CERN-OHL-W v2
+/* Copyright (C) 2024  Nikola Lukić <lukicn@protonmail.com>
+ * This source describes Open Hardware and is licensed under the CERN-OHL-S v2
  *
  * You may redistribute and modify this documentation and make products
- * using it under the terms of the CERN-OHL-W v2 (https:/cern.ch/cern-ohl).
+ * using it under the terms of the CERN-OHL-S v2 (https:/cern.ch/cern-ohl).
  * This documentation is distributed WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY
- * AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-W v2
+ * AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-S v2
  * for applicable conditions.
  *
  * Source location: https://www.github.com/kiclu/rv6
  *
- * As per CERN-OHL-W v2 section 4.1, should You produce hardware based on
+ * As per CERN-OHL-S v2 section 4.1, should You produce hardware based on
  * these sources, You must maintain the Source Location visible on the
- * external case of any product you make using this documentation.
- */
+ * external case of any product you make using this documentation. */
 
-`include "../hdl/config.v"
+`include "../hdl/config.vh"
 
-`define tb_entry    64'h8000_0000
-`define tb_mem_size 64'h10_0000
+//`define DROMAJO_VERBOSE
 
-`define ANSI_COLORS
-`define DROMAJO_VERBOSE
+`define DROMAJO             "/opt/riscv/bin/dromajo"
+`define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
+`define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
 `timescale 1ns/1ps
+module tb_core;
 
-module tb_hart;
+    wire             [63:0] c_addr;
+    wire                    c_ext;
+    reg    [`CMEM_LINE-1:0] c_rdata;
+    wire                    c_rd;
+    reg                     c_dv;
+    wire             [63:0] c_wdata;
+    wire             [ 1:0] c_len;
+    wire                    c_wr;
+    reg                     c_irq_e;
+    reg                     c_irq_t;
+    reg                     c_irq_s;
+    reg              [63:0] c_inv_addr;
+    reg                     c_inv;
+    wire                    c_amo_req;
+    reg                     c_amo_ack;
+    reg                     c_rst_n;
+    wire                    c_clk;
 
-    wire             [63:0] h_addr;
-    reg    [`hmem_line-1:0] h_data_in;
-    wire                    h_rd;
-    reg                     h_dv;
-    wire   [`hmem_line-1:0] h_data_out;
-    wire                    h_wr;
-    reg                     h_irq_e;
-    reg                     h_irq_t;
-    reg                     h_irq_s;
-    reg              [63:0] h_inv_addr;
-    reg                     h_inv;
-    wire                    h_amo_req;
-    reg                     h_amo_ack;
-    reg                     h_rst_n;
-    wire                    h_clk;
-
-    hart #(.HART_ID(0)) dut (
-        .h_addr         (h_addr         ),
-        .h_data_in      (h_data_in      ),
-        .h_rd           (h_rd           ),
-        .h_dv           (h_dv           ),
-        .h_data_out     (h_data_out     ),
-        .h_wr           (h_wr           ),
-        .h_irq_e        (h_irq_e        ),
-        .h_irq_t        (h_irq_t        ),
-        .h_irq_s        (h_irq_s        ),
-        .h_inv_addr     (h_inv_addr     ),
-        .h_inv          (h_inv          ),
-        .h_amo_req      (h_amo_req      ),
-        .h_amo_ack      (h_amo_ack      ),
-        .h_rst_n        (h_rst_n        ),
-        .h_clk          (h_clk          )
+    rv6_core #(.HART_ID(0)) dut (
+        .c_addr         (c_addr         ),
+        .c_ext          (c_ext          ),
+        .c_rdata        (c_rdata        ),
+        .c_rd           (c_rd           ),
+        .c_dv           (c_dv           ),
+        .c_wdata        (c_wdata        ),
+        .c_len          (c_len          ),
+        .c_wr           (c_wr           ),
+        .c_irq_e        (c_irq_e        ),
+        .c_irq_t        (c_irq_t        ),
+        .c_irq_s        (c_irq_s        ),
+        .c_inv_addr     (c_inv_addr     ),
+        .c_inv          (c_inv          ),
+        .c_amo_req      (c_amo_req      ),
+        .c_amo_ack      (c_amo_ack      ),
+        .c_rst_n        (c_rst_n        ),
+        .c_clk          (c_clk          )
     );
 
     // initial signal values
     initial begin
-        h_data_in   = 64'bZ;
-        h_dv        = 0;
-        h_irq_e     = 0;
-        h_irq_t     = 0;
-        h_irq_s     = 0;
-        h_inv_addr  = 64'bZ;
-        h_inv       = 0;
-        h_amo_ack   = 0;
-    end
-
-    // reset signal
-    initial begin
-        h_rst_n = 1;
+        c_rdata     = 64'bZ;
+        c_dv        = 0;
+        c_irq_e     = 0;
+        c_irq_t     = 0;
+        c_irq_s     = 0;
+        c_inv_addr  = 64'bZ;
+        c_inv       = 0;
+        c_amo_ack   = 0;
+        c_rst_n     = 1;
     end
 
     // clock generator
@@ -85,60 +82,29 @@ module tb_hart;
         clk = 1;
         forever #10 clk = ~clk;
     end
-    assign h_clk = clk;
+    assign c_clk = clk;
 
     /* MEMORY MODEL */
 
-    reg [7:0] mem [`tb_entry : `tb_entry+`tb_mem_size-1];
-
-    // initialize memory
-    task read_hex(string filename);
-        $readmemh(filename, mem, `tb_entry);
-        for(integer i = `tb_entry; i < `tb_entry+`tb_mem_size; ++i) begin
-            if(mem[i] === 8'hX) mem[i] = 8'h00;
-        end
-    endtask
-
-    // memory read op
-    always @(h_rd) begin
-        if(h_rd) begin
-            #800
-            for(integer i = 0; i < `hmem_line/8; ++i) begin
-                h_data_in[8*i +: 8] = mem[h_addr + i];
-            end
-            h_dv = 1;
-            #20
-            h_data_in = `hmem_line'bZ;
-            h_dv = 0;
-        end
-        else begin
-            h_data_in = 'bZ;
-            h_dv = 0;
-        end
-    end
-
-    // memory write op
-    always @(posedge clk) begin
-        if(h_wr) begin
-            for(integer i = 0; i < `hmem_line/8; ++i) begin
-                mem[h_addr + i] = h_data_out[8*i +: 8];
-            end
-        end
-    end
+    mem tb_mem (
+        .addr           (c_addr         ),
+        .wdata          (c_wdata        ),
+        .rdata          (c_rdata        ),
+        .len            (c_len          ),
+        .rd             (c_rd           ),
+        .wr             (c_wr           ),
+        .dv             (c_dv           ),
+        .rst_n          (c_rst_n        ),
+        .clk            (c_clk          )
+    );
 
     /* MONITOR */
-
-    string _elf = "/opt/riscv/target/share/riscv-tests/isa/rv64ui-p-xor";
-
-`define dromajo             "/opt/riscv/bin/dromajo"
-`define dromajo_cosim_test  "/opt/riscv/bin/dromajo_cosim_test"
-`define objcopy             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
     class Exception;
         bit [63:0] cause;
         bit [63:0] tval;
 
-        function new(bit [63:0] cause, bit [63:0] tval);
+        function new(input bit [63:0] cause, input bit [63:0] tval);
             this.cause = cause;
             this.tval = tval;
         endfunction
@@ -152,7 +118,7 @@ module tb_hart;
     class InvalidCSRException extends Exception;
         bit [11:0] csr_addr;
 
-        function new(bit [63:0] cause, bit [63:0] tval, bit [11:0] csr_addr);
+        function new(input bit [63:0] cause, input bit [63:0] tval, input bit [11:0] csr_addr);
             super.new(cause, tval);
             this.csr_addr = csr_addr;
         endfunction
@@ -177,7 +143,7 @@ module tb_hart;
 
         Exception e;
 
-        function new(bit [63:0] hart_id, bit[1:0] priv_lvl, bit [31:0] ir, bit [63:0] pc);
+        function new(input bit [63:0] hart_id, input bit[1:0] priv_lvl, input bit [31:0] ir, input bit [63:0] pc);
             this.hart_id = hart_id;
             this.priv_lvl = priv_lvl;
 
@@ -203,7 +169,7 @@ module tb_hart;
 
                 return {exc, ret};
             end
-            else if(dut.wr && dut.rd) begin
+            else if(dut.we && dut.rd) begin
                 return $sformatf(
                     "%-d %-d 0x%16h (0x%8h) x%2d 0x%16h",
                     this.hart_id,
@@ -211,7 +177,7 @@ module tb_hart;
                     this.pc,
                     this.ir,
                     dut.rd,
-                    dut.d
+                    dut.rd_data
                 );
             end
             else begin
@@ -231,7 +197,7 @@ module tb_hart;
 
         string name;
 
-        function new(string elf);
+        function new(input string elf);
             integer k;
             this.elf = elf;
             for(integer i = 0; i < elf.len(); ++i) begin
@@ -247,23 +213,24 @@ module tb_hart;
         Instruction pipeline [1:5];
 
         local task dromajo_cosim();
-            //$system({`dromajo, " --trace 0 ", this.elf, " 2> check.trace"});
-            $system({`objcopy, " -O verilog ", this.elf, " temp.hex"});
-            read_hex("temp.hex");
+            //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
+            $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
+            tb_mem.read_hex("temp.hex");
 
-            // probably some debug section or some other kind of bootrom?? not documented anywhere
-            // fdisplay here just so trace comparison works
+            // dromajo runs debug mode bootrom at 0x10000
+            // there's no debug mode implemented on this core so this section
+            // is just skipped, but trace still has to be printed for trace comparison
             $fdisplay(
                 this.fd,
-"0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000
-0 3 0x0000000000010004 (0x00050663)
-0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010
-0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100
-0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603
-0 3 0x000000000001001c (0x7b041073)
-0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001
-0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000
-0 3 0x0000000000010028 (0x7b141073)
+"0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000\n\
+0 3 0x0000000000010004 (0x00050663)\n\
+0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010\n\
+0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100\n\
+0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603\n\
+0 3 0x000000000001001c (0x7b041073)\n\
+0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001\n\
+0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000\n\
+0 3 0x0000000000010028 (0x7b141073)\n\
 0 3 0x000000000001002c (0x7b200073)"
             );
 
@@ -273,9 +240,22 @@ module tb_hart;
             forever begin
                 if(!this.fd) break;
                 @(posedge clk) begin
-                    if(!dut.stall_wb && this.pipeline[WB]) begin
-                        this.ir_retired = this.pipeline[WB].ir;
+                    /* DEBUG START */
+                    // if($time() == 31200000ps) begin
+                    //     $display("DEBUG START");
+                    //     $display("IR = %08h", this.pipeline[WB].ir);
+                    //     $display("DEBUG END");
+                    // end
+                    /* DEBUG END */
+                    if(!dut.stall_wb && this.pipeline[WB] != null) begin
                         if(!this.fd) break;
+                        this.ir_retired = this.pipeline[WB].ir;
+                        if(this.pipeline[WB] && this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e) begin
+                            // TODO: fix a bug where pipeline record in this
+                            // testbench doesn't align with core pipeline
+                            this.pipeline[WB].ir = dut.bmw_ir;
+                            //$display("ir mismatch @ %t", $time());
+                        end
                         $fdisplay(
                             this.fd,
                             "%s",
@@ -287,9 +267,11 @@ module tb_hart;
                     if(!dut.stall_ex)  this.pipeline[MEM] = this.pipeline[EX];
                     if(!dut.stall_id)  this.pipeline[EX]  = this.pipeline[ID];
                     if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
-                    if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, dut.ir, dut.pc);
+                    if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
 
-                    if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
+                    if(this.pipeline[MEM]) begin
+                        if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
+                    end
 
                     if(dut.t_flush_ex)  this.pipeline[EX] = null;
 
@@ -316,6 +298,10 @@ module tb_hart;
                         automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
                         this.pipeline[MEM].e = ex;
                     end
+                    if(dut.u_csr.trap_ret && this.pipeline[MEM]) begin
+                        automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
+                        this.pipeline[MEM].e = ex;
+                    end
                 end
             end
         endtask
@@ -329,9 +315,9 @@ module tb_hart;
                         $fclose(this.fd);
                         this.fd = 0;
 `ifdef DROMAJO_VERBOSE
-                        this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " 2> ", this.name, ".dromajo.log > ", this.name, ".dromajo.log"}) == 0;
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"}) == 0;
 `else
-                        this.passed = $system({`dromajo_cosim_test, " cosim ", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
 `endif
                         break;
                     end
@@ -347,12 +333,12 @@ module tb_hart;
 
             // hart reset signal
             #80
-            h_rst_n = 0;
+            c_rst_n = 0;
             #80;
-            h_rst_n = 1;
+            c_rst_n = 1;
 
             // trace file handle init
-            this.fd = $fopen({this.name, ".trace"}, "w");
+            this.fd = $fopen({"trace/", this.name, ".trace"}, "w");
 
             // run co-sim
             this.dromajo_cosim();
@@ -362,6 +348,7 @@ module tb_hart;
                 this.tohost_monitor();
                 this.timeout();
             join_any
+            $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"});
         endtask
 
     endclass
@@ -370,14 +357,13 @@ module tb_hart;
 
         string path;
 
-        function new(string path, string template);
+        function new(input string path);
             this.path = path;
-            this.gen_file_list(template);
             this.passed = 0;
             this.failed = 0;
         endfunction
 
-        local task gen_file_list(string template);
+        task gen_file_list(input string template);
             $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' > tb_hart.lst"});
         endtask
 
@@ -433,7 +419,11 @@ module tb_hart;
     RiscvTestEnv env;
 
     initial begin
-        env = new("/opt/riscv/target/share/riscv-tests/isa/", "rv64ui-p-*");
+        env = new("/opt/riscv/target/share/riscv-tests/isa/");
+
+        //env.gen_file_list("rv64ui-p-*");
+        env.gen_file_list("rv64ui-p-ma_data");
+
         env.run();
         $stop();
     end

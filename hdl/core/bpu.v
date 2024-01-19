@@ -1,22 +1,20 @@
-/*
- * Copyright (C) 2023  Nikola Lukic <lukicn@protonmail.com>
- * This source describes Open Hardware and is licensed under the CERN-OHL-W v2
+/* Copyright (C) 2024  Nikola Lukić <lukicn@protonmail.com>
+ * This source describes Open Hardware and is licensed under the CERN-OHL-S v2
  *
  * You may redistribute and modify this documentation and make products
- * using it under the terms of the CERN-OHL-W v2 (https:/cern.ch/cern-ohl).
+ * using it under the terms of the CERN-OHL-S v2 (https:/cern.ch/cern-ohl).
  * This documentation is distributed WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY
- * AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-W v2
+ * AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-S v2
  * for applicable conditions.
  *
  * Source location: https://www.github.com/kiclu/rv6
  *
- * As per CERN-OHL-W v2 section 4.1, should You produce hardware based on
+ * As per CERN-OHL-S v2 section 4.1, should You produce hardware based on
  * these sources, You must maintain the Source Location visible on the
- * external case of any product you make using this documentation.
- */
+ * external case of any product you make using this documentation. */
 
-`include "../config.v"
+`include "../config.vh"
 
 module bpu (
     input      [63:0] pc,
@@ -31,17 +29,17 @@ module bpu (
     input             rst_n
 );
 
-`ifdef bpu_static_taken
+`ifdef BPU_STATIC_TAKEN
     // static branch prediction, all jumps taken
     assign pr_taken = ir[6:0] == 7'b1100011;
 `endif
 
-`ifdef bpu_static_ntaken
+`ifdef BPU_STATIC_NTAKEN
     // static branch prediction, all jumps not taken
     assign pr_taken = 0;
 `endif
 
-`ifdef bpu_static_btaken
+`ifdef BPU_STATIC_BTAKEN
     // static branch prediction, backward jumps taken, forward jumps not taken
     assign pr_taken = ir[6:0] == 7'b1100011 && ir[31];
 `endif

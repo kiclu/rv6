@@ -1,38 +1,33 @@
-/*
- * Copyright (C) 2023  Nikola Lukic <lukicn@protonmail.com>
- * This source describes Open Hardware and is licensed under the CERN-OHL-W v2
+/* Copyright (C) 2024  Nikola Lukić <lukicn@protonmail.com>
+ * This source describes Open Hardware and is licensed under the CERN-OHL-S v2
  *
  * You may redistribute and modify this documentation and make products
- * using it under the terms of the CERN-OHL-W v2 (https:/cern.ch/cern-ohl).
+ * using it under the terms of the CERN-OHL-S v2 (https:/cern.ch/cern-ohl).
  * This documentation is distributed WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY
- * AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-W v2
+ * AND FITNESS FOR A PARTICULAR PURPOSE. Please see the CERN-OHL-S v2
  * for applicable conditions.
  *
  * Source location: https://www.github.com/kiclu/rv6
  *
- * As per CERN-OHL-W v2 section 4.1, should You produce hardware based on
+ * As per CERN-OHL-S v2 section 4.1, should You produce hardware based on
  * these sources, You must maintain the Source Location visible on the
- * external case of any product you make using this documentation.
- */
+ * external case of any product you make using this documentation. */
 
 `define op_lui      7'b0110111
 `define op_auipc    7'b0010111
 `define op_jal      7'b1101111
 `define op_jalr     7'b1100111
-
 `define op_load     7'b0000011
 `define op_store    7'b0100011
-
 `define op_itype    7'b0010011
 `define op_itype_w  7'b0011011
-
 `define op_rtype    7'b0110011
 `define op_rtype_w  7'b0111011
-
 `define op_branch   7'b1100011
-
 `define op_system   7'b1110011
+
+`include "../config.vh"
 
 module cu (
     input      [31:0] ir_id,
@@ -48,32 +43,26 @@ module cu (
     output            stall_mem,
     output            stall_wb,
 
-    // input stall causes
+    // cache miss stall signals
     input             stall_imem,
     input             stall_dmem,
-    input             stall_hmem,
 
     // atomic instruction signals
     input             amo_req,
     input             amo_ack,
 
-    // instruction/data bus signals
-    input             b_rd_i,
-    input             b_rd_d,
-
     // forwarding signals
     output reg [ 1:0] s_mx_a_fw,
     output reg        a_fw,
-
     output reg [ 1:0] s_mx_b_fw,
     output reg        b_fw,
 
+    // control signals
     input             rst_n,
-
     input             clk
 );
 
-    wire stall_all = !rst_n || stall_hmem || stall_imem || stall_dmem || (amo_req && !amo_ack);
+    wire stall_all = !rst_n || stall_imem || stall_dmem || (amo_req && !amo_ack);
 
     /* PIPELINE DATA HAZARD */
 
