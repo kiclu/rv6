@@ -16,8 +16,6 @@
 
 `include "../hdl/config.vh"
 
-//`define DROMAJO_VERBOSE
-
 `define DROMAJO             "/opt/riscv/bin/dromajo"
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
 `define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
@@ -33,6 +31,22 @@
 0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000\n\
 0 3 0x0000000000010028 (0x7b141073)\n\
 0 3 0x000000000001002c (0x7b200073)"
+
+`ifdef ANSI_COLORS
+`define TEST_PASSED "\x1b[1;32mpassed\x1b[0m"
+`define TEST_FAILED "\x1b[1;31mfailed\x1b[0m"
+`define TEST_REPORT_FMT "riscv-tests finished: \x1b[1;32m%-d\x1b[0m passed, \x1b[1;31m%-d\x1b[0m failed!"
+`else
+`define TEST_PASSED "passed"
+`define TEST_FAILED "failed"
+`define TET_REPORT_FMT "riscv-tests finished: %d passed, %d failed!"
+`endif
+
+`ifdef DROMAJO_VERBOSE
+`define DROMAJO_OUTPUT " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"
+`else
+`define DROMAJO_OUTPUT " > /dev/null 2> /dev/null"
+`endif
 
 `timescale 1ns/1ps
 module tb_core;
@@ -54,6 +68,8 @@ module tb_core;
     reg                     c_amo_ack;
     reg                     c_rst_n;
     wire                    c_clk;
+
+    enum integer {IF, PD, ID, EX, MEM, WB} phase;
 
     rv6_core #(.HART_ID(0)) dut (
         .c_addr         (c_addr         ),
@@ -126,7 +142,6 @@ module tb_core;
         virtual function string what();
             return "";
         endfunction
-
     endclass
 
     class InvalidCSRException extends Exception;
@@ -138,16 +153,11 @@ module tb_core;
         endfunction
 
         function string what();
-            return $sformatf(
-                "csr_read: invalid CSR=0x%-h\n",
-                this.csr_addr
-            );
+            return $sformatf("csr_read: invalid CSR=0x%-h\n", this.csr_addr);
         endfunction
-
     endclass
 
     class MisalignedLoadAddressException extends Exception;
-
         function new(input bit [63:0] tval);
             super.new(4, tval);
         endfunction
@@ -155,11 +165,9 @@ module tb_core;
         function string what();
             return super.what();
         endfunction
-
     endclass
 
     class MisalignedStoreAddressException extends Exception;
-
         function new(input bit [63:0] tval);
             super.new(6, tval);
         endfunction
@@ -167,26 +175,27 @@ module tb_core;
         function string what();
             return super.what();
         endfunction
-
     endclass
-
-    enum integer {IF, PD, ID, EX, MEM, WB} phase;
 
     /*--------------------------------------------------------------------------------*/
     /* INSTRUCTION                                                                    */
     /*--------------------------------------------------------------------------------*/
 
     class Instruction;
+
         bit [31:0] ir;
         bit [63:0] pc;
-
         bit [63:0] hart_id;
         bit [ 1:0] priv_lvl;
-
         Exception e;
         bit trap_ret;
 
-        function new(input bit [63:0] hart_id, input bit[1:0] priv_lvl, input bit [31:0] ir, input bit [63:0] pc);
+        function new(
+            input bit [63:0] hart_id,
+            input bit [ 1:0] priv_lvl,
+            input bit [31:0] ir,
+            input bit [63:0] pc
+        );
             this.hart_id = hart_id;
             this.priv_lvl = priv_lvl;
 
@@ -199,7 +208,7 @@ module tb_core;
 
         function string retire();
             if(this.e) begin
-                string exc = this.e.what();
+                string err_msg = this.e.what();
 
                 string ret = $sformatf(
                     "%-d %-d 0x%16h (0x%8h) exception %-d, tval %16h",
@@ -211,7 +220,7 @@ module tb_core;
                     this.e.tval
                 );
 
-                return {exc, ret};
+                return {err_msg, ret};
             end
             else if(dut.we && dut.rd) begin
                 return $sformatf(
@@ -234,12 +243,19 @@ module tb_core;
                 );
             end
         endfunction
-
     endclass
 
-    class Test;
+    /*--------------------------------------------------------------------------------*/
+    /* TEST                                                                           */
+    /*--------------------------------------------------------------------------------*/
 
+    class Test;
         string name;
+        bit passed;
+        local string elf;
+        local Instruction retired;
+        local integer fd;
+        Instruction pipeline [1:5];
 
         function new(input string elf);
             integer k;
@@ -250,14 +266,8 @@ module tb_core;
             this.name = elf.substr(k, elf.len()-1);
         endfunction
 
-        local string elf;
-
-        local Instruction retired;
-        local integer fd;
-        Instruction pipeline [1:5];
-
-        local task dromajo_cosim ();
-            //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
+        // dromajo cosim startup
+        local task dromajo_cosim();
             $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
             tb_mem.read_hex("temp.hex");
 
@@ -267,7 +277,7 @@ module tb_core;
             $fdisplay(this.fd, `DROMAJO_BOOTROM_TRACE);
         endtask
 
-        // Syncronises simulation pipeline with DUT pipeline
+        // synchronizes simulation pipeline with DUT pipeline
         local task pipeline_sync();
             forever begin
                 @(posedge clk) begin
@@ -299,7 +309,7 @@ module tb_core;
             end
         endtask
 
-        // Retire functions and write them to trace file
+        // retire functions and write them to trace file
         local task retire_handler();
             if(!dut.stall_wb && this.pipeline[WB] != null) begin
                 if(this.retired != this.pipeline[WB]) begin
@@ -316,7 +326,7 @@ module tb_core;
             end
         endtask
 
-        // Snoop on core traps and update sim pipeline
+        // snoop on core traps and update sim pipeline
         local task exception_handler();
             forever begin
                 @(negedge clk) begin
@@ -344,20 +354,14 @@ module tb_core;
             end
         endtask
 
-        bit passed;
-
-        // Sim termination monitor
+        // sim termination monitor
         local task tohost_monitor();
             forever begin
                 @(negedge clk) begin
                     if(this.retired != null && (this.retired.ir == 32'hfc3f2223 || this.retired.ir == 32'hfc3f2023)) begin
                         $fclose(this.fd);
                         this.fd = 0;
-`ifdef DROMAJO_VERBOSE
-                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"}) == 0;
-`else
-                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " > /dev/null 2> /dev/null"}) == 0;
-`endif
+                        this.passed = $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, `DROMAJO_OUTPUT}) == 0;
                         break;
                     end
                 end
@@ -386,14 +390,18 @@ module tb_core;
                 this.tohost_monitor();
                 this.timeout();
             join_any
-            $system({`DROMAJO_COSIM_TEST, " cosim trace/", this.name, ".trace ", this.elf, " 2> dromajo/", this.name, ".dromajo.log > dromajo/", this.name, ".dromajo.log"});
         endtask
-
     endclass
 
-    class RiscvTestEnv;
+    /*--------------------------------------------------------------------------------*/
+    /* RISC-V TEST ENVIRONMENT                                                        */
+    /*--------------------------------------------------------------------------------*/
 
+    class RiscvTestEnv;
+        Test t;
         string path;
+        integer passed;
+        integer failed;
 
         function new(input string path);
             this.path = path;
@@ -401,15 +409,12 @@ module tb_core;
             this.failed = 0;
         endfunction
 
+        // generate list of tests based on template
         task gen_file_list(input string template);
             $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' > tb_hart.lst"});
         endtask
 
-        Test t;
-
-        integer passed;
-        integer failed;
-
+        // run tests and report
         task run();
             integer fd;
             string filename;
@@ -425,37 +430,22 @@ module tb_core;
                 $display(
                     "%-25s: %s",
                     t.name,
-`ifdef ANSI_COLORS
-                    t.passed ? "\x1b[1;32mpassed\x1b[0m" : "\x1b[1;31mfailed\x1b[0m"
-`else
-                    t.passed ? "passed" : "failed"
-`endif
+                    t.passed ? `TEST_PASSED : `TEST_FAILED
                 );
 
                 this.passed +=  t.passed;
                 this.failed += !t.passed;
             end
 
-            $display(
-`ifdef ANSI_COLORS
-                "riscv-tests finished: \x1b[1;32m%d\x1b[0m passed, \x1b[1;31m%d\x1b[0m failed!",
-`else
-                "riscv-tests finished: %d passed, %d failed!",
-`endif
-                this.passed,
-                this.failed
-            );
-
+            $display(`TEST_REPORT_FMT, this.passed, this.failed);
             $fclose(fd);
-
             $system("rm tb_hart.lst");
-
         endtask
-
     endclass
 
-    RiscvTestEnv env;
 
+
+    RiscvTestEnv env;
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
