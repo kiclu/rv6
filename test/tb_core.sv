@@ -22,6 +22,18 @@
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
 `define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
 
+`define DROMAJO_BOOTROM_TRACE "\
+0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000\n\
+0 3 0x0000000000010004 (0x00050663)\n\
+0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010\n\
+0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100\n\
+0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603\n\
+0 3 0x000000000001001c (0x7b041073)\n\
+0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001\n\
+0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000\n\
+0 3 0x0000000000010028 (0x7b141073)\n\
+0 3 0x000000000001002c (0x7b200073)"
+
 `timescale 1ns/1ps
 module tb_core;
 
@@ -98,7 +110,9 @@ module tb_core;
         .clk            (c_clk          )
     );
 
-    /* MONITOR */
+    /*--------------------------------------------------------------------------------*/
+    /* EXCEPTION                                                                      */
+    /*--------------------------------------------------------------------------------*/
 
     class Exception;
         bit [63:0] cause;
@@ -156,7 +170,11 @@ module tb_core;
 
     endclass
 
-    enum {IF, PD, ID, EX, MEM, WB} phase;
+    enum integer {IF, PD, ID, EX, MEM, WB} phase;
+
+    /*--------------------------------------------------------------------------------*/
+    /* INSTRUCTION                                                                    */
+    /*--------------------------------------------------------------------------------*/
 
     class Instruction;
         bit [31:0] ir;
@@ -223,7 +241,7 @@ module tb_core;
 
         string name;
 
-        function new (input string elf);
+        function new(input string elf);
             integer k;
             this.elf = elf;
             for(integer i = 0; i < elf.len(); ++i) begin
@@ -234,7 +252,7 @@ module tb_core;
 
         local string elf;
 
-        local bit [31:0] ir_retired;
+        local Instruction retired;
         local integer fd;
         Instruction pipeline [1:5];
 
@@ -246,44 +264,23 @@ module tb_core;
             // dromajo runs debug mode bootrom at 0x10000
             // there's no debug mode implemented on this core so this section
             // is just skipped, but trace still has to be printed for trace comparison
-            $fdisplay(
-                this.fd,
-"0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000\n\
-0 3 0x0000000000010004 (0x00050663)\n\
-0 3 0x0000000000010010 (0x00000597) x11 0x0000000000010010\n\
-0 3 0x0000000000010014 (0x0f058593) x11 0x0000000000010100\n\
-0 3 0x0000000000010018 (0x60300413) x 8 0x0000000000000603\n\
-0 3 0x000000000001001c (0x7b041073)\n\
-0 3 0x0000000000010020 (0x0010041b) x 8 0x0000000000000001\n\
-0 3 0x0000000000010024 (0x01f41413) x 8 0x0000000080000000\n\
-0 3 0x0000000000010028 (0x7b141073)\n\
-0 3 0x000000000001002c (0x7b200073)"
-            );
-
+            $fdisplay(this.fd, `DROMAJO_BOOTROM_TRACE);
         endtask
 
+        // Syncronises simulation pipeline with DUT pipeline
         local task pipeline_sync();
             forever begin
-                if(!this.fd) break;
                 @(posedge clk) begin
-                    if(!dut.stall_wb && this.pipeline[WB] != null) begin
-                        if(!this.fd) break;
-                        this.ir_retired = this.pipeline[WB].ir;
-                        if(this.pipeline[WB] && this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e && !this.pipeline[WB].trap_ret) begin
-                            this.pipeline[WB].ir = dut.bmw_ir;
-                        end
-                        $fdisplay(
-                            this.fd,
-                            "%s",
-                            this.pipeline[WB].retire()
-                        );
-                    end
+                    if(!this.fd) break;
+                    this.retire_handler();
 
                     if(!dut.stall_mem) this.pipeline[WB]  = this.pipeline[MEM];
                     if(!dut.stall_ex)  this.pipeline[MEM] = this.pipeline[EX];
                     if(!dut.stall_id)  this.pipeline[EX]  = this.pipeline[ID];
                     if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
-                    if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
+                    if(!dut.stall_if && !dut.fence_i) begin
+                        this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
+                    end
 
                     if(this.pipeline[MEM]) begin
                         if(dut.t_flush_mem && !this.pipeline[MEM].e && !this.pipeline[MEM].trap_ret) this.pipeline[MEM] = null;
@@ -302,10 +299,28 @@ module tb_core;
             end
         endtask
 
+        // Retire functions and write them to trace file
+        local task retire_handler();
+            if(!dut.stall_wb && this.pipeline[WB] != null) begin
+                if(this.retired != this.pipeline[WB]) begin
+                    if(this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e && !this.pipeline[WB].trap_ret) begin
+                        this.pipeline[WB].ir = dut.bmw_ir;
+                    end
+                    this.retired = this.pipeline[WB];
+                    $fdisplay(
+                        this.fd,
+                        "%s",
+                        this.pipeline[WB].retire()
+                    );
+                end
+            end
+        endtask
+
+        // Snoop on core traps and update sim pipeline
         local task exception_handler();
             forever begin
-                if(!this.fd) break;
                 @(negedge clk) begin
+                    if(!this.fd) break;
                     if(dut.u_csr.ecall && this.pipeline[MEM]) begin
                         automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
                         this.pipeline[MEM].e = ex;
@@ -331,10 +346,11 @@ module tb_core;
 
         bit passed;
 
+        // Sim termination monitor
         local task tohost_monitor();
             forever begin
                 @(negedge clk) begin
-                    if(this.ir_retired == 32'hfc3f2223 || this.ir_retired == 32'hfc3f2023) begin
+                    if(this.retired != null && (this.retired.ir == 32'hfc3f2223 || this.retired.ir == 32'hfc3f2023)) begin
                         $fclose(this.fd);
                         this.fd = 0;
 `ifdef DROMAJO_VERBOSE
@@ -353,7 +369,6 @@ module tb_core;
         endtask
 
         task run();
-
             // hart reset signal
             #80
             c_rst_n = 0;
@@ -447,7 +462,6 @@ module tb_core;
         //env.gen_file_list("rv64mi-p-*");
         //env.gen_file_list("rv64si-p-*");
         env.gen_file_list("rv64ui-p-*");
-        //env.gen_file_list("rv64ui-p-jal");
 
         env.run();
         $stop();
