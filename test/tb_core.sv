@@ -118,8 +118,8 @@ module tb_core;
     class InvalidCSRException extends Exception;
         bit [11:0] csr_addr;
 
-        function new(input bit [63:0] cause, input bit [63:0] tval, input bit [11:0] csr_addr);
-            super.new(cause, tval);
+        function new(input bit [63:0] tval, input bit [11:0] csr_addr);
+            super.new(2, tval);
             this.csr_addr = csr_addr;
         endfunction
 
@@ -128,6 +128,30 @@ module tb_core;
                 "csr_read: invalid CSR=0x%-h\n",
                 this.csr_addr
             );
+        endfunction
+
+    endclass
+
+    class MisalignedLoadAddressException extends Exception;
+
+        function new(input bit [63:0] tval);
+            super.new(4, tval);
+        endfunction
+
+        function string what();
+            return super.what();
+        endfunction
+
+    endclass
+
+    class MisalignedStoreAddressException extends Exception;
+
+        function new(input bit [63:0] tval);
+            super.new(6, tval);
+        endfunction
+
+        function string what();
+            return super.what();
         endfunction
 
     endclass
@@ -142,6 +166,7 @@ module tb_core;
         bit [ 1:0] priv_lvl;
 
         Exception e;
+        bit trap_ret;
 
         function new(input bit [63:0] hart_id, input bit[1:0] priv_lvl, input bit [31:0] ir, input bit [63:0] pc);
             this.hart_id = hart_id;
@@ -151,6 +176,7 @@ module tb_core;
             this.pc = pc;
 
             this.e = null;
+            this.trap_ret = 0;
         endfunction
 
         function string retire();
@@ -197,7 +223,7 @@ module tb_core;
 
         string name;
 
-        function new(input string elf);
+        function new (input string elf);
             integer k;
             this.elf = elf;
             for(integer i = 0; i < elf.len(); ++i) begin
@@ -212,7 +238,7 @@ module tb_core;
         local integer fd;
         Instruction pipeline [1:5];
 
-        local task dromajo_cosim();
+        local task dromajo_cosim ();
             //$system({`DROMAJO, " --trace 0 ", this.elf, " 2> check.trace"});
             $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
             tb_mem.read_hex("temp.hex");
@@ -240,21 +266,11 @@ module tb_core;
             forever begin
                 if(!this.fd) break;
                 @(posedge clk) begin
-                    /* DEBUG START */
-                    // if($time() == 31200000ps) begin
-                    //     $display("DEBUG START");
-                    //     $display("IR = %08h", this.pipeline[WB].ir);
-                    //     $display("DEBUG END");
-                    // end
-                    /* DEBUG END */
                     if(!dut.stall_wb && this.pipeline[WB] != null) begin
                         if(!this.fd) break;
                         this.ir_retired = this.pipeline[WB].ir;
-                        if(this.pipeline[WB] && this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e) begin
-                            // TODO: fix a bug where pipeline record in this
-                            // testbench doesn't align with core pipeline
+                        if(this.pipeline[WB] && this.pipeline[WB].ir != dut.bmw_ir && !this.pipeline[WB].e && !this.pipeline[WB].trap_ret) begin
                             this.pipeline[WB].ir = dut.bmw_ir;
-                            //$display("ir mismatch @ %t", $time());
                         end
                         $fdisplay(
                             this.fd,
@@ -270,7 +286,7 @@ module tb_core;
                     if(!dut.stall_if)  this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
 
                     if(this.pipeline[MEM]) begin
-                        if(dut.t_flush_mem && !this.pipeline[MEM].e) this.pipeline[MEM] = null;
+                        if(dut.t_flush_mem && !this.pipeline[MEM].e && !this.pipeline[MEM].trap_ret) this.pipeline[MEM] = null;
                     end
 
                     if(dut.t_flush_ex)  this.pipeline[EX] = null;
@@ -290,17 +306,24 @@ module tb_core;
             forever begin
                 if(!this.fd) break;
                 @(negedge clk) begin
-                    if(dut.u_csr.csr_addr_invalid && this.pipeline[MEM]) begin
-                        automatic InvalidCSRException ex = new(2, 0, dut.u_csr.csr_addr);
-                        this.pipeline[MEM].e = ex;
-                    end
                     if(dut.u_csr.ecall && this.pipeline[MEM]) begin
                         automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
                         this.pipeline[MEM].e = ex;
                     end
-                    if(dut.u_csr.trap_ret && this.pipeline[MEM]) begin
-                        automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
+                    if(dut.u_csr.csr_addr_invalid && this.pipeline[MEM]) begin
+                        automatic InvalidCSRException ex = new(0, dut.u_csr.csr_addr);
                         this.pipeline[MEM].e = ex;
+                    end
+                    if(dut.u_csr.dmem_ld_ma && this.pipeline[MEM]) begin
+                        automatic MisalignedLoadAddressException ex = new(dut.u_csr.val);
+                        this.pipeline[MEM].e = ex;
+                    end
+                    if(dut.u_csr.dmem_st_ma && this.pipeline[MEM]) begin
+                        automatic MisalignedStoreAddressException ex = new(dut.u_csr.val);
+                        this.pipeline[MEM].e = ex;
+                    end
+                    if(dut.u_csr.trap_ret && this.pipeline[MEM]) begin
+                        this.pipeline[MEM].trap_ret = 1;
                     end
                 end
             end
@@ -311,7 +334,7 @@ module tb_core;
         local task tohost_monitor();
             forever begin
                 @(negedge clk) begin
-                    if(this.ir_retired == 32'hfc3f2223) begin
+                    if(this.ir_retired == 32'hfc3f2223 || this.ir_retired == 32'hfc3f2023) begin
                         $fclose(this.fd);
                         this.fd = 0;
 `ifdef DROMAJO_VERBOSE
@@ -421,8 +444,10 @@ module tb_core;
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        //env.gen_file_list("rv64ui-p-*");
-        env.gen_file_list("rv64ui-p-ma_data");
+        //env.gen_file_list("rv64mi-p-*");
+        //env.gen_file_list("rv64si-p-*");
+        env.gen_file_list("rv64ui-p-*");
+        //env.gen_file_list("rv64ui-p-jal");
 
         env.run();
         $stop();
