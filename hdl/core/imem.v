@@ -29,6 +29,7 @@ module imem(
     output reg                      b_rd_i,
     input                           b_dv_i,
 
+    input                           fence_i,
     output                          stall_imem,
     input                           rst_n,
     input                           clk
@@ -162,7 +163,7 @@ module imem(
     /* METADATA UPDATE */
 
     always @(posedge clk) begin
-        if(!rst_n) begin : imem_reset
+        if(!rst_n || fence_i) begin : imem_reset
             integer i;
             for(i = 0; i < `IMEM_LINES; i = i + 1) begin
                 tag[i] <= 0;
@@ -185,7 +186,8 @@ module imem(
 
     always @(*) begin
         if(ma) ir = {q[15:0], ma_reg};
-        else ir = q[8*addr_offs +: 32];
+        else if(rb_hit) ir = q[8*addr_offs +: 32];
+        else ir = 32'h00000013;
     end
 
     /* HIT DETECTION */

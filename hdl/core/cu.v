@@ -30,6 +30,7 @@
 `include "../config.vh"
 
 module cu (
+    input      [31:0] ir_if,
     input      [31:0] ir_id,
     input      [31:0] ir_ex,
     input      [31:0] ir_mem,
@@ -46,6 +47,9 @@ module cu (
     // cache miss stall signals
     input             stall_imem,
     input             stall_dmem,
+
+    // instruction fence signal
+    output            fence_i,
 
     // atomic instruction signals
     input             amo_req,
@@ -166,7 +170,7 @@ module cu (
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
 
     // front end stall signals
-    assign stall_if  = stall_all || stall_c || dh || amo_req;
+    assign stall_if  = stall_all || stall_c || dh || amo_req || fence_i;
     assign stall_pd  = stall_all || stall_c || dh;
     assign stall_id  = stall_all || stall_c || dh;
 
@@ -199,5 +203,31 @@ module cu (
             stall_d <= stall_d << 1;
         end
     end
+
+    /* FENCE_I */
+
+    wire i_fence = ir_if[6:0] == `OP_FENCE;
+    reg i_fence_d;
+    always @(posedge clk, negedge rst_n) begin
+        if(!rst_n) i_fence_d <= 0;
+        else i_fence_d <= i_fence;
+    end
+    wire i_fence_re = i_fence && !i_fence_d;
+
+    reg [2:0] fence_cnt;
+    reg fence_cnt_ena;
+
+    always @(posedge clk, negedge rst_n) begin
+        if(!rst_n) fence_cnt_ena <= 0;
+        else if(i_fence_re) fence_cnt_ena <= 1;
+        else if(fence_cnt == 3'd0) fence_cnt_ena <= 0;
+    end
+
+    always @(posedge clk, negedge rst_n) begin
+        if(!fence_cnt_ena || !rst_n) fence_cnt <= 3'd5;
+        if(!stall_wb && fence_cnt_ena) fence_cnt <= fence_cnt - 1;
+    end
+
+    assign fence_i = !stall_imem && (i_fence_re || (fence_cnt_ena && fence_cnt != 3'd0));
 
 endmodule

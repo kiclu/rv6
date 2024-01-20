@@ -46,7 +46,6 @@ module cmem(
     input                          inv,
 
     // control signals
-    output                         stall_cmem,
     input                          rst_n,
     input                          clk
 );

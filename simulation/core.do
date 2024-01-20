@@ -131,7 +131,6 @@ add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/b_rd_c
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/b_dv_c
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/b_inv_addr_c
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/inv
-add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/stall_cmem
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/rst_n
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/clk
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/addr_i_tag
@@ -185,9 +184,137 @@ add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/cmem_fsm_s
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/cmem_fsm_state_next
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/pend
 add wave -noupdate -group cmem -radix hexadecimal /tb_core/dut/u_cmem/pend_next
-add wave -noupdate -childformat {{/tb_core/env.t.ir_retired -radix hexadecimal}} -subitemconfig {/tb_core/env.t.ir_retired {-height 16 -radix hexadecimal} /tb_core/env.t.pipeline {-height 16 -childformat {{{/tb_core/env.t.pipeline[1]} -radix hexadecimal} {{/tb_core/env.t.pipeline[2]} -radix hexadecimal} {{/tb_core/env.t.pipeline[3]} -radix hexadecimal} {{/tb_core/env.t.pipeline[4]} -radix hexadecimal} {{/tb_core/env.t.pipeline[5]} -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[5].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].e} -radix hexadecimal}}}} -expand} {/tb_core/env.t.pipeline[1]} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[2]} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[3]} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[4]} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5]} {-height 16 -radix hexadecimal -childformat {{{/tb_core/env.t.pipeline[5].ir} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].pc} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].hart_id} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].priv_lvl} -radix hexadecimal} {{/tb_core/env.t.pipeline[5].e} -radix hexadecimal}}} {/tb_core/env.t.pipeline[5].ir} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].pc} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].hart_id} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].priv_lvl} {-height 16 -radix hexadecimal} {/tb_core/env.t.pipeline[5].e} {-height 16 -radix hexadecimal}} /tb_core/env.t
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pc
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/trap_taken
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/trap_addr
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jalr_taken
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jalr_addr
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_miss
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/br_addr
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jal_taken
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/jal_addr
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_taken
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_offs
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/c_ins
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/stall
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/rst_n
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/clk
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_addr
+add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/n_pc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/HART_ID
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ir
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_in
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_out
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap_addr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap_taken
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/irq_e
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/irq_t
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/irq_s
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_ld_ma
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_st_ma
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_addr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_pd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_id
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_ex
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_mem
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_if
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_pd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_id
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_ex
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_mem
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/stall
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/rst_n
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/clk
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_addr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_reg
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/privilege_level
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_addr_invalid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_wr_invalid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_pr_invalid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/cause
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/cause_pc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/m_trap
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/m_ret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/s_trap
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/s_ret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap_ret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/val
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rw
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rwi
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rs
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rsi
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rci
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_op
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/rd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/wr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/rd_valid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/wr_valid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/wpri
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ncsr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ecall
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_ma
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/intr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/exc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/stvec_offs
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/mtvec_offs
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_if
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_id
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_if
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_pd
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_id
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_imem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_dmem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/fence_i
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/amo_req
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/amo_ack
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/s_mx_a_fw
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/a_fw
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/s_mx_b_fw
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/b_fw
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rst_n
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/clk
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_all
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rs1_pc
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rs2_imm
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rs1
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rs2
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rd_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rd_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/rd_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/wr_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/wr_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/wr_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/dh_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/dh_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/dh_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/a_fw_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/a_fw_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/a_fw_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/b_fw_ex
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/b_fw_mem
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/b_fw_wb
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/fw
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_c
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/stall_d
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/dh
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/i_fence
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/i_fence_d
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/i_fence_re
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/fence_cnt
+add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/fence_cnt_ena
+add wave -noupdate /tb_core/env.t
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{trace log error} {31040000 ps} 1} {{Cursor 4} {31040000 ps} 0}
+WaveRestoreCursors {{Cursor 4} {5520000 ps} 1} {{Cursor 3} {480000 ps} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 262
 configure wave -valuecolwidth 158
@@ -203,4 +330,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {30658799 ps} {31655225 ps}
+WaveRestoreZoom {0 ps} {21937555 ps}

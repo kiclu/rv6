@@ -117,6 +117,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [   `IMEM_LINE-1:0] b_data_i;
     wire                     b_rd_i;
     wire                     b_dv_i;
+    wire                     fence_i;
     wire                     stall_imem;
 
     imem u_imem (
@@ -126,6 +127,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .b_data_i       (b_data_i       ),
         .b_rd_i         (b_rd_i         ),
         .b_dv_i         (b_dv_i         ),
+        .fence_i        (fence_i        ),
         .stall_imem     (stall_imem     ),
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
@@ -139,7 +141,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire flush_pd = !flush_n && !stall_if;
 
     always @(posedge c_clk) begin
-        if(flush_pd || t_flush_pd) begin
+        if(flush_pd || t_flush_pd || !c_rst_n) begin
             bfp_pc       <= 64'b0;
             bfp_ir       <= 32'h13;
             bfp_pr_taken <= 1'b0;
@@ -179,7 +181,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire flush_id = !flush_n && !stall_if;
 
     always @(posedge c_clk) begin
-        if(flush_id || t_flush_id) begin
+        if(flush_id || t_flush_id || !c_rst_n) begin
             bpd_pc       <= 64'b0;
             bpd_ir       <= 32'h13;
             bpd_pr_taken <= 1'b0;
@@ -214,6 +216,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .rd_data        (rd_data        ),
         .rd             (rd             ),
         .we             (we             ),
+        .rst_n          (rst_n          ),
         .clk            (c_clk          )
     );
 
@@ -230,6 +233,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .pr_miss        (pr_miss        ),
         .br_addr        (br_addr        ),
         .pr_taken       (bpd_pr_taken   ),
+        .rst_n          (rst_n          ),
         .stall          (stall_id       )
     );
 
@@ -541,6 +545,7 @@ module rv6_core #(parameter HART_ID = 0) (
     /* CONTROL UNIT */
 
     cu u_cu (
+        .ir_if          (ir             ),
         .ir_id          (bpd_ir         ),
         .ir_ex          (bdx_ir         ),
         .ir_mem         (bxm_ir         ),
@@ -553,6 +558,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .stall_wb       (stall_wb       ),
         .stall_imem     (stall_imem     ),
         .stall_dmem     (stall_dmem     ),
+        .fence_i        (fence_i        ),
         .amo_req        (c_amo_req      ),
         .amo_ack        (c_amo_ack      ),
         .s_mx_a_fw      (s_mx_a_fw      ),

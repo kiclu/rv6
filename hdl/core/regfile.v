@@ -25,6 +25,7 @@ module regfile (
     input   [ 4:0] rd,
     input          we,
 
+    input          rst_n,
     input          clk
 );
 
@@ -49,6 +50,12 @@ module regfile (
 
     /* REGISTER WRITE */
 
-    always @(posedge clk) if(we) reg_data[rd] <= rd_data;
+    always @(posedge clk, negedge rst_n) begin
+        if(!rst_n) begin : regfile_reset
+            integer i;
+            for(i = 1; i < 32; i = i + 1) reg_data[i] <= 64'b0;
+        end
+        else if(we) reg_data[rd] <= rd_data;
+    end
 
 endmodule

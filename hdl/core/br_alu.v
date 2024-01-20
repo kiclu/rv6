@@ -31,6 +31,7 @@ module br_alu (
 
     input             pr_taken,
 
+    input             rst_n,
     input             stall
 );
 
@@ -45,7 +46,7 @@ module br_alu (
     wire branch    = ir[6:0] == `OP_BRANCH;
 
     // branch prediction miss check
-    reg brc = 0;
+    reg brc;
     assign pr_miss = (pr_taken != brc) && branch;
     assign br_addr = brc ? pc + br_offs : pc + 4;
 
@@ -54,13 +55,13 @@ module br_alu (
     wire signed [63:0] rs2_data_s = rs2_data;
     always @(*) begin
         case(ir[14:12])
-            3'b000:  brc <= (rs1_data   ==  rs2_data);
-            3'b001:  brc <= (rs1_data   !=  rs2_data);
-            3'b100:  brc <= (rs1_data_s <   rs2_data_s);
-            3'b101:  brc <= (rs1_data_s >=  rs2_data_s);
-            3'b110:  brc <= (rs1_data   <   rs2_data);
-            3'b111:  brc <= (rs1_data   >=  rs2_data);
-            default: brc <= 0;
+            3'b000:  brc = (rs1_data   ==  rs2_data);
+            3'b001:  brc = (rs1_data   !=  rs2_data);
+            3'b100:  brc = (rs1_data_s <   rs2_data_s);
+            3'b101:  brc = (rs1_data_s >=  rs2_data_s);
+            3'b110:  brc = (rs1_data   <   rs2_data);
+            3'b111:  brc = (rs1_data   >=  rs2_data);
+            default: brc = 0;
         endcase
     end
 
