@@ -106,11 +106,11 @@ module cu (
     always @(posedge clk) begin
         if(!stall_all) begin
             if(a_fw_ex) begin
-                a_fw <= ir_ex[6:0] != `op_load;
+                a_fw <= ir_ex[6:0] != `op_load && ir_ex[6:0] != `op_system;
                 s_mx_a_fw <= 0;
             end
             else if(a_fw_mem) begin
-                a_fw <= ir_mem[6:0] != `op_load;
+                a_fw <= ir_mem[6:0] != `op_load && ir_mem[6:0] != `op_system;
                 s_mx_a_fw <= 1;
             end
             else if(a_fw_wb) begin
@@ -128,11 +128,11 @@ module cu (
     always @(posedge clk) begin
         if(!stall_all) begin
             if(b_fw_ex) begin
-                b_fw <= ir_ex[6:0] != `op_load;
+                b_fw <= ir_ex[6:0] != `op_load && ir_ex[6:0] != `op_system;
                 s_mx_b_fw <= 0;
             end
             else if(b_fw_mem) begin
-                b_fw <= ir_ex[6:0] != `op_load;
+                b_fw <= ir_ex[6:0] != `op_load && ir_mem[6:0] != `op_system;
                 s_mx_b_fw <= 1;
             end
             else if(b_fw_wb) begin
@@ -160,7 +160,7 @@ module cu (
     reg  [4:0] stall_d;
 
     wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c &&
-        (!fw || ir_id[6:0] == `op_branch || ir_id[6:0] == `op_jalr || ir_id[6:0] == `op_store);
+        (!fw || ir_id[6:0] == `op_branch || ir_id[6:0] == `op_jalr || ir_id[6:0] == `op_store || ir_id[6:0] == `op_system);
 
     // disable forwarding
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;
