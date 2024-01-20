@@ -39,7 +39,7 @@
 `else
 `define TEST_PASSED "passed"
 `define TEST_FAILED "failed"
-`define TET_REPORT_FMT "riscv-tests finished: %d passed, %d failed!"
+`define TEST_REPORT_FMT "riscv-tests finished: %d passed, %d failed!"
 `endif
 
 `ifdef DROMAJO_VERBOSE
@@ -139,7 +139,11 @@ module tb_core;
             this.tval = tval;
         endfunction
 
-        virtual function string what();
+        function string what();
+            return $sformatf("exception %-d, tval %16h", this.cause, this.tval);
+        endfunction
+
+        virtual function string err_msg();
             return "";
         endfunction
     endclass
@@ -152,8 +156,11 @@ module tb_core;
             this.csr_addr = csr_addr;
         endfunction
 
-        function string what();
-            return $sformatf("csr_read: invalid CSR=0x%-h\n", this.csr_addr);
+        function string err_msg();
+            return $sformatf(
+                "csr_read: invalid CSR=0x%-h\n",
+                this.csr_addr
+            );
         endfunction
     endclass
 
@@ -161,19 +168,11 @@ module tb_core;
         function new(input bit [63:0] tval);
             super.new(4, tval);
         endfunction
-
-        function string what();
-            return super.what();
-        endfunction
     endclass
 
     class MisalignedStoreAddressException extends Exception;
         function new(input bit [63:0] tval);
             super.new(6, tval);
-        endfunction
-
-        function string what();
-            return super.what();
         endfunction
     endclass
 
@@ -208,19 +207,16 @@ module tb_core;
 
         function string retire();
             if(this.e) begin
-                string err_msg = this.e.what();
-
-                string ret = $sformatf(
-                    "%-d %-d 0x%16h (0x%8h) exception %-d, tval %16h",
+                string trace = $sformatf(
+                    "%-d %-d 0x%16h (0x%8h) %s",
                     this.hart_id,
                     this.priv_lvl,
                     this.pc,
                     this.ir,
-                    this.e.cause,
-                    this.e.tval
+                    this.e.what()
                 );
 
-                return {err_msg, ret};
+                return {this.e.err_msg(), trace};
             end
             else if(dut.we && dut.rd) begin
                 return $sformatf(
