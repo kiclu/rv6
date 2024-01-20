@@ -122,6 +122,7 @@ module imem(
             end
             `S_LOAD: begin
                 rde = ld_cnt == `IMEM_READ_VALID_DELAY;
+                if(!hit) imem_fsm_state_next = `S_FETCH;
 
                 if(!ld_cnt) imem_fsm_state_next = ma_pend ? `S_MA : `S_READY;
             end
@@ -240,7 +241,7 @@ module imem(
 
 `endif//IMEM_SET_ASSOC
 
-    assign stall_imem = imem_fsm_state != `S_READY || imem_fsm_state_next != `S_READY;
+    assign stall_imem = imem_fsm_state != `S_READY || imem_fsm_state_next != `S_READY || !rb_hit;
 
     // TODO:
     /* REPLACEMENT ENTRY */
