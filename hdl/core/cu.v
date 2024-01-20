@@ -14,19 +14,6 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`define op_lui      7'b0110111
-`define op_auipc    7'b0010111
-`define op_jal      7'b1101111
-`define op_jalr     7'b1100111
-`define op_load     7'b0000011
-`define op_store    7'b0100011
-`define op_itype    7'b0010011
-`define op_itype_w  7'b0011011
-`define op_rtype    7'b0110011
-`define op_rtype_w  7'b0111011
-`define op_branch   7'b1100011
-`define op_system   7'b1110011
-
 `include "../config.vh"
 
 module cu (
@@ -70,14 +57,8 @@ module cu (
 
     /* PIPELINE DATA HAZARD */
 
-    wire rs1_pc  =
-        ir_id[6:0] == `op_lui   ||
-        ir_id[6:0] == `op_auipc ||
-        ir_id[6:0] == `op_jal;
-
-    wire rs2_imm =
-        ir_id[6:0] != `op_rtype &&
-        ir_id[6:0] != `op_rtype_w;
+    wire rs1_pc  = ir_id[6:0] == `OP_LUI || ir_id[6:0] == `OP_AUIPC || ir_id[6:0] == `OP_JAL;
+    wire rs2_imm = ir_id[6:0] != `OP_ALRR && ir_id[6:0] != `OP_ALRRW;
 
     wire [4:0] rs1 = ir_id[19:15];
     wire [4:0] rs2 = ir_id[24:20];
@@ -86,9 +67,9 @@ module cu (
     wire [4:0] rd_mem = ir_mem[11:7];
     wire [4:0] rd_wb  = ir_wb [11:7];
 
-    wire wr_ex  = ir_ex [6:0] != `op_branch && ir_ex [6:0] != `op_store;
-    wire wr_mem = ir_mem[6:0] != `op_branch && ir_mem[6:0] != `op_store;
-    wire wr_wb  = ir_wb [6:0] != `op_branch && ir_wb [6:0] != `op_store;
+    wire wr_ex  = ir_ex [6:0] != `OP_BRANCH && ir_ex [6:0] != `OP_STORE;
+    wire wr_mem = ir_mem[6:0] != `OP_BRANCH && ir_mem[6:0] != `OP_STORE;
+    wire wr_wb  = ir_wb [6:0] != `OP_BRANCH && ir_wb [6:0] != `OP_STORE;
 
     /* DATA HAZARD DETECTION */
 
@@ -110,11 +91,11 @@ module cu (
     always @(posedge clk) begin
         if(!stall_all) begin
             if(a_fw_ex) begin
-                a_fw <= ir_ex[6:0] != `op_load && ir_ex[6:0] != `op_system;
+                a_fw <= ir_ex[6:0] != `OP_LOAD && ir_ex[6:0] != `OP_SYSTEM;
                 s_mx_a_fw <= 0;
             end
             else if(a_fw_mem) begin
-                a_fw <= ir_mem[6:0] != `op_load && ir_mem[6:0] != `op_system;
+                a_fw <= ir_mem[6:0] != `OP_LOAD && ir_mem[6:0] != `OP_SYSTEM;
                 s_mx_a_fw <= 1;
             end
             else if(a_fw_wb) begin
@@ -132,11 +113,11 @@ module cu (
     always @(posedge clk) begin
         if(!stall_all) begin
             if(b_fw_ex) begin
-                b_fw <= ir_ex[6:0] != `op_load && ir_ex[6:0] != `op_system;
+                b_fw <= ir_ex[6:0] != `OP_LOAD && ir_ex[6:0] != `OP_SYSTEM;
                 s_mx_b_fw <= 0;
             end
             else if(b_fw_mem) begin
-                b_fw <= ir_ex[6:0] != `op_load && ir_mem[6:0] != `op_system;
+                b_fw <= ir_ex[6:0] != `OP_LOAD && ir_mem[6:0] != `OP_SYSTEM;
                 s_mx_b_fw <= 1;
             end
             else if(b_fw_wb) begin
@@ -150,8 +131,8 @@ module cu (
     reg fw;
     always @(*) begin
         fw <= 0;
-        if(a_fw_ex || b_fw_ex)        fw <= ir_ex [6:0] != `op_load && ir_ex [6:0] != `op_system;
-        else if(a_fw_mem || b_fw_mem) fw <= ir_mem[6:0] != `op_load && ir_mem[6:0] != `op_system;
+        if(a_fw_ex || b_fw_ex)        fw <= ir_ex [6:0] != `OP_LOAD && ir_ex [6:0] != `OP_SYSTEM;
+        else if(a_fw_mem || b_fw_mem) fw <= ir_mem[6:0] != `OP_LOAD && ir_mem[6:0] != `OP_SYSTEM;
         else if(a_fw_wb || b_fw_wb)   fw <= 1;
     end
 
@@ -164,7 +145,7 @@ module cu (
     reg  [4:0] stall_d;
 
     wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c &&
-        (!fw || ir_id[6:0] == `op_branch || ir_id[6:0] == `op_jalr || ir_id[6:0] == `op_store || ir_id[6:0] == `op_system);
+        (!fw || ir_id[6:0] == `OP_BRANCH || ir_id[6:0] == `OP_JALR || ir_id[6:0] == `OP_STORE || ir_id[6:0] == `OP_SYSTEM);
 
     // disable forwarding
     //wire dh = (dh_ex || dh_mem || dh_wb) && !stall_c;

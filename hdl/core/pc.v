@@ -44,7 +44,7 @@ module pc(
     wire [63:0] n_pc    = pc + (c_ins ? 64'h2 : 64'h4);
 
     always @(posedge clk, negedge rst_n) begin
-        if(!rst_n) pc <= 64'h80000000;
+        if(!rst_n) pc <= `RESET_VECTOR;
         else if(trap_taken)     pc <= trap_addr;
         else if(jalr_taken)     pc <= jalr_addr;
         else if(!stall) begin

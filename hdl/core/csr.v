@@ -14,172 +14,173 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
+`include "../config.vh"
+
 // supervisor trap setup
-`define sstatus         12'h100
-`define sstatus_reg     csr_reg[0]
-`define sie             12'h104
-`define sie_reg         csr_reg[1]
-`define stvec           12'h105
-`define stvec_reg       csr_reg[2]
-`define scounteren      12'h106
-`define scounteren_reg  csr_reg[3]
+`define SSTATUS         12'h100
+`define SSTATUS_REG     csr_reg[0]
+`define SIE             12'h104
+`define SIE_REG         csr_reg[1]
+`define STVEC           12'h105
+`define STVEC_REG       csr_reg[2]
+`define SCOUNTEREN      12'h106
+`define SCOUNTEREN_REG  csr_reg[3]
 
 // supervisor trap handling
-`define sscratch        12'h140
-`define sscratch_reg    csr_reg[4]
-`define sepc            12'h141
-`define sepc_reg        csr_reg[5]
-`define scause          12'h142
-`define scause_reg      csr_reg[6]
-`define stval           12'h143
-`define stval_reg       csr_reg[7]
-`define sip             12'h144
-`define sip_reg         csr_reg[8]
+`define SSCRATCH        12'h140
+`define SSCRATCH_REG    csr_reg[4]
+`define SEPC            12'h141
+`define SEPC_REG        csr_reg[5]
+`define SCAUSE          12'h142
+`define SCAUSE_REG      csr_reg[6]
+`define STVAL           12'h143
+`define STVAL_REG       csr_reg[7]
+`define SIP             12'h144
+`define SIP_REG         csr_reg[8]
 
 // supervisor protection and translation
-`define satp            12'h180
-`define satp_reg        csr_reg[9]
+`define SATP            12'h180
+`define SATP_REG        csr_reg[9]
 
 // machine information registers
-`define mvendorid       12'hf11
-`define mvendorid_reg   csr_reg[10]
-`define marchid         12'hf12
-`define marchid_reg     csr_reg[11]
-`define mimpid          12'hf13
-`define mimpid_reg      csr_reg[12]
-`define mhartid         12'hf14
-`define mhartid_reg     csr_reg[13]
-`define mconfigptr      12'hf15
-`define mconfigptr_reg  csr_reg[14]
+`define MVENDORID       12'hf11
+`define MVENDORID_REG   csr_reg[10]
+`define MARCHID         12'hf12
+`define MARCHID_REG     csr_reg[11]
+`define MIMPID          12'hf13
+`define MIMPID_REG      csr_reg[12]
+`define MHARTID         12'hf14
+`define MHARTID_REG     csr_reg[13]
+`define MCONFIGPTR      12'hf15
+`define MCONFIGPTR_REG  csr_reg[14]
 
 // machine trap setup
-`define mstatus         12'h300
-`define mstatus_reg     csr_reg[0]
-`define misa            12'h301
-`define misa_reg        csr_reg[15]
-`define medeleg         12'h302
-`define medeleg_reg     csr_reg[16]
-`define mideleg         12'h303
-`define mideleg_reg     csr_reg[17]
-`define mie             12'h304
-`define mie_reg         csr_reg[1]
-`define mtvec           12'h305
-`define mtvec_reg       csr_reg[18]
-`define mcounteren      12'h306
-`define mcounteren_reg  csr_reg[19]
+`define MSTATUS         12'h300
+`define MSTATUS_REG     csr_reg[0]
+`define MISA            12'h301
+`define MISA_REG        csr_reg[15]
+`define MEDELEG         12'h302
+`define MEDELEG_REG     csr_reg[16]
+`define MIDELEG         12'h303
+`define MIDELEG_REG     csr_reg[17]
+`define MIE             12'h304
+`define MIE_REG         csr_reg[1]
+`define MTVEC           12'h305
+`define MTVEC_REG       csr_reg[18]
+`define MCOUNTEREN      12'h306
+`define MCOUNTEREN_REG  csr_reg[19]
 
 // machine trap handling
-`define mscratch        12'h340
-`define mscratch_reg    csr_reg[20]
-`define mepc            12'h341
-`define mepc_reg        csr_reg[21]
-`define mcause          12'h342
-`define mcause_reg      csr_reg[22]
-`define mtval           12'h343
-`define mtval_reg       csr_reg[23]
-`define mip             12'h344
-`define mip_reg         csr_reg[8]
-`define mtinst          12'h345
-`define mtinst_reg      csr_reg[24]
+`define MSCRATCH        12'h340
+`define MSCRATCH_REG    csr_reg[20]
+`define MEPC            12'h341
+`define MEPC_REG        csr_reg[21]
+`define MCAUSE          12'h342
+`define MCAUSE_REG      csr_reg[22]
+`define MTVAL           12'h343
+`define MTVAL_REG       csr_reg[23]
+`define MIP             12'h344
+`define MIP_REG         csr_reg[8]
+`define MTINST          12'h345
+`define MTINST_REG      csr_reg[24]
 
 // machine configuration
-`define menvcfg         12'h30a
-`define menvcfg_reg     csr_reg[25]
-`define mseccfg         12'h747
-`define mseccfg_reg     csr_reg[26]
+`define MENVCFG         12'h30a
+`define MENVCFG_REG     csr_reg[25]
+`define MSECCFG         12'h747
+`define MSECCFG_REG     csr_reg[26]
 
 // unprivileged floating-point csrs
-`define fflags          12'h001
-`define fflags_reg      csr_reg[27]
-`define frm             12'h002
-`define frm_reg         csr_reg[28]
-`define fcsr            12'h003
-`define fcsr_reg        csr_reg[29]
+`define FFLAGS          12'h001
+`define FFLAGS_REG      csr_reg[27]
+`define FRM             12'h002
+`define FRM_REG         csr_reg[28]
+`define FCSR            12'h003
+`define FCSR_REG        csr_reg[29]
 
 // machine memory protection
-`define pmpcfg0         12'h3a0
-`define pmpaddr0        12'h3b0
+`define PMPCFG0         12'h3a0
+`define PMPADDR0        12'h3b0
 
-`define csr_count 32
+`define CSR_COUNT 32
 
 // mstatus register fields
-`define mstatus_sd      `mstatus_reg[63]
-`define mstatus_mbe     `mstatus_reg[37]
-`define mstatus_sbe     `mstatus_reg[36]
-`define mstatus_sxl     `mstatus_reg[35:34]
-`define mstatus_uxl     `mstatus_reg[33:32]
-`define mstatus_tsr     `mstatus_reg[22]
-`define mstatus_tw      `mstatus_reg[21]
-`define mstatus_tvm     `mstatus_reg[20]
-`define mstatus_mxr     `mstatus_reg[19]
-`define mstatus_sum     `mstatus_reg[18]
-`define mstatus_mprv    `mstatus_reg[17]
-`define mstatus_xs      `mstatus_reg[16:15]
-`define mstatus_fs      `mstatus_reg[14:13]
-`define mstatus_mpp     `mstatus_reg[12:11]
-`define mstatus_vs      `mstatus_reg[10:9]
-`define mstatus_spp     `mstatus_reg[8]
-`define mstatus_mpie    `mstatus_reg[7]
-`define mstatus_ube     `mstatus_reg[6]
-`define mstatus_spie    `mstatus_reg[5]
-`define mstatus_mie     `mstatus_reg[3]
-`define mstatus_sie     `mstatus_reg[1]
+`define MSTATUS_SD      `MSTATUS_REG[63]
+`define MSTATUS_MBE     `MSTATUS_REG[37]
+`define MSTATUS_SBE     `MSTATUS_REG[36]
+`define MSTATUS_SXL     `MSTATUS_REG[35:34]
+`define MSTATUS_UXL     `MSTATUS_REG[33:32]
+`define MSTATUS_TSR     `MSTATUS_REG[22]
+`define MSTATUS_TW      `MSTATUS_REG[21]
+`define MSTATUS_TVM     `MSTATUS_REG[20]
+`define MSTATUS_MXR     `MSTATUS_REG[19]
+`define MSTATUS_SUM     `MSTATUS_REG[18]
+`define MSTATUS_MPRV    `MSTATUS_REG[17]
+`define MSTATUS_XS      `MSTATUS_REG[16:15]
+`define MSTATUS_FS      `MSTATUS_REG[14:13]
+`define MSTATUS_MPP     `MSTATUS_REG[12:11]
+`define MSTATUS_VS      `MSTATUS_REG[10:9]
+`define MSTATUS_SPP     `MSTATUS_REG[8]
+`define MSTATUS_MPIE    `MSTATUS_REG[7]
+`define MSTATUS_UBE     `MSTATUS_REG[6]
+`define MSTATUS_SPIE    `MSTATUS_REG[5]
+`define MSTATUS_MIE     `MSTATUS_REG[3]
+`define MSTATUS_SIE     `MSTATUS_REG[1]
 
 // mideleg register fields
-`define mideleg_meid    `mideleg_reg[11]
-`define mideleg_seid    `mideleg_reg[9]
-`define mideleg_mtid    `mideleg_reg[7]
-`define mideleg_stid    `mideleg_reg[5]
-`define mideleg_msid    `mideleg_reg[3]
-`define mideleg_ssid    `mideleg_reg[1]
+`define MIDELEG_MEID    `MIDELEG_REG[11]
+`define MIDELEG_SEID    `MIDELEG_REG[9]
+`define MIDELEG_MTID    `MIDELEG_REG[7]
+`define MIDELEG_STID    `MIDELEG_REG[5]
+`define MIDELEG_MSID    `MIDELEG_REG[3]
+`define MIDELEG_SSID    `MIDELEG_REG[1]
 
 // mip register fields
-`define mip_meip        `mip_reg[11]
-`define mip_seip        `mip_reg[9]
-`define mip_mtip        `mip_reg[7]
-`define mip_stip        `mip_reg[5]
-`define mip_msip        `mip_reg[3]
-`define mip_ssip        `mip_reg[1]
+`define MIP_MEIP        `MIP_REG[11]
+`define MIP_SEIP        `MIP_REG[9]
+`define MIP_MTIP        `MIP_REG[7]
+`define MIP_STIP        `MIP_REG[5]
+`define MIP_MSIP        `MIP_REG[3]
+`define MIP_SSIP        `MIP_REG[1]
 
 // mie register fields
-`define mie_meie        `mie_reg[11]
-`define mie_seie        `mie_reg[9]
-`define mie_mtie        `mie_reg[7]
-`define mie_stie        `mie_reg[5]
-`define mie_msie        `mie_reg[3]
-`define mie_ssie        `mie_reg[1]
+`define MIE_MEIE        `MIE_REG[11]
+`define MIE_SEIE        `MIE_REG[9]
+`define MIE_MTIE        `MIE_REG[7]
+`define MIE_STIE        `MIE_REG[5]
+`define MIE_MSIE        `MIE_REG[3]
+`define MIE_SSIE        `MIE_REG[1]
 
 // sstatus register fields
-`define sstatus_sd      `sstatus_reg[63]
-`define sstatus_uxl     `sstatus_reg[33:32]
-`define sstatus_mxr     `sstatus_reg[19]
-`define sstatus_sum     `sstatus_reg[18]
-`define sstatus_xs      `sstatus_reg[16:15]
-`define sstatus_fs      `sstatus_reg[14:13]
-`define sstatus_vs      `sstatus_reg[10:9]
-`define sstatus_spp     `sstatus_reg[8]
-`define sstatus_ube     `sstatus_reg[6]
-`define sstatus_spie    `sstatus_reg[5]
-`define sstatus_sie     `sstatus_reg[1]
+`define SSTATUS_SD      `SSTATUS_REG[63]
+`define SSTATUS_UXL     `SSTATUS_REG[33:32]
+`define SSTATUS_MXR     `SSTATUS_REG[19]
+`define SSTATUS_SUM     `SSTATUS_REG[18]
+`define SSTATUS_XS      `SSTATUS_REG[16:15]
+`define SSTATUS_FS      `SSTATUS_REG[14:13]
+`define SSTATUS_VS      `SSTATUS_REG[10:9]
+`define SSTATUS_SPP     `SSTATUS_REG[8]
+`define SSTATUS_UBE     `SSTATUS_REG[6]
+`define SSTATUS_SPIE    `SSTATUS_REG[5]
+`define SSTATUS_SIE     `SSTATUS_REG[1]
 
 // sip register fields
-`define sip_seip        `sip_reg[9]
-`define sip_stip        `sip_reg[5]
-`define sip_ssip        `sip_reg[1]
+`define SIP_SEIP        `SIP_REG[9]
+`define SIP_STIP        `SIP_REG[5]
+`define SIP_SSIP        `SIP_REG[1]
 
 // sie register fields
-`define sie_seie        `sie_reg[9]
-`define sie_stie        `sie_reg[5]
-`define sie_ssie        `sie_reg[1]
+`define SIE_SEIE        `SIE_REG[9]
+`define SIE_STIE        `SIE_REG[5]
+`define SIE_SSIE        `SIE_REG[1]
 
 // Zicsr instructions
-`define op_system       7'b1110011
-`define csr_rw          3'b001
-`define csr_rs          3'b010
-`define csr_rc          3'b011
-`define csr_rwi         3'b101
-`define csr_rsi         3'b110
-`define csr_rci         3'b111
+`define CSR_RW          3'b001
+`define CSR_RS          3'b010
+`define CSR_RC          3'b011
+`define CSR_RWI         3'b101
+`define CSR_RSI         3'b110
+`define CSR_RCI         3'b111
 
 `define FLUSH_PD        4'b1000
 `define FLUSH_ID        4'b1100
@@ -228,7 +229,7 @@ module csr #(parameter HART_ID = 0) (
 );
 
     wire [11:0] csr_addr = ir[31:20];
-    reg  [63:0] csr_reg [0:`csr_count-1];
+    reg  [63:0] csr_reg [0:`CSR_COUNT-1];
     reg  [ 1:0] privilege_level;
 
     // CSR exceptions
@@ -254,12 +255,12 @@ module csr #(parameter HART_ID = 0) (
 
     /* REGISTER READ/UPDATE */
 
-    wire csr_rw  = ir[14:12] == `csr_rw  && ir[6:0] == `op_system;
-    wire csr_rwi = ir[14:12] == `csr_rwi && ir[6:0] == `op_system;
-    wire csr_rs  = ir[14:12] == `csr_rs  && ir[6:0] == `op_system;
-    wire csr_rsi = ir[14:12] == `csr_rsi && ir[6:0] == `op_system;
-    wire csr_rc  = ir[14:12] == `csr_rc  && ir[6:0] == `op_system;
-    wire csr_rci = ir[14:12] == `csr_rci && ir[6:0] == `op_system;
+    wire csr_rw  = ir[14:12] == `CSR_RW  && ir[6:0] == `OP_SYSTEM;
+    wire csr_rwi = ir[14:12] == `CSR_RWI && ir[6:0] == `OP_SYSTEM;
+    wire csr_rs  = ir[14:12] == `CSR_RS  && ir[6:0] == `OP_SYSTEM;
+    wire csr_rsi = ir[14:12] == `CSR_RSI && ir[6:0] == `OP_SYSTEM;
+    wire csr_rc  = ir[14:12] == `CSR_RC  && ir[6:0] == `OP_SYSTEM;
+    wire csr_rci = ir[14:12] == `CSR_RCI && ir[6:0] == `OP_SYSTEM;
     wire csr_op = csr_rw || csr_rwi || csr_rs || csr_rsi || csr_rc || csr_rci;
 
     wire rd = csr_op && !((csr_rw || csr_rwi                     ) && ir[11:7]  == 5'b0);
@@ -278,50 +279,50 @@ module csr #(parameter HART_ID = 0) (
         csr = 64'b0;
         if(rd || wr) begin
             case(csr_addr)
-                `sstatus:       csr = `sstatus_reg;
-                `sie:           csr = `sie_reg;
-                `stvec:         csr = `stvec_reg;
-                `scounteren:    csr = `scounteren_reg;
+                `SSTATUS:       csr = `SSTATUS_REG;
+                `SIE:           csr = `SIE_REG;
+                `STVEC:         csr = `STVEC_REG;
+                `SCOUNTEREN:    csr = `SCOUNTEREN_REG;
 
-                `sscratch:      csr = `sscratch_reg;
-                `sepc:          csr = `sepc_reg;
-                `scause:        csr = `scause_reg;
-                `stval:         csr = `stval_reg;
-                `sip:           csr = `sip_reg;
+                `SSCRATCH:      csr = `SSCRATCH_REG;
+                `SEPC:          csr = `SEPC_REG;
+                `SCAUSE:        csr = `SCAUSE_REG;
+                `STVAL:         csr = `STVAL_REG;
+                `SIP:           csr = `SIP_REG;
 
-                `satp:          csr = `satp_reg;
+                `SATP:          csr = `SATP_REG;
 
-                `mvendorid:     csr = `mvendorid_reg;
-                `marchid:       csr = `marchid_reg;
-                `mimpid:        csr = `mimpid_reg;
-                `mhartid:       csr = `mhartid_reg;
-                `mconfigptr:    csr = `mconfigptr_reg;
+                `MVENDORID:     csr = `MVENDORID_REG;
+                `MARCHID:       csr = `MARCHID_REG;
+                `MIMPID:        csr = `MIMPID_REG;
+                `MHARTID:       csr = `MHARTID_REG;
+                `MCONFIGPTR:    csr = `MCONFIGPTR_REG;
 
-                `mstatus:       csr = `mstatus_reg;
-                `misa:          csr = `misa_reg;
-                `medeleg:       csr = `medeleg_reg;
-                `mideleg:       csr = `mideleg_reg;
-                `mie:           csr = `mie_reg;
-                `mtvec:         csr = `mtvec_reg;
-                `mcounteren:    csr = `mcounteren_reg;
+                `MSTATUS:       csr = `MSTATUS_REG;
+                `MISA:          csr = `MISA_REG;
+                `MEDELEG:       csr = `MEDELEG_REG;
+                `MIDELEG:       csr = `MIDELEG_REG;
+                `MIE:           csr = `MIE_REG;
+                `MTVEC:         csr = `MTVEC_REG;
+                `MCOUNTEREN:    csr = `MCOUNTEREN_REG;
 
-                `mscratch:      csr = `mscratch_reg;
-                `mepc:          csr = `mepc_reg;
-                `mcause:        csr = `mcause_reg;
-                `mtval:         csr = `mtval_reg;
-                `mip:           csr = `mip_reg;
-                `mtinst:        csr = `mtinst_reg;
+                `MSCRATCH:      csr = `MSCRATCH_REG;
+                `MEPC:          csr = `MEPC_REG;
+                `MCAUSE:        csr = `MCAUSE_REG;
+                `MTVAL:         csr = `MTVAL_REG;
+                `MIP:           csr = `MIP_REG;
+                `MTINST:        csr = `MTINST_REG;
 
-                `menvcfg:       csr = `menvcfg_reg;
-                `mseccfg:       csr = `mseccfg_reg;
+                `MENVCFG:       csr = `MENVCFG_REG;
+                `MSECCFG:       csr = `MSECCFG_REG;
 
-                `fflags:        csr = `fflags_reg;
-                `frm:           csr = `frm_reg;
-                `fcsr:          csr = `fcsr_reg;
+                `FFLAGS:        csr = `FFLAGS_REG;
+                `FRM:           csr = `FRM_REG;
+                `FCSR:          csr = `FCSR_REG;
 
                 // riscv-tests only
-                `pmpcfg0:       csr = 0;
-                `pmpaddr0:      csr = 0;
+                `PMPCFG0:       csr = 0;
+                `PMPADDR0:      csr = 0;
 
                 default: csr_addr_invalid = 1;
             endcase
@@ -332,11 +333,11 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] wpri;
     always @(*) begin
         case(csr_addr)
-            `sstatus:   wpri = 64'h80000003000de762;
-            `mstatus:   wpri = 64'h8000003f007fffea;
+            `SSTATUS:   wpri = 64'h80000003000de762;
+            `MSTATUS:   wpri = 64'h8000003f007fffea;
 
-            `menvcfg:   wpri = 64'hc0000000000000f1;
-            `mseccfg:   wpri = 64'h0000000000000207;
+            `MENVCFG:   wpri = 64'hc0000000000000f1;
+            `MSECCFG:   wpri = 64'h0000000000000207;
 
             default:    wpri = 64'hffffffffffffffff;
         endcase
@@ -348,15 +349,15 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] ncsr;
     always @(*) begin
         ncsr = 64'b0;
-        if(ir[6:0] == `op_system) begin
+        if(ir[6:0] == `OP_SYSTEM) begin
             case(ir[14:12])
-                `csr_rw:  ncsr =        csr_in;
-                `csr_rs:  ncsr = csr |  csr_in;
-                `csr_rc:  ncsr = csr & ~csr_in;
+                `CSR_RW:  ncsr =        csr_in;
+                `CSR_RS:  ncsr = csr |  csr_in;
+                `CSR_RC:  ncsr = csr & ~csr_in;
 
-                `csr_rwi: ncsr =        {59'b0, ir[19:15]};
-                `csr_rsi: ncsr = csr |  {59'b0, ir[19:15]};
-                `csr_rci: ncsr = csr & ~{59'b0, ir[19:15]};
+                `CSR_RWI: ncsr =        {59'b0, ir[19:15]};
+                `CSR_RSI: ncsr = csr |  {59'b0, ir[19:15]};
+                `CSR_RCI: ncsr = csr & ~{59'b0, ir[19:15]};
 
                 default:  ncsr = 64'b0;
             endcase
@@ -372,87 +373,87 @@ module csr #(parameter HART_ID = 0) (
 
             // initialize CSR registers
             // mvendorid
-            `mvendorid_reg  <= 64'h0000000000000000;
+            `MVENDORID_REG  <= 64'h0000000000000000;
             // marchid
-            `marchid_reg    <= 64'h0000000000000027;
+            `MARCHID_REG    <= 64'h0000000000000027;
             // mimpid
-            `mimpid_reg     <= 64'h0000000000000000;
+            `MIMPID_REG     <= 64'h0000000000000000;
             // mhartid
-            `mhartid_reg    <= HART_ID;
+            `MHARTID_REG    <= HART_ID;
             // mconfigptr
-            `mconfigptr_reg <= 64'h0000000000000000;
+            `MCONFIGPTR_REG <= 64'h0000000000000000;
 
             // mstatus
-            `mstatus_reg    <= 64'h0000000a00001900;
+            `MSTATUS_REG    <= 64'h0000000a00001900;
             // misa
-            `misa_reg       <= 64'h8000000000141105;
+            `MISA_REG       <= 64'h8000000000141105;
             // medeleg
-            `medeleg_reg    <= 64'h0000000000000000;
+            `MEDELEG_REG    <= 64'h0000000000000000;
             // mideleg
-            `mideleg_reg    <= 64'h0000000000000000;
+            `MIDELEG_REG    <= 64'h0000000000000000;
             // mie
-            `mie_reg        <= 64'h0000000000000000;
+            `MIE_REG        <= 64'h0000000000000000;
             // mtvec
-            `mtvec_reg      <= 64'h0000000000000000;
+            `MTVEC_REG      <= 64'h0000000000000000;
             // mcounteren
-            `mcounteren_reg <= 64'h0000000000000000;
+            `MCOUNTEREN_REG <= 64'h0000000000000000;
 
             // mscratch
-            `mscratch_reg   <= 64'h0000000000000000;
+            `MSCRATCH_REG   <= 64'h0000000000000000;
             // mepc
-            `mepc_reg       <= 64'h0000000000000000;
+            `MEPC_REG       <= 64'h0000000000000000;
             // mcause
-            `mcause_reg     <= 64'h0000000000000000;
+            `MCAUSE_REG     <= 64'h0000000000000000;
             // mtval
-            `mtval_reg      <= 64'h0000000000000000;
+            `MTVAL_REG      <= 64'h0000000000000000;
             // mip
-            `mip_reg        <= 64'h0000000000000000;
+            `MIP_REG        <= 64'h0000000000000000;
             // mtinst
-            `mtinst_reg     <= 64'h0000000000000000;
+            `MTINST_REG     <= 64'h0000000000000000;
 
         end
         else if(wr_valid && !stall) begin
             case(csr_addr)
                 // supervisor trap setup
-                `sstatus:        `sstatus_reg       <= ncsr;
-                `sie:            `sie_reg           <= ncsr;
-                `stvec:          `stvec_reg         <= ncsr;
-                `scounteren:     `scounteren_reg    <= ncsr;
+                `SSTATUS:        `SSTATUS_REG       <= ncsr;
+                `SIE:            `SIE_REG           <= ncsr;
+                `STVEC:          `STVEC_REG         <= ncsr;
+                `SCOUNTEREN:     `SCOUNTEREN_REG    <= ncsr;
 
                 // supervisor trap handling
-                `sscratch:       `sscratch_reg      <= ncsr;
-                `sepc:           `sepc_reg          <= ncsr;
-                `scause:         `scause_reg        <= ncsr;
-                `stval:          `stval_reg         <= ncsr;
-                `sip:            `sip_reg           <= ncsr;
+                `SSCRATCH:       `SSCRATCH_REG      <= ncsr;
+                `SEPC:           `SEPC_REG          <= ncsr;
+                `SCAUSE:         `SCAUSE_REG        <= ncsr;
+                `STVAL:          `STVAL_REG         <= ncsr;
+                `SIP:            `SIP_REG           <= ncsr;
 
                 // supervisor protection and translation
-                `satp:           `satp_reg          <= ncsr;
+                `SATP:           `SATP_REG          <= ncsr;
 
                 // machine trap setup
-                `mstatus:        `mstatus_reg       <= ncsr;
-                `misa:           `misa_reg          <= ncsr;
-                `medeleg:        `medeleg_reg       <= ncsr;
-                `mideleg:        `mideleg_reg       <= ncsr;
-                `mie:            `mie_reg           <= ncsr;
-                `mtvec:          `mtvec_reg         <= ncsr;
-                `mcounteren:     `mcounteren_reg    <= ncsr;
+                `MSTATUS:        `MSTATUS_REG       <= ncsr;
+                `MISA:           `MISA_REG          <= ncsr;
+                `MEDELEG:        `MEDELEG_REG       <= ncsr;
+                `MIDELEG:        `MIDELEG_REG       <= ncsr;
+                `MIE:            `MIE_REG           <= ncsr;
+                `MTVEC:          `MTVEC_REG         <= ncsr;
+                `MCOUNTEREN:     `MCOUNTEREN_REG    <= ncsr;
 
                 // machine trap handling
-                `mscratch:       `mscratch_reg      <= ncsr;
-                `mepc:           `mepc_reg          <= ncsr;
-                `mcause:         `mcause_reg        <= ncsr;
-                `mtval:          `mtval_reg         <= ncsr;
-                `mip:            `mip_reg           <= ncsr;
-                `mtinst:         `mtinst_reg        <= ncsr;
+                `MSCRATCH:       `MSCRATCH_REG      <= ncsr;
+                `MEPC:           `MEPC_REG          <= ncsr;
+                `MCAUSE:         `MCAUSE_REG        <= ncsr;
+                `MTVAL:          `MTVAL_REG         <= ncsr;
+                `MIP:            `MIP_REG           <= ncsr;
+                `MTINST:         `MTINST_REG        <= ncsr;
 
                 // machine configuration
-                `menvcfg:        `menvcfg_reg       <= ncsr;
-                `mseccfg:        `mseccfg_reg       <= ncsr;
+                `MENVCFG:        `MENVCFG_REG       <= ncsr;
+                `MSECCFG:        `MSECCFG_REG       <= ncsr;
 
-                `fflags:         `fflags_reg        <= ncsr;
-                `frm:            `frm_reg           <= ncsr;
-                `fcsr:           `fcsr_reg          <= ncsr;
+                `FFLAGS:         `FFLAGS_REG        <= ncsr;
+                `FRM:            `FRM_REG           <= ncsr;
+                `FCSR:           `FCSR_REG          <= ncsr;
             endcase
         end
         // trap setup
@@ -462,40 +463,40 @@ module csr #(parameter HART_ID = 0) (
                 privilege_level <= 2'b11;
 
                 // mstatus
-                `mstatus_mie    <= 0;
-                `mstatus_mpie   <= `mstatus_mie;
-                `mstatus_mpp    <= privilege_level;
+                `MSTATUS_MIE    <= 0;
+                `MSTATUS_MPIE   <= `MSTATUS_MIE;
+                `MSTATUS_MPP    <= privilege_level;
                 // mepc
-                `mepc_reg       <= cause_pc;
+                `MEPC_REG       <= cause_pc;
                 // mcause
-                `mcause_reg     <= cause;
+                `MCAUSE_REG     <= cause;
                 // mtval
-                `mtval_reg      <= val;
+                `MTVAL_REG      <= val;
             end
             // supervisor trap
             else if(s_trap) begin
                 privilege_level <= 2'b01;
 
                 // sstatus
-                `sstatus_sie    <= 0;
-                `sstatus_spie   <= `sstatus_sie;
-                `sstatus_spp    <= privilege_level[0];
+                `SSTATUS_SIE    <= 0;
+                `SSTATUS_SPIE   <= `SSTATUS_SIE;
+                `SSTATUS_SPP    <= privilege_level[0];
                 // sepc
-                `sepc_reg       <= cause_pc;
+                `SEPC_REG       <= cause_pc;
                 // scause
-                `scause_reg     <= cause;
+                `SCAUSE_REG     <= cause;
                 // stval
-                `stval_reg      <= val;
+                `STVAL_REG      <= val;
             end
         end
         else if(trap_ret) begin
             if(m_ret) begin
-                `mstatus_mie <= `mstatus_mpie;
-                privilege_level <= `mstatus_mpp;
+                `MSTATUS_MIE <= `MSTATUS_MPIE;
+                privilege_level <= `MSTATUS_MPP;
             end
             else if(s_ret) begin
-                `sstatus_sie <= `sstatus_spie;
-                privilege_level <= {1'b0, `sstatus_spp};
+                `SSTATUS_SIE <= `SSTATUS_SPIE;
+                privilege_level <= {1'b0, `SSTATUS_SPP};
             end
         end
     end
@@ -568,8 +569,8 @@ module csr #(parameter HART_ID = 0) (
 
         end
         else if(exc) begin
-            m_trap = !`mideleg_reg[cause] || privilege_level == 2'b11;
-            s_trap =  `mideleg_reg[cause] && privilege_level != 2'b11;
+            m_trap = !`MIDELEG_REG[cause] || privilege_level == 2'b11;
+            s_trap =  `MIDELEG_REG[cause] && privilege_level != 2'b11;
         end
 
         trap_taken = m_trap || s_trap || m_ret || s_ret;
@@ -580,15 +581,15 @@ module csr #(parameter HART_ID = 0) (
     wire [63:0] mtvec_offs;
     always @(*) begin
         trap_addr = 64'hZ;
-        if(m_trap) trap_addr = {`mtvec_reg[63:2], 2'b00} + mtvec_offs;
-        if(s_trap) trap_addr = {`stvec_reg[63:2], 2'b00} + stvec_offs;
-        if(m_ret)  trap_addr = `mepc_reg;
-        if(s_ret)  trap_addr = `sepc_reg;
+        if(m_trap) trap_addr = {`MTVEC_REG[63:2], 2'b00} + mtvec_offs;
+        if(s_trap) trap_addr = {`STVEC_REG[63:2], 2'b00} + stvec_offs;
+        if(m_ret)  trap_addr = `MEPC_REG;
+        if(s_ret)  trap_addr = `SEPC_REG;
     end
 
     // vectored exception address generation
-    assign mtvec_offs = (`mtvec_reg[1:0] == 2'b01 && !cause[63]) ? (cause << 2) : 64'b0;
-    assign stvec_offs = (`stvec_reg[1:0] == 2'b01 && !cause[63]) ? (cause << 2) : 64'b0;
+    assign mtvec_offs = (`MTVEC_REG[1:0] == 2'b01 && !cause[63]) ? (cause << 2) : 64'b0;
+    assign stvec_offs = (`STVEC_REG[1:0] == 2'b01 && !cause[63]) ? (cause << 2) : 64'b0;
 
     // sstatus / mstatus
     // SD   = VS, FS, XS context status
@@ -618,16 +619,16 @@ endmodule
 
 
 // unprivileged counter/timers
-`define cycle           12'hc00
-`define time            12'hc01
-`define instret         12'hc02
-`define hpmcounter3     12'hc03
+`define CYCLE           12'hc00
+`define TIME            12'hc01
+`define INSTRET         12'hc02
+`define HPMCOUNTER3     12'hc03
 
 // machine counter/timers
-`define mcycle          12'hb00
-`define minstret        12'hb02
-`define mhpmcounter3    12'hb03
+`define MCYCLE          12'hb00
+`define MINSTRET        12'hb02
+`define MHPMCOUNTER3    12'hb03
 
 // machine counter setup
-`define mcountinhibit   12'hb20
-`define mhpmevent3      12'hb23
+`define MCOUNTINHIBIT   12'hb20
+`define MHPMEVENT3      12'hb23
