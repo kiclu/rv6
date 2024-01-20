@@ -39,7 +39,7 @@
 `else
 `define TEST_PASSED "passed"
 `define TEST_FAILED "failed"
-`define TEST_REPORT_FMT "riscv-tests finished: %d passed, %d failed!"
+`define TEST_REPORT_FMT "riscv-tests finished: %-d passed, %-d failed!"
 `endif
 
 `ifdef DROMAJO_VERBOSE

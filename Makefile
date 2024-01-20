@@ -5,26 +5,36 @@ DIR_SIM   = test
 DIR_VCD	  = vcd
 DIR_VVP	  = vvp
 
-SOURCES_SYN = $(addprefix ${DIR_SYN}/,$(shell find ${DIR_SYN} -name "*.v" -printf "%P "))
-SOURCES_SIM = $(addprefix ${DIR_SIM}/,$(shell find ${DIR_SIM} -name "*.sv" -printf "%P "))
+CURR_DIR = $(shell pwd)
 
-#all: unit_test unit_test_report
+SOURCES_SYN = $(addprefix ${CURR_DIR}/${DIR_SYN}/,$(shell find ${DIR_SYN} -name "*.v" -printf "%P "))
+SOURCES_SIM = $(addprefix ${CURR_DIR}/${DIR_SIM}/,$(shell find ${DIR_SIM} -name "*.sv" -printf "%P "))
+
+VLOG_FLAGS_SYN 			= -incr
+VLOG_FLAGS_SIM 			= -sv -incr +define+ANSI_COLORS +define+DROMAJO_VERBOSE
+VLOG_FLAGS_SIM_REPORT 	= -sv -incr
 
 # Compile all source files
-syn_all: ${SOURCES_SYN}
+compile_syn: ${SOURCES_SYN}
 	@echo "Makefile: Compiling synthesis modules"
-	@cd simulation/ && vsim -c tb_core -do 'quit -sim; project open rv6; project compileall; quit -f;'
-	@echo "Makefile: Compiled sysntesis modules successfully\n"
+	@cd simulation/ && vlog ${VLOG_FLAGS_SYN} ${SOURCES_SYN}
+	@echo "Makefile: Compiled synthesis modules successfully\n"
 
-core_unit_test: | ${SOURCES_SYN} ${SOURCES_SIM}
-	# compile
-	@cd simulation/ && vsim -c tb_core -do 'quit -sim; project open rv6; project compileall; vlog -work work ../test/tb_core.sv +define+ANSI_COLORS +define+DROMAJO_VERBOSE; quit -f;'
+compile_sim: ${SOURCES_SYN} ${SOURCES_SIM}
+	@echo "Makefile: Compiling simulation modules"
+	@cd simulation/ && vlog ${VLOG_FLAGS_SIM} ${SOURCES_SIM}
+	@echo "Makefile: Compiled simulation modules successfully\n"
+
+compile_sim_report:
+	@cd simulation/ && vlog ${VLOG_FLAGS_SIM_REPORT} ${SOURCES_SIM}
+
+core_unit_test: compile_syn compile_sim
 	# run simulation
 	@cd simulation/ && vsim -c tb_core -do 'run -all; quit -f;'
 
-core_unit_test_report: syn_all | ${SOURCES_SYN} ${SOURCES_SIM}
+core_unit_test_report: compile_syn compile_sim_report
 	@echo Writing report file
-	@cd simulation/ && vsim -c tb_core -do 'run -all; quit -f' > unit_test_report
+	@cd simulation/ && vsim -c tb_core -do 'run -all; quit -f' > reports/core_unit_test_report
 	@echo Report file written successfully
 
 clean:
