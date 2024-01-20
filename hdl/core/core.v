@@ -81,6 +81,7 @@ module rv6_core #(parameter HART_ID = 0) (
 
     wire stall_if;
 
+
     // program counter
     pc u_pc (
         .pc             (pc             ),
@@ -138,7 +139,8 @@ module rv6_core #(parameter HART_ID = 0) (
     reg bfp_pr_taken;
     reg bfp_c_ins;
 
-    wire flush_pd = !flush_n && !stall_if;
+    wire flush_ena = !stall_if || (jalr_taken && fence_i);
+    wire flush_pd = !flush_n && flush_ena;
 
     always @(posedge c_clk) begin
         if(flush_pd || t_flush_pd || !c_rst_n) begin
@@ -178,7 +180,7 @@ module rv6_core #(parameter HART_ID = 0) (
     reg bpd_pr_taken;
     reg bpd_c_ins;
 
-    wire flush_id = !flush_n && !stall_if;
+    wire flush_id = !flush_n && flush_ena;
 
     always @(posedge c_clk) begin
         if(flush_id || t_flush_id || !c_rst_n) begin

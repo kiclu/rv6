@@ -35,11 +35,8 @@ module pc(
     input      [12:0] pr_offs,
 
     input             c_ins,
-
     input             stall,
-
     input             rst_n,
-
     input             clk
 );
 
