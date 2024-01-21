@@ -407,7 +407,7 @@ module tb_core;
 
         // generate list of tests based on template
         task gen_file_list(input string template);
-            $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' > tb_hart.lst"});
+            $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' >> tb_hart.lst"});
         endtask
 
         // run tests and report
