@@ -325,7 +325,7 @@ module dmem(
             2'b00: ma = 0;
             2'b01: ma = |addr[0:0];
             2'b10: ma = |addr[1:0];
-            2'b11: ma = |addr[3:0];
+            2'b11: ma = |addr[2:0];
         endcase
     end
 `endif//DMEM_MA_NATURAL
