@@ -218,7 +218,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .rd_data        (rd_data        ),
         .rd             (rd             ),
         .we             (we             ),
-        .rst_n          (rst_n          ),
+        .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
     );
 

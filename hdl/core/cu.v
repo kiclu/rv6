@@ -205,8 +205,11 @@ module cu (
     end
 
     always @(posedge clk, negedge rst_n) begin
-        if(!fence_cnt_ena || !rst_n) fence_cnt <= 3'd5;
-        if(!stall_wb && fence_cnt_ena) fence_cnt <= fence_cnt - 1;
+        if(!rst_n) fence_cnt <= 3'd5;
+        else begin
+            if(!fence_cnt_ena) fence_cnt <= 3'd5;
+            if(!stall_wb && fence_cnt_ena) fence_cnt <= fence_cnt - 1;
+        end
     end
 
     assign fence_i = !stall_imem && (i_fence_re || (fence_cnt_ena && fence_cnt != 3'd0));
