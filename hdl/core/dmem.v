@@ -104,10 +104,10 @@ module dmem(
     reg  [1:0] dmem_fsm_state;
     reg  [1:0] dmem_fsm_state_next;
 
-    `define S_READY 2'd0
-    `define S_FETCH 2'd1
-    `define S_LOAD  2'd2
-    `define S_WRITE 2'd3
+    `define DMEM_S_READY 2'd0
+    `define DMEM_S_FETCH 2'd1
+    `define DMEM_S_LOAD  2'd2
+    `define DMEM_S_WRITE 2'd3
 
     always @(*) begin
         wre     = 0;
@@ -116,32 +116,32 @@ module dmem(
         way_d   = way_q;
         dmem_fsm_state_next = dmem_fsm_state;
         case(dmem_fsm_state)
-            `S_READY: begin
-                if(rd &&   !hit) dmem_fsm_state_next = `S_FETCH;
-                if(wr &&   !hit) dmem_fsm_state_next = `S_FETCH;
+            `DMEM_S_READY: begin
+                if(rd &&   !hit) dmem_fsm_state_next = `DMEM_S_FETCH;
+                if(wr &&   !hit) dmem_fsm_state_next = `DMEM_S_FETCH;
 
-                if(rd &&    hit) dmem_fsm_state_next = `S_LOAD;
-                if(wr &&    hit) dmem_fsm_state_next = `S_LOAD;
+                if(rd &&    hit) dmem_fsm_state_next = `DMEM_S_LOAD;
+                if(wr &&    hit) dmem_fsm_state_next = `DMEM_S_LOAD;
 
-                if(rd && rb_hit) dmem_fsm_state_next = `S_READY;
-                if(wr && rb_hit) dmem_fsm_state_next = `S_WRITE;
+                if(rd && rb_hit) dmem_fsm_state_next = `DMEM_S_READY;
+                if(wr && rb_hit) dmem_fsm_state_next = `DMEM_S_WRITE;
             end
-            `S_FETCH: begin
+            `DMEM_S_FETCH: begin
                 b_rd_d  = 1;
                 way_d   = re;
                 wre     = b_dv_d;
 
-                if(b_dv_d) dmem_fsm_state_next = `S_LOAD;
+                if(b_dv_d) dmem_fsm_state_next = `DMEM_S_LOAD;
             end
-            `S_LOAD: begin
+            `DMEM_S_LOAD: begin
                 rde = ld_cnt == `DMEM_READ_VALID_DELAY;
 
-                if(!ld_cnt) dmem_fsm_state_next = wr_pend ? `S_WRITE : `S_READY;
+                if(!ld_cnt) dmem_fsm_state_next = wr_pend ? `DMEM_S_WRITE : `DMEM_S_READY;
             end
-            `S_WRITE: begin
+            `DMEM_S_WRITE: begin
                 wre     = 1;
 
-                dmem_fsm_state_next = `S_READY;
+                dmem_fsm_state_next = `DMEM_S_READY;
             end
         endcase
     end
@@ -149,7 +149,7 @@ module dmem(
     /* FSM UPDATE */
 
     always @(posedge clk) begin
-        if(!rst_n) dmem_fsm_state  <= `S_READY;
+        if(!rst_n) dmem_fsm_state  <= `DMEM_S_READY;
         else dmem_fsm_state <= dmem_fsm_state_next;
     end
 
@@ -162,14 +162,14 @@ module dmem(
             rb_v    <= 0;
         end
         else begin
-            if(dmem_fsm_state == `S_WRITE) rb_v <= 0;
-            if(dmem_fsm_state == `S_LOAD) begin
+            if(dmem_fsm_state == `DMEM_S_WRITE) rb_v <= 0;
+            if(dmem_fsm_state == `DMEM_S_LOAD) begin
                 rb_tag <= wr_pend ? wb_tag : addr_tag;
                 rb_set <= wr_pend ? wb_set : addr_set;
                 rb_v   <= 1;
             end
         end
-        ld_cnt <= dmem_fsm_state == `S_LOAD ? ld_cnt - 1 : `DMEM_READ_VALID_DELAY;
+        ld_cnt <= dmem_fsm_state == `DMEM_S_LOAD ? ld_cnt - 1 : `DMEM_READ_VALID_DELAY;
     end
 
     /* WRITE BUFFER */
@@ -180,7 +180,7 @@ module dmem(
     wire wr_nstall_re = wr_nstall && !wr_nstall_d;
 
     always @(posedge clk) begin
-        if(!rst_n || dmem_fsm_state == `S_WRITE) wr_pend <= 0;
+        if(!rst_n || dmem_fsm_state == `DMEM_S_WRITE) wr_pend <= 0;
         else if(wr_nstall_re && !rb_hit) begin
             wb_tag  <= addr_tag;
             wb_set  <= addr_set;
@@ -194,7 +194,7 @@ module dmem(
     /* REQUEST ADDRESS */
 
     //always @(posedge clk) begin
-    //    if(dmem_fsm_state == `S_FETCH) begin
+    //    if(dmem_fsm_state == `DMEM_S_FETCH) begin
     //        b_addr_d <= wr_pend ? {wb_tag, wb_set} : {addr_tag, addr_set};
     //    end
     //end
@@ -214,7 +214,7 @@ module dmem(
             end
         end
         else begin
-            if(wre && dmem_fsm_state == `S_FETCH) begin
+            if(wre && dmem_fsm_state == `DMEM_S_FETCH) begin
                 tag[`DMEM_WAYS * set_d + way_d] <= tag_d;
                 v  [`DMEM_WAYS * set_d + way_d] <= 1;
             end
@@ -224,7 +224,7 @@ module dmem(
     /* INPUT MUX */
 
     always @(*) begin
-        if(dmem_fsm_state == `S_FETCH) d = b_rdata_d;
+        if(dmem_fsm_state == `DMEM_S_FETCH) d = b_rdata_d;
         else if(wr_pend) begin
             d = q;
             case(wb_len)
@@ -286,7 +286,7 @@ module dmem(
         set_d = wr_pend ? wb_set : addr_set;
     end
 
-    assign stall_dmem = (rd && dmem_fsm_state_next) || ((rd ||wr) && wr_pend) || (dmem_fsm_state == `S_READY && dmem_fsm_state_next == `S_WRITE);
+    assign stall_dmem = (rd && dmem_fsm_state_next) || ((rd ||wr) && wr_pend) || (dmem_fsm_state == `DMEM_S_READY && dmem_fsm_state_next == `DMEM_S_WRITE);
 
 `endif//DMEM_SET_ASSOC
 

@@ -93,10 +93,10 @@ module imem(
     reg  [1:0] imem_fsm_state;
     reg  [1:0] imem_fsm_state_next;
 
-    `define S_READY 2'd0
-    `define S_FETCH 2'd1
-    `define S_LOAD  2'd2
-    `define S_MA    2'd3
+    `define IMEM_S_READY 2'd0
+    `define IMEM_S_FETCH 2'd1
+    `define IMEM_S_LOAD  2'd2
+    `define IMEM_S_MA    2'd3
 
     /* FSM */
 
@@ -108,27 +108,27 @@ module imem(
 
         imem_fsm_state_next = imem_fsm_state;
         case(imem_fsm_state)
-            `S_READY: begin
-                if(!hit) imem_fsm_state_next = `S_FETCH;
-                if( hit) imem_fsm_state_next = `S_LOAD;
-                if(rb_hit && !ma_re) imem_fsm_state_next = `S_READY;
-                if(rb_hit &&  ma_re) imem_fsm_state_next = `S_MA;
+            `IMEM_S_READY: begin
+                if(!hit) imem_fsm_state_next = `IMEM_S_FETCH;
+                if( hit) imem_fsm_state_next = `IMEM_S_LOAD;
+                if(rb_hit && !ma_re) imem_fsm_state_next = `IMEM_S_READY;
+                if(rb_hit &&  ma_re) imem_fsm_state_next = `IMEM_S_MA;
             end
-            `S_FETCH: begin
+            `IMEM_S_FETCH: begin
                 b_rd_i  = 1;
                 way_d   = re;
                 wre     = b_dv_i;
 
-                if(b_dv_i) imem_fsm_state_next = ma_pend ? `S_MA : `S_LOAD;
+                if(b_dv_i) imem_fsm_state_next = ma_pend ? `IMEM_S_MA : `IMEM_S_LOAD;
             end
-            `S_LOAD: begin
+            `IMEM_S_LOAD: begin
                 rde = ld_cnt == `IMEM_READ_VALID_DELAY;
-                if(!hit) imem_fsm_state_next = `S_FETCH;
+                if(!hit) imem_fsm_state_next = `IMEM_S_FETCH;
 
-                if(!ld_cnt) imem_fsm_state_next = ma_pend ? `S_MA : `S_READY;
+                if(!ld_cnt) imem_fsm_state_next = ma_pend ? `IMEM_S_MA : `IMEM_S_READY;
             end
-            `S_MA: begin
-                imem_fsm_state_next = hit ? `S_LOAD : `S_FETCH;
+            `IMEM_S_MA: begin
+                imem_fsm_state_next = hit ? `IMEM_S_LOAD : `IMEM_S_FETCH;
             end
         endcase
     end
@@ -136,7 +136,7 @@ module imem(
     /* FSM UPDATE */
 
     always @(posedge clk) begin
-        if(!rst_n) imem_fsm_state <= `S_READY;
+        if(!rst_n) imem_fsm_state <= `IMEM_S_READY;
         else imem_fsm_state <= imem_fsm_state_next;
     end
 
@@ -146,12 +146,12 @@ module imem(
         if(!rst_n) begin
             rb_v    <= 0;
         end
-        else if(ld_cnt == 0 && imem_fsm_state == `S_LOAD) begin
+        else if(ld_cnt == 0 && imem_fsm_state == `IMEM_S_LOAD) begin
             rb_tag  <= addr_tag;
             rb_set  <= addr_set;
             rb_v    <= 1;
         end
-        ld_cnt <= imem_fsm_state == `S_LOAD ? ld_cnt - 1 : `IMEM_READ_VALID_DELAY;
+        ld_cnt <= imem_fsm_state == `IMEM_S_LOAD ? ld_cnt - 1 : `IMEM_READ_VALID_DELAY;
     end
 
     /* REQUEST ADDRESS */
@@ -219,15 +219,15 @@ module imem(
     /* MISALIGNED ACCESS */
 
     always @(posedge clk) begin
-        if(imem_fsm_state == `S_READY) begin
+        if(imem_fsm_state == `IMEM_S_READY) begin
             ma_pend <= ma_re;
         end
-        else if(imem_fsm_state == `S_MA) begin
+        else if(imem_fsm_state == `IMEM_S_MA) begin
             ma_reg  <= q[`IMEM_LINE-1 -: 16];
             ma_pend <= 0;
             ma_acc  <= 1;
         end
-        else if(imem_fsm_state_next == `S_READY) begin
+        else if(imem_fsm_state_next == `IMEM_S_READY) begin
             ma_pend <= 0;
             ma_acc  <= 0;
         end
@@ -243,7 +243,7 @@ module imem(
 
 `endif//IMEM_SET_ASSOC
 
-    assign stall_imem = imem_fsm_state != `S_READY || imem_fsm_state_next != `S_READY || !rb_hit;
+    assign stall_imem = imem_fsm_state != `IMEM_S_READY || imem_fsm_state_next != `IMEM_S_READY || !rb_hit;
 
     // TODO:
     /* REPLACEMENT ENTRY */

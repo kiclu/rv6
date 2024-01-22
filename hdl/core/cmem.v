@@ -132,10 +132,10 @@ module cmem(
     reg  [1:0] cmem_fsm_state;
     reg  [1:0] cmem_fsm_state_next;
 
-    `define S_READY 3'd0
-    `define S_FETCH 3'd1
-    `define S_LOAD  3'd2
-    `define S_WRITE 3'd3
+    `define CMEM_S_READY 2'd0
+    `define CMEM_S_FETCH 2'd1
+    `define CMEM_S_LOAD  2'd2
+    `define CMEM_S_WRITE 2'd3
 
     reg  [1:0] pend;
     reg  [1:0] pend_next;
@@ -155,39 +155,39 @@ module cmem(
         pend_next = pend;
         cmem_fsm_state_next = cmem_fsm_state;
         case(cmem_fsm_state)
-            `S_READY: begin
-                if(b_rd_i &&    !hit_i && !pend_next) cmem_fsm_state_next = `S_FETCH;
-                if(b_rd_i &&     hit_i && !pend_next) cmem_fsm_state_next = `S_LOAD;
-                if(b_rd_i &&  rb_hit_i && !pend_next) cmem_fsm_state_next = `S_READY;
+            `CMEM_S_READY: begin
+                if(b_rd_i &&    !hit_i && !pend_next) cmem_fsm_state_next = `CMEM_S_FETCH;
+                if(b_rd_i &&     hit_i && !pend_next) cmem_fsm_state_next = `CMEM_S_LOAD;
+                if(b_rd_i &&  rb_hit_i && !pend_next) cmem_fsm_state_next = `CMEM_S_READY;
                 if(cmem_fsm_state_next && !pend_next) pend_next = `PEND_RD_I;
 
-                if(b_rd_d &&    !hit_d && !pend_next) cmem_fsm_state_next = `S_FETCH;
-                if(b_rd_d &&     hit_d && !pend_next) cmem_fsm_state_next = `S_LOAD;
-                if(b_rd_d &&  rb_hit_d && !pend_next) cmem_fsm_state_next = `S_READY;
+                if(b_rd_d &&    !hit_d && !pend_next) cmem_fsm_state_next = `CMEM_S_FETCH;
+                if(b_rd_d &&     hit_d && !pend_next) cmem_fsm_state_next = `CMEM_S_LOAD;
+                if(b_rd_d &&  rb_hit_d && !pend_next) cmem_fsm_state_next = `CMEM_S_READY;
                 if(cmem_fsm_state_next && !pend_next) pend_next = `PEND_RD_D;
 
-                if(b_wr_w &&    !hit_d && !pend_next) cmem_fsm_state_next = `S_FETCH;
-                if(b_wr_w &&     hit_d && !pend_next) cmem_fsm_state_next = `S_LOAD;
-                if(b_wr_w &&  rb_hit_w && !pend_next) cmem_fsm_state_next = `S_WRITE;
+                if(b_wr_w &&    !hit_d && !pend_next) cmem_fsm_state_next = `CMEM_S_FETCH;
+                if(b_wr_w &&     hit_d && !pend_next) cmem_fsm_state_next = `CMEM_S_LOAD;
+                if(b_wr_w &&  rb_hit_w && !pend_next) cmem_fsm_state_next = `CMEM_S_WRITE;
                 if(cmem_fsm_state_next && !pend_next) pend_next = `PEND_WR_D;
             end
-            `S_FETCH: begin
+            `CMEM_S_FETCH: begin
                 b_rd_c = 1;
                 wre    = b_dv_c;
 
-                if(b_dv_c) cmem_fsm_state_next = `S_LOAD;
+                if(b_dv_c) cmem_fsm_state_next = `CMEM_S_LOAD;
             end
-            `S_LOAD: begin
+            `CMEM_S_LOAD: begin
                 if(pend == `PEND_RD_I) rde_i = ld_cnt == `CMEM_READ_VALID_DELAY;
                 else rde_d = ld_cnt == `CMEM_READ_VALID_DELAY;
 
                 pend_next = pend == `PEND_WR_D ? `PEND_WR_D : `PEND_NOP;
-                if(!ld_cnt) cmem_fsm_state_next = pend == `PEND_WR_D ? `S_WRITE : `S_READY;
+                if(!ld_cnt) cmem_fsm_state_next = pend == `PEND_WR_D ? `CMEM_S_WRITE : `CMEM_S_READY;
             end
-            `S_WRITE: begin
+            `CMEM_S_WRITE: begin
                 wre = 1;
                 pend_next = `PEND_NOP;
-                cmem_fsm_state_next = `S_READY;
+                cmem_fsm_state_next = `CMEM_S_READY;
             end
         endcase
     end
@@ -195,7 +195,7 @@ module cmem(
     /* FSM UPDATE */
 
     always @(posedge clk) begin
-        if(!rst_n) cmem_fsm_state <= `S_READY;
+        if(!rst_n) cmem_fsm_state <= `CMEM_S_READY;
         else cmem_fsm_state <= cmem_fsm_state_next;
     end
 
@@ -214,7 +214,7 @@ module cmem(
             rb_set_i <= 0;
             rb_v_i   <= 0;
         end
-        else if(cmem_fsm_state == `S_LOAD && pend == `PEND_RD_I) begin
+        else if(cmem_fsm_state == `CMEM_S_LOAD && pend == `PEND_RD_I) begin
             rb_tag_i <= addr_i_tag;
             rb_set_i <= addr_i_set;
             rb_v_i   <= 1;
@@ -227,8 +227,8 @@ module cmem(
             rb_set_d <= 0;
             rb_v_d   <= 0;
         end
-        else if(cmem_fsm_state == `S_WRITE) rb_v_d <= 0;
-        else if(cmem_fsm_state == `S_LOAD) begin
+        else if(cmem_fsm_state == `CMEM_S_WRITE) rb_v_d <= 0;
+        else if(cmem_fsm_state == `CMEM_S_LOAD) begin
             if(pend == `PEND_RD_D) begin
                 rb_tag_d <= addr_d_tag;
                 rb_set_d <= addr_d_set;
@@ -240,13 +240,13 @@ module cmem(
                 rb_v_d   <= 1;
             end
         end
-        ld_cnt <= cmem_fsm_state == `S_LOAD ? ld_cnt - 1 : `CMEM_READ_VALID_DELAY;
+        ld_cnt <= cmem_fsm_state == `CMEM_S_LOAD ? ld_cnt - 1 : `CMEM_READ_VALID_DELAY;
     end
 
     /* WRITE BUFFER */
 
     always @(posedge clk) begin
-        if(!rst_n || cmem_fsm_state == `S_WRITE) begin
+        if(!rst_n || cmem_fsm_state == `CMEM_S_WRITE) begin
             wb_tag  <= 0;
             wb_set  <= 0;
             wb_offs <= 0;
@@ -254,7 +254,7 @@ module cmem(
             wb_len  <= 0;
             wr_pend <= 0;
         end
-        else if(b_wr_w && cmem_fsm_state == `S_READY) begin
+        else if(b_wr_w && cmem_fsm_state == `CMEM_S_READY) begin
             wb_tag  <= addr_w_tag;
             wb_set  <= addr_w_set;
             wb_offs <= addr_w_offs;
@@ -270,7 +270,7 @@ module cmem(
     // also needs update to support different size of L1i and L1d cache lines
 
     always @(posedge clk) begin
-        if(cmem_fsm_state_next == `S_FETCH) begin
+        if(cmem_fsm_state_next == `CMEM_S_FETCH) begin
             case(pend_next)
                 `PEND_RD_I: b_addr_c <= {addr_i_tag, addr_i_set};
                 `PEND_RD_D: b_addr_c <= {addr_d_tag, addr_d_set};
@@ -298,7 +298,7 @@ module cmem(
             end
         end
         else begin
-            if(wre && cmem_fsm_state == `S_FETCH) begin
+            if(wre && cmem_fsm_state == `CMEM_S_FETCH) begin
                 tag[`CMEM_WAYS * set_d + way_d] <= tag_d;
                 v  [`CMEM_WAYS * set_d + way_d] <= 1;
             end
@@ -308,7 +308,7 @@ module cmem(
     /* INPUT MUX */
 
     always @(*) begin
-        if(cmem_fsm_state == `S_WRITE) begin
+        if(cmem_fsm_state == `CMEM_S_WRITE) begin
             d = qd;
             case(wb_len)
                 2'b00: d[8*wb_offs +:  8] = wb_data[ 7:0];
@@ -393,7 +393,7 @@ module cmem(
     end
 
     always @(*) begin
-        way_d = cmem_fsm_state == `S_WRITE ? way_qd : re;
+        way_d = cmem_fsm_state == `CMEM_S_WRITE ? way_qd : re;
     end
 
 `endif//CMEM_SET_ASSOC
