@@ -134,8 +134,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .clk            (c_clk          )
     );
 
-    reg [63:0] bfp_pc;
     reg [31:0] bfp_ir;
+    reg [63:0] bfp_pc;
     reg bfp_pr_taken;
     reg bfp_c_ins;
 
@@ -144,8 +144,8 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(flush_pd || t_flush_pd || !c_rst_n) begin
+            bfp_ir       <= `NOP;
             bfp_pc       <= 64'b0;
-            bfp_ir       <= 32'h13;
             bfp_pr_taken <= 1'b0;
             bfp_c_ins    <= 1'b0;
         end
@@ -175,8 +175,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .clk            (c_clk          )
     );
 
-    reg [63:0] bpd_pc;
     reg [31:0] bpd_ir;
+    reg [63:0] bpd_pc;
     reg bpd_pr_taken;
     reg bpd_c_ins;
 
@@ -184,14 +184,14 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(flush_id || t_flush_id || !c_rst_n) begin
+            bpd_ir       <= `NOP;
             bpd_pc       <= 64'b0;
-            bpd_ir       <= 32'h13;
             bpd_pr_taken <= 1'b0;
             bpd_c_ins    <= 1'b0;
         end
         else if(!stall_pd) begin
-            bpd_pc       <= bfp_pc;
             bpd_ir       <= pd_ir;
+            bpd_pc       <= bfp_pc;
             bpd_pr_taken <= bfp_pr_taken;
             bpd_c_ins    <= bfp_c_ins;
         end
@@ -246,37 +246,37 @@ module rv6_core #(parameter HART_ID = 0) (
     always @(*) begin
         case(bpd_ir[6:0])
             // I-type
-            7'b0000011, 7'b0010011, 7'b0011011: mux_imm = {{52{bpd_ir[31]}}, bpd_ir[31:20]};
+            `OP_LOAD, `OP_ALRI, `OP_ALRIW:  mux_imm = {{52{bpd_ir[31]}}, bpd_ir[31:20]};
             // S-type
-            7'b0100011:                         mux_imm = {{52{bpd_ir[31]}}, bpd_ir[31:25], bpd_ir[11:7]};
+            `OP_STORE:                      mux_imm = {{52{bpd_ir[31]}}, bpd_ir[31:25], bpd_ir[11:7]};
             // U-type
-            7'b0110111, 7'b0010111:             mux_imm = {{32{bpd_ir[31]}}, bpd_ir[31:12], 12'b0};
+            `OP_LUI, `OP_AUIPC:             mux_imm = {{32{bpd_ir[31]}}, bpd_ir[31:12], 12'b0};
             // J-type
-            7'b1101111, 7'b1100111:             mux_imm = bpd_c_ins ? 64'h2 : 64'h4;
+            `OP_JAL, `OP_JALR:              mux_imm = bpd_c_ins ? 64'h2 : 64'h4;
             // SYSTEM
-            7'b1110011:                         mux_imm = {59'b0, bpd_ir[19:15]};
+            `OP_SYSTEM:                     mux_imm = {59'b0, bpd_ir[19:15]};
 
-            default:                            mux_imm = 64'b0;
+            default:                        mux_imm = 64'b0;
         endcase
     end
 
-    reg [63:0] bdx_pc;
     reg [31:0] bdx_ir;
+    reg [63:0] bdx_pc;
     reg [63:0] bdx_rs1_data;
     reg [63:0] bdx_rs2_data;
     reg [63:0] bdx_imm;
 
     always @(posedge c_clk) begin
         if(!c_rst_n || t_flush_ex) begin
+            bdx_ir          <= `NOP;
             bdx_pc          <= 64'b0;
-            bdx_ir          <= 32'h13;
             bdx_rs1_data    <= 64'b0;
             bdx_rs2_data    <= 64'b0;
             bdx_imm         <= 64'b0;
         end
         else if(!stall_id) begin
-            bdx_pc          <= bpd_pc;
             bdx_ir          <= bpd_ir;
+            bdx_pc          <= bpd_pc;
             bdx_rs1_data    <= rs1_data;
             bdx_rs2_data    <= rs2_data;
             bdx_imm         <= mux_imm;
@@ -301,7 +301,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [1:0] s_alu_mx_a;
 
     assign s_alu_mx_a[1] = a_fw;
-    assign s_alu_mx_a[0] = bdx_ir[6:0] == 7'b1101111 || bdx_ir[6:0] == 7'b1100111 || bdx_ir[6:0] == 7'b0010111;
+    assign s_alu_mx_a[0] = bdx_ir[6:0] == `OP_JAL || bdx_ir[6:0] == `OP_JALR || bdx_ir[6:0] == `OP_AUIPC;
 
     wire [63:0] alu_mx_b [0:3];
     assign alu_mx_b[0] = bdx_imm;
@@ -311,7 +311,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [1:0] s_alu_mx_b;
 
     assign s_alu_mx_b[1] = b_fw;
-    assign s_alu_mx_b[0] = bdx_ir[6:0] == 7'b0110011 || bdx_ir[6:0] == 7'b0111011;
+    assign s_alu_mx_b[0] = bdx_ir[6:0] == `OP_ALRR || bdx_ir[6:0] == `OP_ALRRW;
 
     wire [63:0] alu_out;
 
@@ -330,8 +330,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .mod            (mod            )
     );
 
-    reg [63:0] bxm_pc;
     reg [31:0] bxm_ir;
+    reg [63:0] bxm_pc;
     reg [63:0] bxm_alu_out;
     reg [63:0] bxm_csr_in;
     reg [63:0] bxm_rs2_data;
@@ -340,15 +340,15 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(!c_rst_n || t_flush_mem) begin
+            bxm_ir          <= `NOP;
             bxm_pc          <= 64'b0;
-            bxm_ir          <= 32'h13;
             bxm_alu_out     <= 64'b0;
             bxm_csr_in      <= 64'b0;
             bxm_rs2_data    <= 64'b0;
         end
         else if(!stall_ex) begin
-            bxm_pc          <= bdx_pc;
             bxm_ir          <= bdx_ir;
+            bxm_pc          <= bdx_pc;
             bxm_alu_out     <= alu_out;
             bxm_csr_in      <= bdx_ir[14] ? alu_b : alu_a;
             bxm_rs2_data    <= bdx_rs2_data;
@@ -361,8 +361,8 @@ module rv6_core #(parameter HART_ID = 0) (
     wire stall_mem;
 
     // data memory / L1d cache
-    wire op_load   = bxm_ir[6:0] == 7'b0000011;
-    wire op_write  = bxm_ir[6:0] == 7'b0100011;
+    wire op_load   = bxm_ir[6:0] == `OP_LOAD;
+    wire op_store  = bxm_ir[6:0] == `OP_STORE;
 
     wire [`DMEM_BLK_LEN-1:0] b_addr_d;
     wire [   `DMEM_LINE-1:0] b_rdata_d;
@@ -379,7 +379,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .rdata          (dmem_out       ),
         .rd             (op_load        ),
         .wdata          (bxm_rs2_data   ),
-        .wr             (op_write       ),
+        .wr             (op_store       ),
         .ld_ma          (dmem_ld_ma     ),
         .st_ma          (dmem_st_ma     ),
         .b_addr_d       (b_addr_d       ),
@@ -433,15 +433,15 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(!c_rst_n) begin
+            bmw_ir       <= `NOP;
             bmw_pc       <= 64'b0;
-            bmw_ir       <= 32'h13;
             bmw_csr_out  <= 64'b0;
             bmw_alu_out  <= 64'b0;
             bmw_dmem_out <= 64'b0;
         end
         else if(!stall_mem) begin
-            bmw_pc       <= bxm_pc;
             bmw_ir       <= bxm_ir;
+            bmw_pc       <= bxm_pc;
             bmw_csr_out  <= csr_out;
             bmw_alu_out  <= bxm_alu_out;
             bmw_dmem_out <= dmem_out;
@@ -454,8 +454,8 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(*) begin
         case(bmw_ir[6:0])
-            7'b0000011: wb_mux <= bmw_dmem_out;
-            7'b1110011: wb_mux <= csr_out;
+            `OP_LOAD:   wb_mux <= bmw_dmem_out;
+            `OP_SYSTEM: wb_mux <= csr_out;
             default:    wb_mux <= bmw_alu_out;
         endcase
     end
@@ -464,7 +464,7 @@ module rv6_core #(parameter HART_ID = 0) (
     assign rd_data  = wb_mux;
 
     wire stall_wb;
-    assign we = (bmw_ir[6:0] != 7'b1100011) && (bmw_ir[6:0] != 7'b0100011);
+    assign we = (bmw_ir[6:0] != `OP_BRANCH) && (bmw_ir[6:0] != `OP_STORE);
 
     /* WB FORWARD REGISTER */
 
@@ -486,7 +486,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [63:0] b_addr_w    = bxm_alu_out;
     wire [63:0] b_wdata_w   = bxm_rs2_data;
     wire [ 1:0] b_len_w     = len;
-    wire        b_wr_w      = op_write;
+    wire        b_wr_w      = op_store;
 
     wire [`CMEM_BLK_LEN-1:0] b_addr_c;
     wire [   `CMEM_LINE-1:0] b_rdata_c;
