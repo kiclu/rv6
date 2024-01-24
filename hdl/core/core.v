@@ -144,10 +144,10 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(flush_pd || t_flush_pd || !c_rst_n) begin
-            bfp_ir       <= `NOP;
+            bfp_ir       <=  `NOP;
             bfp_pc       <= 64'b0;
-            bfp_pr_taken <= 1'b0;
-            bfp_c_ins    <= 1'b0;
+            bfp_pr_taken <=  1'b0;
+            bfp_c_ins    <=  1'b0;
         end
         else if(!stall_if) begin
             bfp_pc       <= pc;
@@ -184,10 +184,10 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(flush_id || t_flush_id || !c_rst_n) begin
-            bpd_ir       <= `NOP;
+            bpd_ir       <=  `NOP;
             bpd_pc       <= 64'b0;
-            bpd_pr_taken <= 1'b0;
-            bpd_c_ins    <= 1'b0;
+            bpd_pr_taken <=  1'b0;
+            bpd_c_ins    <=  1'b0;
         end
         else if(!stall_pd) begin
             bpd_ir       <= pd_ir;
@@ -268,7 +268,7 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(!c_rst_n || t_flush_ex) begin
-            bdx_ir          <= `NOP;
+            bdx_ir          <=  `NOP;
             bdx_pc          <= 64'b0;
             bdx_rs1_data    <= 64'b0;
             bdx_rs2_data    <= 64'b0;
@@ -340,7 +340,7 @@ module rv6_core #(parameter HART_ID = 0) (
 
     always @(posedge c_clk) begin
         if(!c_rst_n || t_flush_mem) begin
-            bxm_ir          <= `NOP;
+            bxm_ir          <=  `NOP;
             bxm_pc          <= 64'b0;
             bxm_alu_out     <= 64'b0;
             bxm_csr_in      <= 64'b0;
@@ -395,14 +395,19 @@ module rv6_core #(parameter HART_ID = 0) (
     );
 
     wire [63:0] csr_out;
+    wire        csr_rd;
+
     wire csr_addr_invalid;
     wire csr_wr_invalid;
     wire csr_pr_invalid;
+
+    wire instret;
 
     csr #(.HART_ID(HART_ID)) u_csr (
         .ir             (bxm_ir         ),
         .csr_in         (bxm_csr_in     ),
         .csr_out        (csr_out        ),
+        .csr_rd         (csr_rd         ),
         .trap_taken     (trap_taken     ),
         .trap_addr      (trap_addr      ),
         .irq_e          (c_irq_e        ),
@@ -420,6 +425,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .pc_id          (bpd_pc         ),
         .pc_ex          (bdx_pc         ),
         .pc_mem         (bxm_pc         ),
+        .instret        (instret        ),
         .stall          (stall_mem      ),
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
@@ -427,24 +433,27 @@ module rv6_core #(parameter HART_ID = 0) (
 
     reg [31:0] bmw_ir;
     reg [63:0] bmw_pc;
-    reg [63:0] bmw_csr_out;
     reg [63:0] bmw_alu_out;
     reg [63:0] bmw_dmem_out;
+    reg [63:0] bmw_csr_out;
+    reg        bmw_csr_rd;
 
     always @(posedge c_clk) begin
         if(!c_rst_n) begin
-            bmw_ir       <= `NOP;
+            bmw_ir       <=  `NOP;
             bmw_pc       <= 64'b0;
-            bmw_csr_out  <= 64'b0;
             bmw_alu_out  <= 64'b0;
             bmw_dmem_out <= 64'b0;
+            bmw_csr_out  <= 64'b0;
+            bmw_csr_rd   <= 1'b0;
         end
         else if(!stall_mem) begin
             bmw_ir       <= bxm_ir;
             bmw_pc       <= bxm_pc;
-            bmw_csr_out  <= csr_out;
             bmw_alu_out  <= bxm_alu_out;
             bmw_dmem_out <= dmem_out;
+            bmw_csr_out  <= csr_out;
+            bmw_csr_rd   <= csr_rd;
         end
     end
 
@@ -455,7 +464,7 @@ module rv6_core #(parameter HART_ID = 0) (
     always @(*) begin
         case(bmw_ir[6:0])
             `OP_LOAD:   wb_mux <= bmw_dmem_out;
-            `OP_SYSTEM: wb_mux <= csr_out;
+            `OP_SYSTEM: wb_mux <= bmw_csr_out;
             default:    wb_mux <= bmw_alu_out;
         endcase
     end
@@ -464,7 +473,9 @@ module rv6_core #(parameter HART_ID = 0) (
     assign rd_data  = wb_mux;
 
     wire stall_wb;
-    assign we = (bmw_ir[6:0] != `OP_BRANCH) && (bmw_ir[6:0] != `OP_STORE);
+    assign we = (bmw_ir[6:0] != `OP_BRANCH) && (bmw_ir[6:0] != `OP_STORE) && !(bmw_ir[6:0] == `OP_SYSTEM && !bmw_csr_rd);
+
+    assign instret = bmw_ir != `NOP && !stall_wb;
 
     /* WB FORWARD REGISTER */
 

@@ -148,11 +148,23 @@ module tb_core;
         endfunction
     endclass
 
+    class EcallException extends Exception;
+        function new(input bit [63:0] cause);
+            super.new(cause, 0);
+        endfunction
+    endclass
+
+    class BreakpointException extends Exception;
+        function new();
+            super.new(3, 0);
+        endfunction
+    endclass
+
     class InvalidCSRException extends Exception;
         bit [11:0] csr_addr;
 
-        function new(input bit [63:0] tval, input bit [11:0] csr_addr);
-            super.new(2, tval);
+        function new(input bit [11:0] csr_addr);
+            super.new(2, 0);
             this.csr_addr = csr_addr;
         endfunction
 
@@ -328,22 +340,26 @@ module tb_core;
                 @(negedge clk) begin
                     if(!this.fd) break;
                     if(dut.u_csr.ecall && this.pipeline[MEM]) begin
-                        automatic Exception ex = new(dut.u_csr.cause, dut.u_csr.val);
+                        automatic EcallException ex = new(dut.u_csr.tcause);
+                        this.pipeline[MEM].e = ex;
+                    end
+                    if(dut.u_csr.ebreak && this.pipeline[MEM]) begin
+                        automatic BreakpointException ex = new();
                         this.pipeline[MEM].e = ex;
                     end
                     if(dut.u_csr.csr_addr_invalid && this.pipeline[MEM]) begin
-                        automatic InvalidCSRException ex = new(0, dut.u_csr.csr_addr);
+                        automatic InvalidCSRException ex = new(dut.u_csr.csr_addr);
                         this.pipeline[MEM].e = ex;
                     end
                     if(dut.u_csr.dmem_ld_ma && this.pipeline[MEM]) begin
-                        automatic MisalignedLoadAddressException ex = new(dut.u_csr.val);
+                        automatic MisalignedLoadAddressException ex = new(dut.u_csr.tval);
                         this.pipeline[MEM].e = ex;
                     end
                     if(dut.u_csr.dmem_st_ma && this.pipeline[MEM]) begin
-                        automatic MisalignedStoreAddressException ex = new(dut.u_csr.val);
+                        automatic MisalignedStoreAddressException ex = new(dut.u_csr.tval);
                         this.pipeline[MEM].e = ex;
                     end
-                    if(dut.u_csr.trap_ret && this.pipeline[MEM]) begin
+                    if(dut.u_csr.tret && this.pipeline[MEM]) begin
                         this.pipeline[MEM].trap_ret = 1;
                     end
                 end
@@ -369,7 +385,7 @@ module tb_core;
         endtask
 
         task run();
-            // hart reset signal
+            // core reset signal
             #80
             c_rst_n = 0;
             #80;
@@ -403,11 +419,12 @@ module tb_core;
             this.path = path;
             this.passed = 0;
             this.failed = 0;
+            $system("rm tb_core.lst");
         endfunction
 
         // generate list of tests based on template
         task gen_file_list(input string template);
-            $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' >> tb_hart.lst"});
+            $system({"find ", this.path, " -name '", template, "' -not -name '*.dump' >> tb_core.lst"});
         endtask
 
         // run tests and report
@@ -416,7 +433,7 @@ module tb_core;
             string filename;
 
             $display("Running riscv-tests...");
-            fd = $fopen("tb_hart.lst", "r");
+            fd = $fopen("tb_core.lst", "r");
             while(!$feof(fd)) begin
                 $fgets(filename, fd);
                 filename = filename.substr(0, filename.len()-2);
@@ -435,7 +452,7 @@ module tb_core;
 
             $display(`TEST_REPORT_FMT, this.passed, this.failed);
             $fclose(fd);
-            $system("rm tb_hart.lst");
+            $system("rm tb_core.lst");
         endtask
     endclass
 
@@ -445,8 +462,8 @@ module tb_core;
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        //env.gen_file_list("rv64mi-p-*");
-        //env.gen_file_list("rv64si-p-*");
+        env.gen_file_list("rv64mi-p-*");
+        env.gen_file_list("rv64si-p-*");
         env.gen_file_list("rv64ui-p-*");
 
         env.run();
