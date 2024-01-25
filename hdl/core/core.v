@@ -142,18 +142,26 @@ module rv6_core #(parameter HART_ID = 0) (
     wire flush_ena = !stall_if || (jalr_taken && fence_i);
     wire flush_pd = !flush_n && flush_ena;
 
-    always @(posedge c_clk) begin
-        if(flush_pd || t_flush_pd || !c_rst_n) begin
+    always @(posedge c_clk, negedge c_rst_n) begin
+        if(!c_rst_n) begin
             bfp_ir       <=  `NOP;
             bfp_pc       <= 64'b0;
             bfp_pr_taken <=  1'b0;
             bfp_c_ins    <=  1'b0;
         end
-        else if(!stall_if) begin
-            bfp_pc       <= pc;
-            bfp_ir       <= ir;
-            bfp_pr_taken <= pr_taken;
-            bfp_c_ins    <= c_ins;
+        else begin
+            if(flush_pd || t_flush_pd) begin
+                bfp_ir       <=  `NOP;
+                bfp_pc       <= 64'b0;
+                bfp_pr_taken <=  1'b0;
+                bfp_c_ins    <=  1'b0;
+            end
+            else if(!stall_if) begin
+                bfp_pc       <= pc;
+                bfp_ir       <= ir;
+                bfp_pr_taken <= pr_taken;
+                bfp_c_ins    <= c_ins;
+            end
         end
     end
 
@@ -182,18 +190,26 @@ module rv6_core #(parameter HART_ID = 0) (
 
     wire flush_id = !flush_n && flush_ena;
 
-    always @(posedge c_clk) begin
-        if(flush_id || t_flush_id || !c_rst_n) begin
+    always @(posedge c_clk, negedge c_rst_n) begin
+        if(!c_rst_n) begin
             bpd_ir       <=  `NOP;
             bpd_pc       <= 64'b0;
             bpd_pr_taken <=  1'b0;
             bpd_c_ins    <=  1'b0;
         end
-        else if(!stall_pd) begin
-            bpd_ir       <= pd_ir;
-            bpd_pc       <= bfp_pc;
-            bpd_pr_taken <= bfp_pr_taken;
-            bpd_c_ins    <= bfp_c_ins;
+        else begin
+            if(flush_id || t_flush_id) begin
+                bpd_ir       <=  `NOP;
+                bpd_pc       <= 64'b0;
+                bpd_pr_taken <=  1'b0;
+                bpd_c_ins    <=  1'b0;
+            end
+            else if(!stall_pd) begin
+                bpd_ir       <= pd_ir;
+                bpd_pc       <= bfp_pc;
+                bpd_pr_taken <= bfp_pr_taken;
+                bpd_c_ins    <= bfp_c_ins;
+            end
         end
     end
 
@@ -438,7 +454,7 @@ module rv6_core #(parameter HART_ID = 0) (
     reg [63:0] bmw_csr_out;
     reg        bmw_csr_rd;
 
-    always @(posedge c_clk) begin
+    always @(posedge c_clk, negedge c_rst_n) begin
         if(!c_rst_n) begin
             bmw_ir       <=  `NOP;
             bmw_pc       <= 64'b0;

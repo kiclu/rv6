@@ -218,7 +218,7 @@ module csr #(parameter HART_ID = 0) (
     /* MISA */
 
     reg [63:0] csr_misa;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_misa <= 64'h8000000000141105;
         else if(csr_wr && csr_addr == `MISA) csr_misa <= ncsr;
     end
@@ -242,7 +242,7 @@ module csr #(parameter HART_ID = 0) (
     /* MSTATUS */
 
     reg [63:0] csr_mstatus;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mstatus <= 64'h0000000a00001800;
         else if(trap) begin
             if(m_trap) begin
@@ -272,7 +272,7 @@ module csr #(parameter HART_ID = 0) (
     /* MTVEC */
 
     reg [63:0] csr_mtvec;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mtvec <= 64'h0;
         else if(csr_wr && csr_addr == `MTVEC) csr_mtvec <= ncsr;
     end
@@ -280,7 +280,7 @@ module csr #(parameter HART_ID = 0) (
     /* MEDELEG */
 
     reg [63:0] csr_medeleg;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_medeleg <= 64'h0;
         else if(csr_wr && csr_addr == `MEDELEG) csr_medeleg <= ncsr;
     end
@@ -288,7 +288,7 @@ module csr #(parameter HART_ID = 0) (
     /* MIDELEG */
 
     reg [63:0] csr_mideleg;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mideleg <= 64'h0;
         else if(csr_wr && csr_addr == `MIDELEG) csr_mideleg <= ncsr;
     end
@@ -296,7 +296,7 @@ module csr #(parameter HART_ID = 0) (
     /* MIE */
 
     reg [63:0] csr_mie;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mie <= 64'h0;
         else if(csr_wr && csr_addr == `MIE) csr_mie <= ncsr;
     end
@@ -304,7 +304,7 @@ module csr #(parameter HART_ID = 0) (
     /* MIP */
 
     reg [63:0] csr_mip;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mip <= 64'h0;
         else if(csr_wr && csr_addr == `MIP) csr_mip <= ncsr;
     end
@@ -312,7 +312,7 @@ module csr #(parameter HART_ID = 0) (
     /* MCYCLE */
 
     reg [63:0] csr_mcycle;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mcycle <= 64'h0;
         else if(csr_wr && csr_addr == `MCYCLE) csr_mcycle <= ncsr;
         else csr_mcycle <= csr_mcycle + 1;
@@ -321,7 +321,7 @@ module csr #(parameter HART_ID = 0) (
     /* MINSTRET */
 
     reg [63:0] csr_minstret;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_minstret <= 64'h0;
         else if(csr_wr && csr_addr == `MINSTRET) csr_minstret <= ncsr;
         else if(instret) csr_minstret <= csr_minstret + 1;
@@ -334,7 +334,7 @@ module csr #(parameter HART_ID = 0) (
     /* MCOUNTEREN */
 
     reg [63:0] csr_mcounteren;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mcounteren <= 64'h0;
         else if(csr_wr && csr_addr == `MCOUNTEREN) csr_mcounteren <= ncsr;
     end
@@ -346,7 +346,7 @@ module csr #(parameter HART_ID = 0) (
     /* MSCRATCH */
 
     reg [63:0] csr_mscratch;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mscratch <= 64'h0;
         else if(csr_wr && csr_addr == `MSCRATCH) csr_mscratch <= ncsr;
     end
@@ -354,7 +354,7 @@ module csr #(parameter HART_ID = 0) (
     /* MEPC */
 
     reg [63:0] csr_mepc;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mepc <= 64'h0;
         else if(m_trap) csr_mepc <= tcause_pc;
         else if(csr_wr && csr_addr == `MEPC) csr_mepc <= ncsr;
@@ -363,7 +363,7 @@ module csr #(parameter HART_ID = 0) (
     /* MCAUSE */
 
     reg [63:0] csr_mcause;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mcause <= 64'h0;
         else if(m_trap) csr_mcause <= tcause;
         else if(csr_wr && csr_addr == `MCAUSE) csr_mcause <= ncsr;
@@ -372,7 +372,7 @@ module csr #(parameter HART_ID = 0) (
     /* MTVAL */
 
     reg [63:0] csr_mtval;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mtval <= 64'h0;
         else if(m_trap) csr_mtval <= tval;
         else if(csr_wr && csr_addr == `MTVAL) csr_mtval <= ncsr;
@@ -381,7 +381,7 @@ module csr #(parameter HART_ID = 0) (
     /* MCONFIGPTR */
 
     reg [63:0] csr_mconfigptr;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mconfigptr <= 64'h0;
         else if(csr_wr && csr_addr == `MCONFIGPTR) csr_mconfigptr <= ncsr;
     end
@@ -389,7 +389,7 @@ module csr #(parameter HART_ID = 0) (
     /* MENVCFG */
 
     reg [63:0] csr_menvcfg;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_menvcfg <= 64'h0;
         else if(csr_wr && csr_addr == `MENVCFG) csr_menvcfg <= ncsr;
     end
@@ -397,7 +397,7 @@ module csr #(parameter HART_ID = 0) (
     /* MSECCFG */
 
     reg [63:0] csr_mseccfg;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mseccfg <= 64'h0;
         else if(csr_wr && csr_addr == `MSECCFG) csr_mseccfg <= ncsr;
     end
@@ -405,7 +405,7 @@ module csr #(parameter HART_ID = 0) (
     /* PMPCFG */
 
     reg [63:0] csr_pmpcfg0;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_pmpcfg0 <= 64'h0;
         else if(csr_wr && csr_addr == `PMPCFG0) csr_pmpcfg0 <= ncsr;
     end
@@ -413,7 +413,7 @@ module csr #(parameter HART_ID = 0) (
     /* PMPADDR */
 
     reg [63:0] csr_pmpaddr0;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_pmpaddr0 <= 64'h0;
         else if(csr_wr && csr_addr == `PMPADDR0) csr_pmpaddr0 <= ncsr;
     end
@@ -421,7 +421,7 @@ module csr #(parameter HART_ID = 0) (
     /* TSELECT */
 
     reg [63:0] csr_tselect;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_tselect <= 64'h0;
         else if(csr_wr && csr_addr == `TSELECT) csr_tselect <= ncsr;
     end
@@ -429,7 +429,7 @@ module csr #(parameter HART_ID = 0) (
     /* TDATA1 */
 
     reg [63:0] csr_tdata1;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_tdata1 <= 64'h0;
         else if(csr_wr && csr_addr == `TDATA1) csr_tdata1 <= ncsr;
     end
@@ -437,7 +437,7 @@ module csr #(parameter HART_ID = 0) (
     /* TDATA2 */
 
     reg [63:0] csr_tdata2;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_tdata2 <= 64'h0;
         else if(csr_wr && csr_addr == `TDATA2) csr_tdata2 <= ncsr;
     end
@@ -445,7 +445,7 @@ module csr #(parameter HART_ID = 0) (
     /* TDATA3 */
 
     reg [63:0] csr_tdata3;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_tdata3 <= 64'h0;
         else if(csr_wr && csr_addr == `TDATA3) csr_tdata3 <= ncsr;
     end
@@ -453,7 +453,7 @@ module csr #(parameter HART_ID = 0) (
     /* MCONTEXT */
 
     reg [63:0] csr_mcontext;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mcontext <= 64'h0;
         else if(csr_wr && csr_addr == `MCONTEXT) csr_mcontext <= ncsr;
     end
@@ -462,13 +462,13 @@ module csr #(parameter HART_ID = 0) (
 
     wire [63:0] csr_sstatus = csr_mstatus;
     always @(posedge clk) begin
-        if(csr_wr && csr_addr == `SSTATUS) csr_mstatus <= ncsr;
+        //if(csr_wr && csr_addr == `SSTATUS) csr_mstatus <= ncsr;
     end
 
     /* STVEC */
 
     reg [63:0] csr_stvec;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_stvec <= 64'h0;
         else if(csr_wr && csr_addr == `STVEC) csr_stvec <= ncsr;
     end
@@ -476,7 +476,7 @@ module csr #(parameter HART_ID = 0) (
     /* SIE */
 
     reg [63:0] csr_sie;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_sie <= 64'h0;
         else if(csr_wr && csr_addr == `SIE) csr_sie <= ncsr;
     end
@@ -484,7 +484,7 @@ module csr #(parameter HART_ID = 0) (
     /* SIP */
 
     reg [63:0] csr_sip;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_sip <= 64'h0;
         else if(csr_wr && csr_addr == `SIP) csr_sip <= ncsr;
     end
@@ -492,7 +492,7 @@ module csr #(parameter HART_ID = 0) (
     /* SCOUNTEREN */
 
     reg [63:0] csr_scounteren;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_scounteren <= 64'h0;
         else if(csr_wr && csr_addr == `SCOUNTEREN) csr_scounteren <= ncsr;
     end
@@ -500,7 +500,7 @@ module csr #(parameter HART_ID = 0) (
     /* SSCRATCH */
 
     reg [63:0] csr_sscratch;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_sscratch <= 64'h0;
         else if(csr_wr && csr_addr == `SSCRATCH) csr_sscratch <= ncsr;
     end
@@ -508,7 +508,7 @@ module csr #(parameter HART_ID = 0) (
     /* SEPC */
 
     reg [63:0] csr_sepc;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_sepc <= 64'h0;
         else if(csr_wr && csr_addr == `SEPC) csr_sepc <= ncsr;
     end
@@ -516,7 +516,7 @@ module csr #(parameter HART_ID = 0) (
     /* SCAUSE */
 
     reg [63:0] csr_scause;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_scause <= 64'h0;
         else if(csr_wr && csr_addr == `SCAUSE) csr_scause <= ncsr;
     end
@@ -524,7 +524,7 @@ module csr #(parameter HART_ID = 0) (
     /* STVAL */
 
     reg [63:0] csr_stval;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_stval <= 64'h0;
         else if(csr_wr && csr_addr == `STVAL) csr_stval <= ncsr;
     end
@@ -536,14 +536,14 @@ module csr #(parameter HART_ID = 0) (
     /* SATP */
 
     reg [63:0] csr_satp;
-    always @(posedge clk) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_satp <= 64'h0;
         else if(csr_wr && csr_addr == `SATP) csr_satp <= ncsr;
     end
 
     /* PRIVILEGE LEVEL */
 
-    always @(posedge clk, negedge rst_n) begin
+    always @(posedge clk, negedge rst_n, negedge rst_n) begin
         if(!rst_n) privilege_level <= 2'b11;
         else begin
             if(trap) privilege_level <= m_trap ? 2'b11 : 2'b01;
@@ -566,41 +566,41 @@ module csr #(parameter HART_ID = 0) (
     always @(*) begin
         tcause    = 64'd0;
         tcause_pc = 64'h0;
-        exc       = 0;
         tval      = 64'h0;
-        flush     = 4'b0;
+        exc       = 1;
+        flush     = 0;
 
-        if(tret) flush = `FLUSH_MEM;
+        if(tret) begin
+            flush = `FLUSH_MEM;
+            exc = 0;
+        end
         else if(ebreak) begin
-            tcause    = 4'd3;
+            tcause    = 64'd3;
             tcause_pc = pc_mem;
-            exc       = 1;
             flush     = `FLUSH_MEM;
         end
         else if(ecall) begin
             case(privilege_level)
-                2'b00: tcause = 4'd8;
-                2'b01: tcause = 4'd9;
-                2'b11: tcause = 4'd11;
+                2'b00: tcause = 64'd8;
+                2'b01: tcause = 64'd9;
+                2'b11: tcause = 64'd11;
             endcase
             tcause_pc = pc_mem;
-            exc       = 1;
             flush     = `FLUSH_MEM;
         end
         else if(dmem_ma) begin
-            if(dmem_ld_ma) tcause = 4'd4;
-            else           tcause = 4'd6;
+            if(dmem_ld_ma) tcause = 64'd4;
+            else           tcause = 64'd6;
             tcause_pc = pc_mem;
             tval      = dmem_addr;
-            exc       = 1;
             flush     = `FLUSH_MEM;
         end
         else if(csr_exc) begin
-            tcause    = 4'd2;
+            tcause    = 64'd2;
             tcause_pc = pc_mem;
-            exc       = 1;
             flush     = `FLUSH_MEM;
         end
+        else exc = 0;
     end
 
     wire [63:0] stvec_offs = (csr_stvec[1:0] == 2'b01 && !tcause[63]) ? (tcause << 2) : 64'b0;
