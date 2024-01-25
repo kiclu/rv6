@@ -134,7 +134,7 @@ module csr #(parameter HART_ID = 0) (
 
     // PC signals
     output reg [63:0] trap_addr,
-    output reg        trap_taken,
+    output            trap_taken,
 
     // interrupt signals
     input             irq_e,
@@ -243,7 +243,7 @@ module csr #(parameter HART_ID = 0) (
 
     reg [63:0] csr_mstatus;
     always @(posedge clk) begin
-        if(!rst_n) csr_mstatus <= 64'h0000000000000000;
+        if(!rst_n) csr_mstatus <= 64'h0000000a00001800;
         else if(trap) begin
             if(m_trap) begin
                 `MSTATUS_MIE  <= 1'b0;
@@ -257,8 +257,14 @@ module csr #(parameter HART_ID = 0) (
             end
         end
         else if(tret) begin
-            if(mret) `MSTATUS_MIE <= `MSTATUS_MPIE;
-            else     `MSTATUS_SIE <= `MSTATUS_SPIE;
+            if(mret) begin
+                `MSTATUS_MIE  <= `MSTATUS_MPIE;
+                `MSTATUS_MPIE <= 1'b1;
+            end
+            else begin
+                `MSTATUS_SIE  <= `MSTATUS_SPIE;
+                `MSTATUS_SPIE <= 1'b1;
+            end
         end
         else if(csr_wr && csr_addr == `MSTATUS) csr_mstatus <= ncsr;
     end
@@ -327,7 +333,11 @@ module csr #(parameter HART_ID = 0) (
 
     /* MCOUNTEREN */
 
-    // TODO
+    reg [63:0] csr_mcounteren;
+    always @(posedge clk) begin
+        if(!rst_n) csr_mcounteren <= 64'h0;
+        else if(csr_wr && csr_addr == `MCOUNTEREN) csr_mcounteren <= ncsr;
+    end
 
     /* MCOUNTINHIBIT */
 
@@ -481,7 +491,11 @@ module csr #(parameter HART_ID = 0) (
 
     /* SCOUNTEREN */
 
-    // TODO
+    reg [63:0] csr_scounteren;
+    always @(posedge clk) begin
+        if(!rst_n) csr_scounteren <= 64'h0;
+        else if(csr_wr && csr_addr == `SCOUNTEREN) csr_scounteren <= ncsr;
+    end
 
     /* SSCRATCH */
 
@@ -547,6 +561,7 @@ module csr #(parameter HART_ID = 0) (
     reg exc;
 
     wire dmem_ma = dmem_ld_ma || dmem_st_ma;
+    wire csr_exc = csr_addr_invalid || csr_wr_invalid || csr_pr_invalid;
 
     always @(*) begin
         tcause    = 64'd0;
@@ -580,7 +595,7 @@ module csr #(parameter HART_ID = 0) (
             exc       = 1;
             flush     = `FLUSH_MEM;
         end
-        else if(csr_addr_invalid) begin
+        else if(csr_exc) begin
             tcause    = 4'd2;
             tcause_pc = pc_mem;
             exc       = 1;
@@ -615,9 +630,10 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] wpri_mask;
     always @(*) begin
         case(csr_addr)
-            default: wpri_mask = 64'hFFFFFFFFFFFFFFFF;
+            `MSTATUS: wpri_mask = 64'hffffffffffffe655;
+            default:  wpri_mask = 64'h0000000000000000;
         endcase
-        if(!rd_valid && !wr_valid) wpri_mask = 64'h0;
+        if(!rd_valid && !wr_valid) wpri_mask = 64'hffffffffffffffff;
     end
 
     /* NCSR */
@@ -630,7 +646,9 @@ module csr #(parameter HART_ID = 0) (
             `CSR_RWI: ncsr = {59'b0,  ir[19:15]};
             `CSR_RSI: ncsr = {59'b0,  ir[19:15]} | csr_out;
             `CSR_RCI: ncsr = {59'b0, ~ir[19:15]} & csr_out;
+            default:  ncsr = 64'h0;
         endcase
+        ncsr = ncsr & ~wpri_mask | csr_out & wpri_mask;
     end
 
     /* OUTPUT MUX */
@@ -653,7 +671,7 @@ module csr #(parameter HART_ID = 0) (
             `MCYCLE:            csr_out = csr_mcycle;
             `MINSTRET:          csr_out = csr_minstret;
             // `MHPMCOUNTER:
-            // `MCOUNTEREN:        csr_out = csr_mcounteren;
+            `MCOUNTEREN:        csr_out = csr_mcounteren;
             // `MCOUNTERINHIBIT:   csr_out = csr_mcountinhibit;
             `MSCRATCH:          csr_out = csr_mscratch;
             `MEPC:              csr_out = csr_mepc;
@@ -668,7 +686,7 @@ module csr #(parameter HART_ID = 0) (
             `STVEC:             csr_out = csr_stvec;
             `SIE:               csr_out = csr_sie;
             `SIP:               csr_out = csr_sip;
-            // `SCOUNTEREN:
+            `SCOUNTEREN:        csr_out = csr_scounteren;
             `SSCRATCH:          csr_out = csr_sscratch;
             `SEPC:              csr_out = csr_sepc;
             `SCAUSE:            csr_out = csr_scause;
@@ -684,7 +702,6 @@ module csr #(parameter HART_ID = 0) (
 
             default:            csr_addr_invalid = rd || wr;
         endcase
-        csr_out = csr_out & wpri_mask;
     end
 
 endmodule

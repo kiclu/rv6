@@ -176,6 +176,18 @@ module tb_core;
         endfunction
     endclass
 
+    class PrivilegeCSRException extends Exception;
+        function new();
+            super.new(2, 0);
+        endfunction
+    endclass
+
+    class WriteInvalidCSRException extends Exception;
+        function new();
+            super.new(2, 0);
+        endfunction
+    endclass
+
     class MisalignedLoadAddressException extends Exception;
         function new(input bit [63:0] tval);
             super.new(4, tval);
@@ -351,6 +363,14 @@ module tb_core;
                         automatic InvalidCSRException ex = new(dut.u_csr.csr_addr);
                         this.pipeline[MEM].e = ex;
                     end
+                    if(dut.u_csr.csr_wr_invalid && this.pipeline[MEM]) begin
+                        automatic WriteInvalidCSRException ex = new();
+                        this.pipeline[MEM].e = ex;
+                    end
+                    if(dut.u_csr.csr_pr_invalid && this.pipeline[MEM]) begin
+                        automatic PrivilegeCSRException ex = new();
+                        this.pipeline[MEM].e = ex;
+                    end
                     if(dut.u_csr.dmem_ld_ma && this.pipeline[MEM]) begin
                         automatic MisalignedLoadAddressException ex = new(dut.u_csr.tval);
                         this.pipeline[MEM].e = ex;
@@ -465,6 +485,8 @@ module tb_core;
         env.gen_file_list("rv64mi-p-*");
         env.gen_file_list("rv64si-p-*");
         env.gen_file_list("rv64ui-p-*");
+
+        //env.gen_file_list("rv64mi-p-csr");
 
         env.run();
         $stop();
