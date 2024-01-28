@@ -43,6 +43,7 @@ module rv6_core #(parameter HART_ID = 0) (
     input                   c_amo_ack,
 
     // control signals
+    input                   c_stall,
     input                   c_rst_n,
     input                   c_clk
 );
@@ -80,7 +81,6 @@ module rv6_core #(parameter HART_ID = 0) (
     wire pr_miss;
 
     wire stall_if;
-
 
     // program counter
     pc u_pc (
@@ -269,10 +269,8 @@ module rv6_core #(parameter HART_ID = 0) (
             `OP_LUI, `OP_AUIPC:             mux_imm = {{32{bpd_ir[31]}}, bpd_ir[31:12], 12'b0};
             // J-type
             `OP_JAL, `OP_JALR:              mux_imm = bpd_c_ins ? 64'h2 : 64'h4;
-            // SYSTEM
-            `OP_SYSTEM:                     mux_imm = {59'b0, bpd_ir[19:15]};
 
-            default:                        mux_imm = 64'b0;
+            default:                        mux_imm = 64'b?;
         endcase
     end
 
@@ -585,6 +583,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .stall_ex       (stall_ex       ),
         .stall_mem      (stall_mem      ),
         .stall_wb       (stall_wb       ),
+        .c_stall        (c_stall        ),
         .stall_imem     (stall_imem     ),
         .stall_dmem     (stall_dmem     ),
         .fence_i        (fence_i        ),
