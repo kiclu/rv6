@@ -66,6 +66,7 @@ module tb_core;
     reg                     c_inv;
     wire                    c_amo_req;
     reg                     c_amo_ack;
+    reg                     c_stall;
     reg                     c_rst_n;
     wire                    c_clk;
 
@@ -87,6 +88,7 @@ module tb_core;
         .c_inv          (c_inv          ),
         .c_amo_req      (c_amo_req      ),
         .c_amo_ack      (c_amo_ack      ),
+        .c_stall        (c_stall        ),
         .c_rst_n        (c_rst_n        ),
         .c_clk          (c_clk          )
     );
@@ -101,6 +103,7 @@ module tb_core;
         c_inv_addr  = 64'bZ;
         c_inv       = 0;
         c_amo_ack   = 0;
+        c_stall     = 0;
         c_rst_n     = 1;
     end
 
@@ -485,8 +488,6 @@ module tb_core;
         env.gen_file_list("rv64mi-p-*");
         env.gen_file_list("rv64si-p-*");
         env.gen_file_list("rv64ui-p-*");
-
-        //env.gen_file_list("rv64mi-p-csr");
 
         env.run();
         $stop();
