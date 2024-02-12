@@ -1,0 +1,114 @@
+Reading pref.tcl
+
+# 2020.1
+
+# vsim -c tb_core -do "run -all; quit -f" 
+# Start time: 14:17:00 on Feb 12,2024
+# Loading sv_std.std
+# Loading work.tb_core
+# Loading work.rv6_core
+# Loading work.pc
+# Loading work.bpu
+# Loading work.imem
+# Loading work.pd
+# Loading work.regfile
+# Loading work.br_alu
+# Loading work.alu
+# Loading work.dmem
+# Loading work.csr
+# Loading work.cmem
+# Loading work.dba
+# Loading work.cu
+# Loading work.mem
+# ** Warning: (vsim-PLI-3691) Expected a system task, not a system function '$fgets'.
+#    Time: 0 ps  Iteration: 0  Region: /tb_core/RiscvTestEnv::run File: /home/kiclu/projects/rv6/test/tb_core.sv Line: 461
+# run -all
+# (vsim-50) A call to system(rm tb_core.lst >'/tmp/questatmp.P1m0Dg' 2>&1) returned error code '1'.
+# The logfile contains the following messages:
+# rm: cannot remove 'tb_core.lst': No such file or directory
+# 
+# No such file or directory. (errno = ENOENT)
+# Running riscv-tests...
+# rv64mi-p-ma_fetch        : failed
+# rv64mi-p-illegal         : failed
+# rv64mi-p-access          : failed
+# rv64mi-p-scall           : passed
+# rv64mi-p-sh-misaligned   : passed
+# rv64mi-p-sd-misaligned   : passed
+# rv64mi-p-csr             : failed
+# rv64mi-p-sbreak          : passed
+# rv64mi-p-sw-misaligned   : passed
+# rv64mi-p-mcsr            : failed
+# rv64mi-p-breakpoint      : failed
+# rv64mi-p-lh-misaligned   : passed
+# rv64mi-p-ma_addr         : failed
+# rv64mi-p-ld-misaligned   : passed
+# rv64mi-p-zicntr          : failed
+# rv64mi-p-lw-misaligned   : passed
+# rv64si-p-csr             : failed
+# rv64si-p-wfi             : passed
+# rv64si-p-dirty           : failed
+# rv64si-p-scall           : failed
+# rv64si-p-ma_fetch        : passed
+# rv64si-p-sbreak          : failed
+# rv64si-p-icache-alias    : failed
+# rv64ui-p-sub             : passed
+# rv64ui-p-subw            : passed
+# rv64ui-p-srl             : passed
+# rv64ui-p-addiw           : passed
+# rv64ui-p-blt             : passed
+# rv64ui-p-bne             : passed
+# rv64ui-p-jal             : passed
+# rv64ui-p-xori            : passed
+# rv64ui-p-bltu            : passed
+# rv64ui-p-and             : passed
+# rv64ui-p-srai            : passed
+# rv64ui-p-lbu             : passed
+# rv64ui-p-lui             : passed
+# rv64ui-p-lhu             : passed
+# rv64ui-p-bge             : passed
+# rv64ui-p-slt             : passed
+# rv64ui-p-sllw            : passed
+# rv64ui-p-lwu             : passed
+# rv64ui-p-srliw           : passed
+# rv64ui-p-fence_i         : passed
+# rv64ui-p-slti            : passed
+# rv64ui-p-ori             : passed
+# rv64ui-p-simple          : passed
+# rv64ui-p-add             : passed
+# rv64ui-p-lh              : passed
+# rv64ui-p-ma_data         : passed
+# rv64ui-p-xor             : passed
+# rv64ui-p-sll             : passed
+# rv64ui-p-andi            : passed
+# rv64ui-p-lw              : passed
+# rv64ui-p-addw            : passed
+# rv64ui-p-or              : passed
+# rv64ui-p-sd              : passed
+# rv64ui-p-addi            : passed
+# rv64ui-p-slli            : passed
+# rv64ui-p-auipc           : passed
+# rv64ui-p-sra             : passed
+# rv64ui-p-lb              : passed
+# rv64ui-p-bgeu            : passed
+# rv64ui-p-ld              : passed
+# rv64ui-p-jalr            : passed
+# rv64ui-p-srlw            : passed
+# rv64ui-p-sltu            : passed
+# rv64ui-p-sraiw           : passed
+# rv64ui-p-sh              : passed
+# rv64ui-p-sltiu           : passed
+# rv64ui-p-beq             : passed
+# rv64ui-p-srli            : passed
+# rv64ui-p-sw              : passed
+# rv64ui-p-slliw           : passed
+# rv64ui-p-sraw            : passed
+# rv64ui-p-sb              : passed
+# riscv-tests finished: 62 passed, 13 failed!
+# ** Note: $stop    : /home/kiclu/projects/rv6/test/tb_core.sv(493)
+#    Time: 10241470 ns  Iteration: 1  Instance: /tb_core
+# Break in Module tb_core at /home/kiclu/projects/rv6/test/tb_core.sv line 493
+# Stopped at /home/kiclu/projects/rv6/test/tb_core.sv line 493
+#  quit -f
+# End time: 14:17:24 on Feb 12,2024, Elapsed time: 0:00:24
+# Errors: 0, Warnings: 1
