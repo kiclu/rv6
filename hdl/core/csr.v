@@ -309,37 +309,21 @@ module csr #(parameter HART_ID = 0) (
 
     reg [63:0] csr_misa;
     always @(posedge clk, negedge rst_n) begin
-`ifdef DROMAJO
-        if(!rst_n) csr_misa <= 64'h800000000034112d;
-`else
         if(!rst_n) csr_misa <= 64'h8000000000141105;
-`endif
         else if(csr_wr && csr_addr == `MISA) csr_misa <= ncsr;
     end
 
     /* MVENDORID */
 
-`ifdef DROMAJO
-    wire [63:0] csr_mvendorid = 64'h5e5;
-`else
     wire [63:0] csr_mvendorid = 64'h0;
-`endif
 
     /* MARCHID */
 
-`ifdef DROMAJO
-    wire [63:0] csr_marchid   = 64'h8000000000000002;
-`else
     wire [63:0] csr_marchid   = 64'h27;
-`endif
 
     /* MIMPID */
 
-`ifdef DROMAJO
-    wire [63:0] csr_mimpid    = 64'h1;
-`else
     wire [63:0] csr_mimpid    = 64'h0;
-`endif
 
     /* MHARTID */
 
