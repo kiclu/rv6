@@ -30,9 +30,13 @@ module rv6_core #(parameter HART_ID = 0) (
     output                  c_wr,
 
     // interrupt signals
-    input                   c_irq_e,
-    input                   c_irq_t,
-    input                   c_irq_s,
+    input                   c_irq_me,
+    input                   c_irq_mt,
+    input                   c_irq_ms,
+
+    input                   c_irq_se,
+    input                   c_irq_st,
+    input                   c_irq_ss,
 
     // cache invalidation signals
     input            [63:0] c_inv_addr,
@@ -424,9 +428,12 @@ module rv6_core #(parameter HART_ID = 0) (
         .csr_rd         (csr_rd         ),
         .trap_taken     (trap_taken     ),
         .trap_addr      (trap_addr      ),
-        .irq_e          (c_irq_e        ),
-        .irq_t          (c_irq_t        ),
-        .irq_s          (c_irq_s        ),
+        .irq_me         (c_irq_me       ),
+        .irq_mt         (c_irq_mt       ),
+        .irq_ms         (c_irq_ms       ),
+        .irq_se         (c_irq_se       ),
+        .irq_st         (c_irq_st       ),
+        .irq_ss         (c_irq_ss       ),
         .dmem_ld_ma     (dmem_ld_ma     ),
         .dmem_st_ma     (dmem_st_ma     ),
         .dmem_addr      (bxm_alu_out    ),
