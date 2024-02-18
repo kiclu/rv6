@@ -723,6 +723,7 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] csr_sepc;
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_sepc <= 64'h0;
+        else if(s_trap) csr_sepc <= tcause_pc;
         else if(csr_wr && csr_addr == `SEPC) csr_sepc <= ncsr;
     end
 
@@ -731,6 +732,7 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] csr_scause;
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_scause <= 64'h0;
+        else if(s_trap) csr_scause <= tcause;
         else if(csr_wr && csr_addr == `SCAUSE) csr_scause <= ncsr;
     end
 
@@ -739,6 +741,7 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] csr_stval;
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_stval <= 64'h0;
+        else if(s_trap) csr_stval <= tval;
         else if(csr_wr && csr_addr == `STVAL) csr_stval <= ncsr;
     end
 
@@ -885,14 +888,24 @@ module csr #(parameter HART_ID = 0) (
 
     /* WPRI MASK */
 
-    reg [63:0] wpri_mask;
+    reg [63:0] wp_mask;
     always @(*) begin
         case(csr_addr)
-            `MSTATUS: wpri_mask = 64'h7fffffc0ff800015;
-            `SSTATUS: wpri_mask = 64'h7ffffffcfff2189d;
-            default:  wpri_mask = 64'h0000000000000000;
+            `MSTATUS: wp_mask = 64'h7fffffcfff800015;
+            `SSTATUS: wp_mask = 64'h7ffffffffff2189d;
+            default:  wp_mask = 64'h0000000000000000;
         endcase
-        if(!rd_valid && !wr_valid) wpri_mask = 64'hffffffffffffffff;
+        if(!rd_valid && !wr_valid) wp_mask = 64'hffffffffffffffff;
+    end
+
+    reg [63:0] ri_mask;
+    always @(*) begin
+        case(csr_addr)
+            `MSTATUS: ri_mask = 64'h7fffffc0ff800015;
+            `SSTATUS: ri_mask = 64'h7ffffffcfff2189d;
+            default:  ri_mask = 64'h0000000000000000;
+        endcase
+        if(!rd_valid && !wr_valid) ri_mask = 64'hffffffffffffffff;
     end
 
     /* NCSR */
@@ -907,7 +920,7 @@ module csr #(parameter HART_ID = 0) (
             `CSR_RCI: ncsr = {59'b0, ~ir[19:15]} & csr_out;
             default:  ncsr = 64'h0;
         endcase
-        ncsr = ncsr & ~wpri_mask | csr_out & wpri_mask;
+        ncsr = ncsr & ~wp_mask | csr_out & wp_mask;
     end
 
     /* OUTPUT MUX */
@@ -982,7 +995,7 @@ module csr #(parameter HART_ID = 0) (
 
             default:            csr_addr_invalid = rd || wr;
         endcase
-        csr_out = csr_out & ~wpri_mask;
+        csr_out = csr_out & ~ri_mask;
     end
 
 endmodule
