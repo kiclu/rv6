@@ -38,6 +38,9 @@ core_unit_test_report: compile_syn compile_sim_report
 	@cd simulation/ && vsim -c tb_core -do 'run -all; quit -f' > core_unit_test_report
 	@echo "[Makefile]: Report file written successfully\n"
 
+dromajo_dasm:
+	@cd tools/ && python3 tracedasm.py
+
 clean:
 	rm -rf simulation/trace/*.trace
 	rm -rf simulation/dromajo/*.dromajo.log
