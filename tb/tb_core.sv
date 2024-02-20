@@ -489,37 +489,18 @@ module tb_core;
         endtask
     endclass
 
-    task test_failed();
-        env.gen_file_list("rv64mi-p-ma_fetch");
-        env.gen_file_list("rv64mi-p-illegal");
-        env.gen_file_list("rv64mi-p-access");
-        env.gen_file_list("rv64mi-p-breakpoint");
-        env.gen_file_list("rv64mi-p-ma_addr");
-
-        env.gen_file_list("rv64si-p-dirty");
-        env.gen_file_list("rv64si-p-icache-alias");
-
-        env.gen_file_list("rv64uc-p-rvc");
-    endtask
-
-    task test_single();
-        env.gen_file_list("rv64mi-p-access");
-    endtask
-
-    task test_all();
-        env.gen_file_list("rv64mi-p-*");
-        env.gen_file_list("rv64si-p-*");
-        env.gen_file_list("rv64ui-p-*");
-        env.gen_file_list("rv64uc-p-*");
-    endtask
-
     RiscvTestEnv env;
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        //test_failed();
-        test_single();
-        //test_all();
+`ifndef ELF
+        env.gen_file_list("rv64mi-p-*");
+        env.gen_file_list("rv64si-p-*");
+        env.gen_file_list("rv64ui-p-*");
+        env.gen_file_list("rv64uc-p-*");
+`else
+        env.gen_file_list(`ELF);
+`endif
 
         env.run();
         $stop();
