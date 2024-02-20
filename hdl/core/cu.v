@@ -31,7 +31,10 @@ module cu (
     output            stall_mem,
     output            stall_wb,
 
-    // cache miss stall signals
+    // extern core stall
+    input             c_stall,
+
+    // cache stall signals
     input             stall_imem,
     input             stall_dmem,
 
@@ -53,7 +56,7 @@ module cu (
     input             clk
 );
 
-    wire stall_all = !rst_n || stall_imem || stall_dmem || (amo_req && !amo_ack);
+    wire stall_all = !rst_n || stall_imem || stall_dmem || (amo_req && !amo_ack) || c_stall;
 
     /* PIPELINE DATA HAZARD */
 
