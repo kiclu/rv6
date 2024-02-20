@@ -14,7 +14,7 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../rtl/config.vh"
+`include "../hdl/config.vh"
 
 `define TB_MEM_START_ADDR   64'h8000_0000
 `define TB_MEM_SIZE         64'h10_0000

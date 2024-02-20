@@ -14,7 +14,7 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../rtl/config.vh"
+`include "../hdl/config.vh"
 
 `define DROMAJO             "/opt/riscv/bin/dromajo"
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
