@@ -75,7 +75,7 @@ module imem(
     reg  [`IMEM_SET_LEN-1:0] rb_set;
     reg                      rb_v;
 
-    wire rb_hit = rb_tag == addr_tag && rb_set == addr_set && rb_v;
+    wire rb_hit = rb_tag == addr_tag && rb_set == addr_set;
 
     /* MISALIGNED ACCESS */
 

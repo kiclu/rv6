@@ -155,7 +155,7 @@ module dmem(
 
     /* READ BUFFER */
 
-    always @(posedge clk, negedge rst_n) begin
+    always @(posedge clk) begin
         if(!rst_n) begin
             rb_tag  <= 0;
             rb_set  <= 0;
@@ -168,8 +168,8 @@ module dmem(
                 rb_set <= wr_pend ? wb_set : addr_set;
                 rb_v   <= 1;
             end
-            ld_cnt <= dmem_fsm_state == `DMEM_S_LOAD ? ld_cnt - 1 : `DMEM_READ_VALID_DELAY;
         end
+        ld_cnt <= dmem_fsm_state == `DMEM_S_LOAD ? ld_cnt - 1 : `DMEM_READ_VALID_DELAY;
     end
 
     /* WRITE BUFFER */

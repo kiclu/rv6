@@ -26,21 +26,21 @@
 
 // L1i cache
 `define IMEM_SET_ASSOC
-`define IMEM_LINE               128
+`define IMEM_LINE               256
 `define IMEM_SETS               2
 `define IMEM_WAYS               2
 `define IMEM_READ_VALID_DELAY   2
 
 // L1d cache
 `define DMEM_SET_ASSOC
-`define DMEM_LINE               128
+`define DMEM_LINE               256
 `define DMEM_SETS               2
 `define DMEM_WAYS               2
 `define DMEM_READ_VALID_DELAY   2
 
 // L2 cache
 `define CMEM_SET_ASSOC
-`define CMEM_LINE               256
+`define CMEM_LINE               512
 `define CMEM_SETS               2
 `define CMEM_WAYS               2
 `define CMEM_READ_VALID_DELAY   2
