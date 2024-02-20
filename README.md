@@ -66,7 +66,7 @@ During the Write Back stage, the result from previous stages is written back int
 ```
 .
 ├─ doc/             # Documentation files
-├─ hdl/             # Synthesis source files
+├─ rtl/             # Synthesis source files
 │   ├─ core/            # Core top-level & submodules
 │   │   ├─ alu.v            # Integer ALU
 │   │   ├─ bpu.v            # Branch Prediction Unit
@@ -82,9 +82,9 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ pd.v             # Instruction Pre-Decoder
 │   │   └─ regfile.v        # Register File
 │   └─ config.vh        # Configuration include file
-├─ simulation/      # ModelSim project files
-├─ synthesis/       # Vivado & Quartus II project files
-├─ test/            # Testbench source files
+├─ sim/             # ModelSim project files
+├─ tb/              # Testbench source files
+├─ tools/
 ├─ LICENSE
 ├─ Makefile
 └─ README.md
