@@ -1,3 +1,6 @@
 [submodule "tools/dromajo"]
 	path = tools/dromajo
 	url = https://github.com/kiclu/dromajo
+[submodule "tools/riscv-tests"]
+	path = tools/riscv-tests
+	url = https://github.com/riscv-software-src/riscv-tests
