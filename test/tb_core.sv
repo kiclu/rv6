@@ -59,9 +59,12 @@ module tb_core;
     wire             [63:0] c_wdata;
     wire             [ 1:0] c_len;
     wire                    c_wr;
-    reg                     c_irq_e;
-    reg                     c_irq_t;
-    reg                     c_irq_s;
+    reg                     c_irq_me;
+    reg                     c_irq_mt;
+    reg                     c_irq_ms;
+    reg                     c_irq_se;
+    reg                     c_irq_st;
+    reg                     c_irq_ss;
     reg              [63:0] c_inv_addr;
     reg                     c_inv;
     wire                    c_amo_req;
@@ -81,9 +84,12 @@ module tb_core;
         .c_wdata        (c_wdata        ),
         .c_len          (c_len          ),
         .c_wr           (c_wr           ),
-        .c_irq_e        (c_irq_e        ),
-        .c_irq_t        (c_irq_t        ),
-        .c_irq_s        (c_irq_s        ),
+        .c_irq_me       (c_irq_me       ),
+        .c_irq_mt       (c_irq_mt       ),
+        .c_irq_ms       (c_irq_ms       ),
+        .c_irq_se       (c_irq_se       ),
+        .c_irq_st       (c_irq_st       ),
+        .c_irq_ss       (c_irq_ss       ),
         .c_inv_addr     (c_inv_addr     ),
         .c_inv          (c_inv          ),
         .c_amo_req      (c_amo_req      ),
@@ -97,9 +103,12 @@ module tb_core;
     initial begin
         c_rdata     = 64'bZ;
         c_dv        = 0;
-        c_irq_e     = 0;
-        c_irq_t     = 0;
-        c_irq_s     = 0;
+        c_irq_me    = 0;
+        c_irq_mt    = 0;
+        c_irq_ms    = 0;
+        c_irq_se    = 0;
+        c_irq_st    = 0;
+        c_irq_ss    = 0;
         c_inv_addr  = 64'bZ;
         c_inv       = 0;
         c_amo_ack   = 0;
@@ -479,15 +488,37 @@ module tb_core;
         endtask
     endclass
 
+    task test_failed();
+        env.gen_file_list("rv64mi-p-ma_fetch");
+        env.gen_file_list("rv64mi-p-illegal");
+        env.gen_file_list("rv64mi-p-access");
+        env.gen_file_list("rv64mi-p-breakpoint");
+        env.gen_file_list("rv64mi-p-ma_addr");
 
+        env.gen_file_list("rv64si-p-dirty");
+        env.gen_file_list("rv64si-p-icache-alias");
+
+        env.gen_file_list("rv64uc-p-rvc");
+    endtask
+
+    task test_single();
+        env.gen_file_list("rv64uc-p-access");
+    endtask
+
+    task test_all();
+        env.gen_file_list("rv64mi-p-*");
+        env.gen_file_list("rv64si-p-*");
+        env.gen_file_list("rv64ui-p-*");
+        env.gen_file_list("rv64uc-p-*");
+    endtask
 
     RiscvTestEnv env;
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        env.gen_file_list("rv64mi-p-*");
-        env.gen_file_list("rv64si-p-*");
-        env.gen_file_list("rv64ui-p-*");
+        //test_failed();
+        //test_single();
+        test_all();
 
         env.run();
         $stop();
