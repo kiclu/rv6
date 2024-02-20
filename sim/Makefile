@@ -33,6 +33,12 @@ vsim_tb_%: tb_% | tb ${DIR_TRACE} ${DIR_DROMAJO}
 vsim_tb_%_c: tb_% | tb ${DIR_TRACE} ${DIR_DROMAJO}
 	vsim -c ${<} -do 'run -all; quit -f;'
 
+${DIR_TRACE}:
+	mkdir -p ${DIR_TRACE}
+
+${DIR_DROMAJO}:
+	mkdir -p ${DIR_DROMAJO}
+
 clean:
 	rm -rf ${DIR_WORK}
 	rm -rf ${DIR_TRACE}
