@@ -8,9 +8,6 @@ add wave -noupdate -label c_dv -radix hexadecimal /tb_core/dut/c_dv
 add wave -noupdate -label c_wdata -radix hexadecimal /tb_core/dut/c_wdata
 add wave -noupdate -label c_len -radix binary /tb_core/dut/c_len
 add wave -noupdate -label c_wr -radix hexadecimal /tb_core/dut/c_wr
-add wave -noupdate -label c_irq_e -radix hexadecimal /tb_core/dut/c_irq_e
-add wave -noupdate -label c_irq_t -radix hexadecimal /tb_core/dut/c_irq_t
-add wave -noupdate -label c_irq_s -radix hexadecimal /tb_core/dut/c_irq_s
 add wave -noupdate -label c_inv_addr -radix hexadecimal -childformat {{{/tb_core/dut/c_inv_addr[63]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[62]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[61]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[60]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[59]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[58]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[57]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[56]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[55]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[54]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[53]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[52]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[51]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[50]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[49]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[48]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[47]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[46]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[45]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[44]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[43]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[42]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[41]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[40]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[39]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[38]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[37]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[36]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[35]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[34]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[33]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[32]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[31]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[30]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[29]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[28]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[27]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[26]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[25]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[24]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[23]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[22]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[21]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[20]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[19]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[18]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[17]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[16]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[15]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[14]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[13]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[12]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[11]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[10]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[9]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[8]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[7]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[6]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[5]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[4]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[3]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[2]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[1]} -radix hexadecimal} {{/tb_core/dut/c_inv_addr[0]} -radix hexadecimal}} -subitemconfig {{/tb_core/dut/c_inv_addr[63]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[62]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[61]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[60]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[59]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[58]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[57]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[56]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[55]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[54]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[53]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[52]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[51]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[50]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[49]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[48]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[47]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[46]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[45]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[44]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[43]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[42]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[41]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[40]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[39]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[38]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[37]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[36]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[35]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[34]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[33]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[32]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[31]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[30]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[29]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[28]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[27]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[26]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[25]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[24]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[23]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[22]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[21]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[20]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[19]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[18]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[17]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[16]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[15]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[14]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[13]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[12]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[11]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[10]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[9]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[8]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[7]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[6]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[5]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[4]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[3]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/c_inv_addr[0]} {-height 16 -radix hexadecimal}} /tb_core/dut/c_inv_addr
 add wave -noupdate -label c_inv -radix hexadecimal /tb_core/dut/c_inv
 add wave -noupdate -label c_amo_req -radix hexadecimal /tb_core/dut/c_amo_req
@@ -201,98 +198,103 @@ add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/rst_n
 add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/clk
 add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/pr_addr
 add wave -noupdate -group pc -radix hexadecimal /tb_core/dut/u_pc/n_pc
-add wave -noupdate -group csr /tb_core/dut/u_csr/HART_ID
-add wave -noupdate -group csr /tb_core/dut/u_csr/ir
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_in
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_out
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rd
-add wave -noupdate -group csr /tb_core/dut/u_csr/trap_addr
-add wave -noupdate -group csr /tb_core/dut/u_csr/trap_taken
-add wave -noupdate -group csr /tb_core/dut/u_csr/irq_e
-add wave -noupdate -group csr /tb_core/dut/u_csr/irq_t
-add wave -noupdate -group csr /tb_core/dut/u_csr/irq_s
-add wave -noupdate -group csr /tb_core/dut/u_csr/dmem_ld_ma
-add wave -noupdate -group csr /tb_core/dut/u_csr/dmem_st_ma
-add wave -noupdate -group csr /tb_core/dut/u_csr/dmem_addr
-add wave -noupdate -group csr /tb_core/dut/u_csr/flush_pd
-add wave -noupdate -group csr /tb_core/dut/u_csr/flush_id
-add wave -noupdate -group csr /tb_core/dut/u_csr/flush_ex
-add wave -noupdate -group csr /tb_core/dut/u_csr/flush_mem
-add wave -noupdate -group csr /tb_core/dut/u_csr/pc_if
-add wave -noupdate -group csr /tb_core/dut/u_csr/pc_pd
-add wave -noupdate -group csr /tb_core/dut/u_csr/pc_id
-add wave -noupdate -group csr /tb_core/dut/u_csr/pc_ex
-add wave -noupdate -group csr /tb_core/dut/u_csr/pc_mem
-add wave -noupdate -group csr /tb_core/dut/u_csr/instret
-add wave -noupdate -group csr /tb_core/dut/u_csr/stall
-add wave -noupdate -group csr /tb_core/dut/u_csr/rst_n
-add wave -noupdate -group csr /tb_core/dut/u_csr/clk
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_addr
-add wave -noupdate -group csr /tb_core/dut/u_csr/privilege_level
-add wave -noupdate -group csr /tb_core/dut/u_csr/ecall
-add wave -noupdate -group csr /tb_core/dut/u_csr/ebreak
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_wr
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rw
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rwi
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rs
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rsi
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rc
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_rci
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_op
-add wave -noupdate -group csr /tb_core/dut/u_csr/rd
-add wave -noupdate -group csr /tb_core/dut/u_csr/wr
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_addr_invalid
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_wr_invalid
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_pr_invalid
-add wave -noupdate -group csr /tb_core/dut/u_csr/rd_valid
-add wave -noupdate -group csr /tb_core/dut/u_csr/wr_valid
-add wave -noupdate -group csr /tb_core/dut/u_csr/tcause
-add wave -noupdate -group csr /tb_core/dut/u_csr/tcause_pc
-add wave -noupdate -group csr /tb_core/dut/u_csr/tval
-add wave -noupdate -group csr /tb_core/dut/u_csr/m_trap
-add wave -noupdate -group csr /tb_core/dut/u_csr/s_trap
-add wave -noupdate -group csr /tb_core/dut/u_csr/trap
-add wave -noupdate -group csr /tb_core/dut/u_csr/mret
-add wave -noupdate -group csr /tb_core/dut/u_csr/sret
-add wave -noupdate -group csr /tb_core/dut/u_csr/tret
-add wave -noupdate -group csr /tb_core/dut/u_csr/ncsr
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_misa
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mvendorid
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_marchid
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mimpid
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mhartid
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mstatus
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mtvec
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_medeleg
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mideleg
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mie
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mip
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mcycle
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_minstret
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mscratch
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mepc
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mcause
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mtval
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mconfigptr
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_menvcfg
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_mseccfg
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_pmpcfg0
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_pmpaddr0
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_sstatus
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_stvec
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_sie
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_sip
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_sscratch
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_sepc
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_scause
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_stval
-add wave -noupdate -group csr /tb_core/dut/u_csr/csr_satp
-add wave -noupdate -group csr /tb_core/dut/u_csr/flush
-add wave -noupdate -group csr /tb_core/dut/u_csr/exc
-add wave -noupdate -group csr /tb_core/dut/u_csr/dmem_ma
-add wave -noupdate -group csr /tb_core/dut/u_csr/stvec_offs
-add wave -noupdate -group csr /tb_core/dut/u_csr/mtvec_offs
-add wave -noupdate -group csr /tb_core/dut/u_csr/wpri_mask
+add wave -noupdate -group reg -radix hexadecimal -childformat {{{/tb_core/dut/u_regfile/rs1_data[63]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[62]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[61]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[60]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[59]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[58]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[57]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[56]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[55]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[54]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[53]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[52]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[51]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[50]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[49]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[48]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[47]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[46]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[45]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[44]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[43]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[42]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[41]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[40]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[39]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[38]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[37]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[36]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[35]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[34]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[33]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[32]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[31]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[30]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[29]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[28]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[27]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[26]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[25]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[24]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[23]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[22]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[21]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[20]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[19]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[18]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[17]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[16]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[15]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[14]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[13]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[12]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[11]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[10]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[9]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[8]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[7]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[6]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[5]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[4]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[3]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[2]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[1]} -radix hexadecimal} {{/tb_core/dut/u_regfile/rs1_data[0]} -radix hexadecimal}} -subitemconfig {{/tb_core/dut/u_regfile/rs1_data[63]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[62]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[61]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[60]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[59]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[58]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[57]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[56]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[55]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[54]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[53]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[52]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[51]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[50]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[49]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[48]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[47]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[46]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[45]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[44]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[43]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[42]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[41]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[40]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[39]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[38]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[37]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[36]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[35]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[34]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[33]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[32]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[31]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[30]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[29]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[28]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[27]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[26]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[25]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[24]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[23]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[22]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[21]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[20]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[19]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[18]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[17]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[16]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[15]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[14]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[13]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[12]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[11]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[10]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[9]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[8]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[7]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[6]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[5]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[4]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[3]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/rs1_data[0]} {-height 16 -radix hexadecimal}} /tb_core/dut/u_regfile/rs1_data
+add wave -noupdate -group reg -radix unsigned /tb_core/dut/u_regfile/rs1
+add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/rs2_data
+add wave -noupdate -group reg -radix unsigned /tb_core/dut/u_regfile/rs2
+add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/rd_data
+add wave -noupdate -group reg -radix unsigned /tb_core/dut/u_regfile/rd
+add wave -noupdate -group reg -radix hexadecimal /tb_core/dut/u_regfile/we
+add wave -noupdate -group reg -radix hexadecimal -childformat {{{/tb_core/dut/u_regfile/reg_data[1]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[2]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[3]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[4]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[5]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[6]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[7]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[8]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[9]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[10]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[11]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[12]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[13]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[14]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[15]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[16]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[17]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[18]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[19]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[20]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[21]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[22]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[23]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[24]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[25]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[26]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[27]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[28]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[29]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[30]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data[31]} -radix hexadecimal}} -expand -subitemconfig {{/tb_core/dut/u_regfile/reg_data[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[3]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[4]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[5]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[6]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[7]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[8]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[9]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[10]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[11]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[12]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[13]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[14]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[15]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[16]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[17]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[18]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[19]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[20]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[21]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[22]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[23]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[24]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[25]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[26]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[27]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[28]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[29]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[30]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data[31]} {-height 16 -radix hexadecimal}} /tb_core/dut/u_regfile/reg_data
+add wave -noupdate -group reg -radix hexadecimal -childformat {{{/tb_core/dut/u_regfile/reg_data_out[0]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[1]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[2]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[3]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[4]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[5]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[6]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[7]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[8]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[9]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[10]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[11]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[12]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[13]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[14]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[15]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[16]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[17]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[18]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[19]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[20]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[21]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[22]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[23]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[24]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[25]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[26]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[27]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[28]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[29]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[30]} -radix hexadecimal} {{/tb_core/dut/u_regfile/reg_data_out[31]} -radix hexadecimal}} -subitemconfig {{/tb_core/dut/u_regfile/reg_data_out[0]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[1]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[2]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[3]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[4]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[5]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[6]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[7]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[8]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[9]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[10]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[11]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[12]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[13]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[14]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[15]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[16]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[17]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[18]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[19]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[20]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[21]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[22]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[23]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[24]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[25]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[26]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[27]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[28]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[29]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[30]} {-height 16 -radix hexadecimal} {/tb_core/dut/u_regfile/reg_data_out[31]} {-height 16 -radix hexadecimal}} /tb_core/dut/u_regfile/reg_data_out
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/HART_ID
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ir
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_in
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_out
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap_addr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap_taken
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_ld_ma
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_st_ma
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_addr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_pd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_id
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_ex
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush_mem
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_if
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_pd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_id
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_ex
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/pc_mem
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/instret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/stall
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/rst_n
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/clk
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_addr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/privilege_level
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ecall
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ebreak
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_wr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rw
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rwi
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rs
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rsi
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_rci
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_op
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/rd
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/wr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_addr_invalid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_wr_invalid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_pr_invalid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/rd_valid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/wr_valid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/tcause
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/tcause_pc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/tval
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/m_trap
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/s_trap
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/trap
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/mret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/sret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/tret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/ncsr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_misa
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mvendorid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_marchid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mimpid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mhartid
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mstatus
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mtvec
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_medeleg
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mideleg
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mie
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mip
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mcycle
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_minstret
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mscratch
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mepc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mcause
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mtval
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mconfigptr
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_menvcfg
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_mseccfg
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_pmpcfg0
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_pmpaddr0
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_sstatus
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_stvec
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_sie
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_sip
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_sscratch
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_sepc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_scause
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_stval
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/csr_satp
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/flush
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/exc
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/dmem_ma
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/stvec_offs
+add wave -noupdate -group csr -radix hexadecimal /tb_core/dut/u_csr/mtvec_offs
 add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_if
 add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_id
 add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/ir_ex
@@ -346,8 +348,8 @@ add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/fence_cnt
 add wave -noupdate -group cu -radix hexadecimal /tb_core/dut/u_cu/fence_cnt_ena
 add wave -noupdate /tb_core/env.t
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {5520000 ps} 1} {{Cursor 3} {77377428 ps} 0}
-quietly wave cursor active 2
+WaveRestoreCursors
+quietly wave cursor active 0
 configure wave -namecolwidth 262
 configure wave -valuecolwidth 158
 configure wave -justifyvalue left
@@ -362,4 +364,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {0 ps} {15336266680 ps}
+WaveRestoreZoom {0 ps} {21774355 ps}
