@@ -1,0 +1,3 @@
+[submodule "tools/dromajo"]
+	path = tools/dromajo
+	url = https://github.com/kiclu/dromajo
