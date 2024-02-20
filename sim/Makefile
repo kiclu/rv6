@@ -1,7 +1,7 @@
 DIR_WORK 	= work
 
 DIR_RTL	 	= rtl
-DIR_TB	 	= test
+DIR_TB	 	= tb
 
 DIR_TRACE	= trace
 DIR_DROMAJO = dromajo

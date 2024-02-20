@@ -14,7 +14,7 @@
  * these sources, You must maintain the Source Location visible on the
  * external case of any product you make using this documentation. */
 
-`include "../hdl/config.vh"
+`include "../rtl/config.vh"
 
 `define DROMAJO             "/opt/riscv/bin/dromajo"
 `define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
@@ -302,6 +302,7 @@ module tb_core;
         local task dromajo_cosim();
             $system({`OBJCOPY, " -O verilog ", this.elf, " temp.hex"});
             tb_mem.read_hex("temp.hex");
+            $system("rm -f temp.hex");
 
             // dromajo runs debug mode bootrom at 0x10000
             // there's no debug mode implemented on this core so this section
@@ -502,7 +503,7 @@ module tb_core;
     endtask
 
     task test_single();
-        env.gen_file_list("rv64uc-p-access");
+        env.gen_file_list("rv64mi-p-access");
     endtask
 
     task test_all();
@@ -517,8 +518,8 @@ module tb_core;
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
         //test_failed();
-        //test_single();
-        test_all();
+        test_single();
+        //test_all();
 
         env.run();
         $stop();
