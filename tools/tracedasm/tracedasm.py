@@ -24,20 +24,20 @@ def get_insn_map(asm):
     return m
 
 
-if not os.path.exists("../../simulation/dromajo/"):
-    os.mkdir("../../simulation/dromajo/")
+if not os.path.exists("../../sim/dromajo/"):
+    os.mkdir("../../sim/dromajo/")
 
 if not os.path.exists("dasm/"):
     os.mkdir("dasm/")
 
-dromajo_logs = os.listdir("../../simulation/dromajo/")
+dromajo_logs = os.listdir("../../sim/dromajo/")
 for filename in dromajo_logs:
-    if not os.path.isfile("../../simulation/dromajo/" + filename):
+    if not os.path.isfile("../../sim/dromajo/" + filename):
         continue
     try:
-        f_trace = open("../../simulation/dromajo/" + filename, "r")
+        f_trace = open("../../sim/dromajo/" + filename, "r")
         f_asm = open(find_asm(filename), "r")
-        f = open("../../simulation/dromajo/dasm/" + filename + ".asm", "w")
+        f = open("dasm/" + filename, "w")
         m = get_insn_map(f_asm)
         dasm(f_trace, m, f)
     except:
