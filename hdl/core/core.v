@@ -468,7 +468,7 @@ module rv6_core #(parameter HART_ID = 0) (
             bmw_csr_out  <= 64'b0;
             bmw_csr_rd   <= 1'b0;
         end
-        else if(!stall_mem) begin
+        else if(!stall_mem && !t_flush_mem) begin
             bmw_ir       <= bxm_ir;
             bmw_pc       <= bxm_pc;
             bmw_alu_out  <= bxm_alu_out;
@@ -494,7 +494,7 @@ module rv6_core #(parameter HART_ID = 0) (
     assign rd_data  = wb_mux;
 
     wire stall_wb;
-    assign we = (bmw_ir[6:0] != `OP_BRANCH) && (bmw_ir[6:0] != `OP_STORE) && !(bmw_ir[6:0] == `OP_SYSTEM && !bmw_csr_rd);
+    assign we = (bmw_ir[6:0] != `OP_BRANCH) && (bmw_ir[6:0] != `OP_STORE) && !(bmw_ir[6:0] == `OP_SYSTEM && !bmw_csr_rd) && !stall_wb;
 
     assign instret = bmw_ir != `NOP && !stall_wb;
 
