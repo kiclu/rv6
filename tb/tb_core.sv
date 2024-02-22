@@ -322,7 +322,7 @@ module tb_core;
                     if(!dut.stall_id)  this.pipeline[EX]  = this.pipeline[ID];
                     if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
                     if(!dut.stall_if && !dut.fence_i) begin
-                        this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
+                        this.pipeline[PD]  = new(0, dut.u_csr.priv, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
                     end
 
                     if(this.pipeline[MEM]) begin
