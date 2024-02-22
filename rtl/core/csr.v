@@ -212,6 +212,7 @@
 `define FLUSH_MEM           4'b1111
 
 module csr #(parameter HART_ID = 0) (
+    output reg [ 1:0] priv,
     input      [31:0] ir,
 
     input      [63:0] csr_in,
@@ -234,9 +235,12 @@ module csr #(parameter HART_ID = 0) (
     // exception signals
     input             dmem_ld_ma,
     input             dmem_st_ma,
-
-    // exception context signals
     input      [63:0] dmem_addr,
+
+    input             pmp_iaf,
+    input             pmp_laf,
+    input             pmp_saf,
+    input      [63:0] pmp_addr,
 
     // pipeline flush signals
     output            flush_pd,
@@ -244,11 +248,33 @@ module csr #(parameter HART_ID = 0) (
     output            flush_ex,
     output            flush_mem,
 
+    // pipeline status signals
     input      [63:0] pc_if,
     input      [63:0] pc_pd,
     input      [63:0] pc_id,
     input      [63:0] pc_ex,
     input      [63:0] pc_mem,
+
+    // PMP signals
+    output     [63:0] pmpcfg0,
+    output     [63:0] pmpcfg2,
+
+    output     [63:0] pmpaddr0,
+    output     [63:0] pmpaddr1,
+    output     [63:0] pmpaddr2,
+    output     [63:0] pmpaddr3,
+    output     [63:0] pmpaddr4,
+    output     [63:0] pmpaddr5,
+    output     [63:0] pmpaddr6,
+    output     [63:0] pmpaddr7,
+    output     [63:0] pmpaddr8,
+    output     [63:0] pmpaddr9,
+    output     [63:0] pmpaddr10,
+    output     [63:0] pmpaddr11,
+    output     [63:0] pmpaddr12,
+    output     [63:0] pmpaddr13,
+    output     [63:0] pmpaddr14,
+    output     [63:0] pmpaddr15,
 
     input             instret,
     input             stall,
@@ -257,7 +283,6 @@ module csr #(parameter HART_ID = 0) (
 );
 
     wire [11:0] csr_addr = ir[31:20];
-    reg  [ 1:0] privilege_level;
 
     wire ecall  = ir == `OP_ECALL;
     wire ebreak = ir == `OP_EBREAK;
@@ -279,7 +304,7 @@ module csr #(parameter HART_ID = 0) (
 
     reg  csr_addr_invalid;
     wire csr_wr_invalid = &csr_addr[11:10] && wr;
-    wire csr_pr_invalid = privilege_level < csr_addr[9:8] && (rd || wr);
+    wire csr_pr_invalid = priv < csr_addr[9:8] && (rd || wr);
 
     wire rd_valid = rd && !csr_addr_invalid && !csr_pr_invalid;
     wire wr_valid = wr && !csr_addr_invalid && !csr_pr_invalid && !csr_wr_invalid;
@@ -340,12 +365,12 @@ module csr #(parameter HART_ID = 0) (
             if(m_trap) begin
                 `MSTATUS_MIE  <= 1'b0;
                 `MSTATUS_MPIE <= `MSTATUS_MIE;
-                `MSTATUS_MPP  <= privilege_level;
+                `MSTATUS_MPP  <= priv;
             end
             else begin
                 `MSTATUS_SIE  <= 1'b0;
                 `MSTATUS_SPIE <= `MSTATUS_SIE;
-                `MSTATUS_SPP  <= privilege_level[0];
+                `MSTATUS_SPP  <= priv[0];
             end
         end
         else if(tret) begin
@@ -748,7 +773,7 @@ module csr #(parameter HART_ID = 0) (
 
     always @(*) begin
         csr_cycle_access_exc = rd_valid && wr_valid && csr_addr == `CYCLE;
-        case(privilege_level)
+        case(priv)
             2'b11: csr_cycle_access_exc = 0;
             2'b01: csr_cycle_access_exc = csr_cycle_access_exc && !`MCOUNTEREN_CY;
             2'b00: csr_cycle_access_exc = csr_cycle_access_exc && (!`SCOUNTEREN_CY || !`MCOUNTEREN_CY);
@@ -765,7 +790,7 @@ module csr #(parameter HART_ID = 0) (
 
     always @(*) begin
         csr_time_access_exc = rd_valid && wr_valid && csr_addr == `TIME;
-        case(privilege_level)
+        case(priv)
             2'b11: csr_time_access_exc = 0;
             2'b01: csr_time_access_exc = csr_time_access_exc && !`MCOUNTEREN_TM;
             2'b00: csr_time_access_exc = csr_time_access_exc && (!`SCOUNTEREN_TM || !`MCOUNTEREN_TM);
@@ -779,7 +804,7 @@ module csr #(parameter HART_ID = 0) (
 
     always @(*) begin
         csr_instret_access_exc = rd_valid && wr_valid && csr_addr == `INSTRET;
-        case(privilege_level)
+        case(priv)
             2'b11: csr_instret_access_exc = 0;
             2'b01: csr_instret_access_exc = csr_instret_access_exc && !`MCOUNTEREN_IR;
             2'b00: csr_instret_access_exc = csr_instret_access_exc && (!`SCOUNTEREN_IR || !`MCOUNTEREN_IR);
@@ -789,10 +814,10 @@ module csr #(parameter HART_ID = 0) (
     /* PRIVILEGE LEVEL */
 
     always @(posedge clk, negedge rst_n, negedge rst_n) begin
-        if(!rst_n) privilege_level <= 2'b11;
+        if(!rst_n) priv <= 2'b11;
         else begin
-            if(trap) privilege_level <= m_trap ? 2'b11 : 2'b01;
-            if(tret) privilege_level <= mret ? `MSTATUS_MPP : {1'b0, `SSTATUS_SPP};
+            if(trap) priv <= m_trap ? 2'b11 : 2'b01;
+            if(tret) priv <= mret ? `MSTATUS_MPP : {1'b0, `SSTATUS_SPP};
         end
     end
 
@@ -819,13 +844,19 @@ module csr #(parameter HART_ID = 0) (
             flush = `FLUSH_MEM;
             exc = 0;
         end
+        else if(pmp_iaf) begin
+            // instruction access fault
+            tcause    = 64'h1;
+            tcause_pc = pc_if;
+            flush     = `FLUSH_PD;
+        end
         else if(ebreak) begin
             tcause    = 64'd3;
             tcause_pc = pc_mem;
             flush     = `FLUSH_MEM;
         end
         else if(ecall) begin
-            case(privilege_level)
+            case(priv)
                 2'b00: tcause = 64'd8;
                 2'b01: tcause = 64'd9;
                 2'b11: tcause = 64'd11;
@@ -842,6 +873,18 @@ module csr #(parameter HART_ID = 0) (
         end
         else if(csr_exc) begin
             tcause    = 64'd2;
+            tcause_pc = pc_mem;
+            flush     = `FLUSH_MEM;
+        end
+        else if(pmp_laf) begin
+            // load access fault
+            tcause    = 64'h5;
+            tcause_pc = pc_mem;
+            flush     = `FLUSH_MEM;
+        end
+        else if(pmp_saf) begin
+            // store access fault
+            tcause    = 64'h7;
             tcause_pc = pc_mem;
             flush     = `FLUSH_MEM;
         end
@@ -865,8 +908,8 @@ module csr #(parameter HART_ID = 0) (
         m_trap = 0;
 
         if(exc) begin
-            m_trap = !csr_medeleg[tcause] || privilege_level == 2'b11;
-            s_trap =  csr_medeleg[tcause] && privilege_level != 2'b11;
+            m_trap = !csr_medeleg[tcause] || priv == 2'b11;
+            s_trap =  csr_medeleg[tcause] && priv != 2'b11;
         end
     end
 
@@ -981,5 +1024,25 @@ module csr #(parameter HART_ID = 0) (
         endcase
         csr_out = csr_out & ~ri_mask;
     end
+
+    assign pmpcfg0 = csr_pmpcfg0;
+    assign pmpcfg2 = csr_pmpcfg2;
+
+    assign pmpaddr0  = csr_pmpaddr0;
+    assign pmpaddr1  = csr_pmpaddr1;
+    assign pmpaddr2  = csr_pmpaddr2;
+    assign pmpaddr3  = csr_pmpaddr3;
+    assign pmpaddr4  = csr_pmpaddr4;
+    assign pmpaddr5  = csr_pmpaddr5;
+    assign pmpaddr6  = csr_pmpaddr6;
+    assign pmpaddr7  = csr_pmpaddr7;
+    assign pmpaddr8  = csr_pmpaddr8;
+    assign pmpaddr9  = csr_pmpaddr9;
+    assign pmpaddr10 = csr_pmpaddr10;
+    assign pmpaddr11 = csr_pmpaddr11;
+    assign pmpaddr12 = csr_pmpaddr12;
+    assign pmpaddr13 = csr_pmpaddr13;
+    assign pmpaddr14 = csr_pmpaddr14;
+    assign pmpaddr15 = csr_pmpaddr15;
 
 endmodule
