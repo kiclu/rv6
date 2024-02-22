@@ -16,7 +16,7 @@
 
 `include "../config.vh"
 
-module pc(
+module pc (
     output reg [63:0] pc,
 
     input             trap_taken,

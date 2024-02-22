@@ -20,7 +20,7 @@
 
 `include "../config.vh"
 
-module imem(
+module imem (
     input                    [63:0] pc,
     output reg               [31:0] ir,
 

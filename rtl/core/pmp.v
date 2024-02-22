@@ -19,41 +19,41 @@
 `include "../config.vh"
 
 module pmp (
-    input   [`PHY_ADDR-1:0] b_addr_w_p,
-    input                   b_wr_w_p,
-    input[`IMEM_BLK_LEN-1:0] b_addr_i_p,
-    input                   b_rd_i_p,
-    input[`DMEM_BLK_LEN-1:0] b_addr_d_p,
-    input                   b_rd_d_p,
+    input     [`PHY_ADDR-1:0] b_addr_w_p,
+    input                     b_wr_w_p,
+    input [`IMEM_BLK_LEN-1:0] b_addr_i_p,
+    input                     b_rd_i_p,
+    input [`DMEM_BLK_LEN-1:0] b_addr_d_p,
+    input                     b_rd_d_p,
 
-    input            [ 1:0] priv,
+    input              [ 1:0] priv,
 
-    input            [63:0] pmpcfg0,
-    input            [63:0] pmpcfg2,
+    input              [63:0] pmpcfg0,
+    input              [63:0] pmpcfg2,
 
-    input            [63:0] pmpaddr0,
-    input            [63:0] pmpaddr1,
-    input            [63:0] pmpaddr2,
-    input            [63:0] pmpaddr3,
-    input            [63:0] pmpaddr4,
-    input            [63:0] pmpaddr5,
-    input            [63:0] pmpaddr6,
-    input            [63:0] pmpaddr7,
-    input            [63:0] pmpaddr8,
-    input            [63:0] pmpaddr9,
-    input            [63:0] pmpaddr10,
-    input            [63:0] pmpaddr11,
-    input            [63:0] pmpaddr12,
-    input            [63:0] pmpaddr13,
-    input            [63:0] pmpaddr14,
-    input            [63:0] pmpaddr15,
+    input              [63:0] pmpaddr0,
+    input              [63:0] pmpaddr1,
+    input              [63:0] pmpaddr2,
+    input              [63:0] pmpaddr3,
+    input              [63:0] pmpaddr4,
+    input              [63:0] pmpaddr5,
+    input              [63:0] pmpaddr6,
+    input              [63:0] pmpaddr7,
+    input              [63:0] pmpaddr8,
+    input              [63:0] pmpaddr9,
+    input              [63:0] pmpaddr10,
+    input              [63:0] pmpaddr11,
+    input              [63:0] pmpaddr12,
+    input              [63:0] pmpaddr13,
+    input              [63:0] pmpaddr14,
+    input              [63:0] pmpaddr15,
 
-    output                  pmp_iaf,
-    output                  pmp_laf,
-    output                  pmp_saf,
+    output                    pmp_iaf,
+    output                    pmp_laf,
+    output                    pmp_saf,
 
-    input                   rst_n,
-    input                   clk
+    input                     rst_n,
+    input                     clk
 );
 
     wire [ 7:0] pmpcfg  [0:15];

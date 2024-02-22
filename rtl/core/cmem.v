@@ -16,7 +16,7 @@
 
 `include "../config.vh"
 
-module cmem(
+module cmem (
     // write bus
     input                   [63:0] b_addr_w,
     input                   [63:0] b_wdata_w,
