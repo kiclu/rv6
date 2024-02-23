@@ -31,12 +31,12 @@ module br_alu (
 
     input             pr_taken,
 
-    input             rst_n,
-    input             stall
+    input             stall_id,
+    input             rst_n
 );
 
     // JALR
-    assign jalr_taken = !stall && ir[6:0] == 7'b1100111;
+    assign jalr_taken = !stall_id && ir[6:0] == `OP_JALR;
     assign jalr_addr  = rs1_data + {{52{ir[31]}}, ir[31:21], 1'b0};
 
     // branch offset calculation
@@ -47,7 +47,7 @@ module br_alu (
 
     // branch prediction miss check
     reg brc;
-    assign pr_miss = (pr_taken != brc) && branch;
+    assign pr_miss = !stall_id && pr_taken != brc && branch;
     assign br_addr = brc ? pc + br_offs : pc + 4;
 
     // branch condition evaluation

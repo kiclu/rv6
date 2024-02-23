@@ -262,8 +262,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .pr_miss        (pr_miss        ),
         .br_addr        (br_addr        ),
         .pr_taken       (bpd_pr_taken   ),
-        .rst_n          (c_rst_n        ),
-        .stall          (stall_id       )
+        .stall_id       (stall_id       ),
+        .rst_n          (c_rst_n        )
     );
 
     assign flush_n = c_rst_n && (!pr_miss && !jalr_taken);
