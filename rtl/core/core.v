@@ -150,7 +150,7 @@ module rv6_core #(parameter HART_ID = 0) (
     reg bfp_pr_taken;
     reg bfp_c_ins;
 
-    wire flush_ena = !stall_if || (jalr_taken && fence_i);
+    wire flush_ena = !stall_if || ((jalr_taken || pr_miss) && fence_i);
     wire flush_pd = !flush_n && flush_ena;
 
     always @(posedge c_clk, negedge c_rst_n) begin
