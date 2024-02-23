@@ -90,6 +90,7 @@ module rv6_core #(parameter HART_ID = 0) (
 
     wire pr_miss;
 
+    wire fence_i;
     wire stall_if;
 
     // program counter
@@ -106,7 +107,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .pr_taken       (pr_taken       ),
         .pr_offs        (pr_offs        ),
         .c_ins          (c_ins          ),
-        .stall          (stall_if       ),
+        .fence_i        (fence_i        ),
+        .stall_if       (stall_if       ),
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
     );
@@ -128,7 +130,6 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [   `IMEM_LINE-1:0] b_data_i;
     wire                     b_rd_i;
     wire                     b_dv_i;
-    wire                     fence_i;
     wire                     stall_imem;
 
     imem u_imem (
