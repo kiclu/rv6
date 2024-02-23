@@ -7,7 +7,7 @@ DIR_TRACE	= trace
 DIR_DROMAJO = dromajo
 
 OPTS_RTL = -incr
-OPTS_TB  = -incr -sv +define+ANSI_COLORS +define+DROMAJO_VERBOSE
+OPTS_TB  = -incr -sv +define+ANSI_COLORS +define+DROMAJO_VERBOSE +incdir+"../rtl/"
 
 ifdef ELF
 OPTS_TB += +define+ELF=\"${ELF}\"
@@ -33,7 +33,7 @@ tb_%: rtl
 	@vlog ${OPTS_TB} $(shell find ../${DIR_TB} -name "${@}.sv" -printf "%p ")
 
 vsim_tb_%: tb_% | tb ${DIR_TRACE} ${DIR_DROMAJO}
-	@vsim ${<} -do 'core.do' -do 'run -all; view wave;'
+	@vsim ${<} -do '${<}.do' -do 'run -all; view wave;'
 
 vsim_tb_%_c: tb_% | tb ${DIR_TRACE} ${DIR_DROMAJO}
 	@vsim -c ${<} -do 'run -all; quit -f;'
