@@ -63,7 +63,7 @@ module pmp (
     reg  [15:0] access_d;
     reg  [15:0] access_w;
 
-    wire [55:2] napot_mask [0:15];
+    wire [63:0] napot_mask [0:15];
 
     wire pmp_iaf_oob = |b_addr_i_p[63-`IMEM_OFFS_LEN -: 8] && b_rd_i_p;
     wire pmp_laf_oob = |b_addr_d_p[63-`DMEM_OFFS_LEN -: 8] && b_rd_d_p;
@@ -73,9 +73,9 @@ module pmp (
     assign pmp_laf = (~|access_d && b_rd_d_p && priv != 2'b11) || pmp_laf_oob;
     assign pmp_saf = (~|access_w && b_wr_w_p && priv != 2'b11) || pmp_saf_oob;
 
-    wire [56:0] b_addr_w = b_addr_w_p;
-    wire [56:0] b_addr_i = {b_addr_i_p, {`IMEM_OFFS_LEN{1'b0}}};
-    wire [56:0] b_addr_d = {b_addr_d_p, {`DMEM_OFFS_LEN{1'b0}}};
+    wire [63:0] b_addr_w = b_addr_w_p;
+    wire [63:0] b_addr_i = {b_addr_i_p, {`IMEM_OFFS_LEN{1'b0}}};
+    wire [63:0] b_addr_d = {b_addr_d_p, {`DMEM_OFFS_LEN{1'b0}}};
 
     genvar i;
     generate
@@ -90,17 +90,21 @@ module pmp (
                     end
                     // TOR
                     2'b01: begin
-
+                        access_w[i] = 0;
+                        access_i[i] = 0;
+                        access_d[i] = 0;
                     end
                     // NA4
                     2'b10: begin
-
+                        access_w[i] = 0;
+                        access_i[i] = 0;
+                        access_d[i] = 0;
                     end
                     // NAPOT
                     2'b11: begin
-                        access_w[i] = &((b_addr_w ^ {pmpaddr[i], 2'b00}) | napot_mask[i]) && pmpcfg[i][1];
-                        access_i[i] = &((b_addr_i ^ {pmpaddr[i], 2'b00}) | napot_mask[i]) && pmpcfg[i][2];
-                        access_d[i] = &((b_addr_d ^ {pmpaddr[i], 2'b00}) | napot_mask[i]) && pmpcfg[i][0];
+                        access_w[i] = &(~(b_addr_w ^ {pmpaddr[i][61:0], 2'b00}) | napot_mask[i]) && pmpcfg[i][1];
+                        access_i[i] = &(~(b_addr_i ^ {pmpaddr[i][61:0], 2'b00}) | napot_mask[i]) && pmpcfg[i][2];
+                        access_d[i] = &(~(b_addr_d ^ {pmpaddr[i][61:0], 2'b00}) | napot_mask[i]) && pmpcfg[i][0];
                     end
                 endcase
             end
@@ -112,10 +116,9 @@ module pmp (
     genvar j;
     generate
         for(i = 0; i < 16; i = i + 1) begin
-            assign napot_mask[i][2] = 1;
-            assign napot_mask[i][3] = pmpaddr[i][2];
-            for(j = 4; j < 56; j = j + 1) begin
-                assign napot_mask[i][j] = napot_mask[i][j-1] && pmpaddr[i][j-1];
+            assign napot_mask[i][2:0] = 3'b111;
+            for(j = 4; j < 64; j = j + 1) begin
+                assign napot_mask[i][j] = napot_mask[i][j-1] && pmpaddr[i][j-2];
             end
         end
     endgenerate
