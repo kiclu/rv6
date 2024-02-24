@@ -16,7 +16,7 @@
 
 `include "../config.vh"
 
-module cmem(
+module cmem (
     // write bus
     input                   [63:0] b_addr_w,
     input                   [63:0] b_wdata_w,
@@ -266,26 +266,13 @@ module cmem(
 
     /* REQUEST ADDRESS */
 
-    // fails on same tests either way, needs more testing
-    // also needs update to support different size of L1i and L1d cache lines
-
-    always @(posedge clk) begin
-        if(cmem_fsm_state_next == `CMEM_S_FETCH) begin
-            case(pend_next)
-                `PEND_RD_I: b_addr_c <= {addr_i_tag, addr_i_set};
-                `PEND_RD_D: b_addr_c <= {addr_d_tag, addr_d_set};
-                `PEND_WR_D: b_addr_c <= {addr_d_tag, addr_d_set};
-            endcase
-        end
+    always @(*) begin
+        case(pend_next)
+            `PEND_RD_I: b_addr_c = {addr_i_tag, addr_i_set};
+            `PEND_RD_D: b_addr_c = {addr_d_tag, addr_d_set};
+            `PEND_WR_D: b_addr_c = {addr_d_tag, addr_d_set};
+        endcase
     end
-
-//    always @(*) begin
-//        case(pend_next)
-//            `PEND_RD_I: b_addr_c = {addr_i_tag, addr_i_set};
-//            `PEND_RD_D: b_addr_c = {addr_d_tag, addr_d_set};
-//            `PEND_WR_D: b_addr_c = {addr_d_tag, addr_d_set};
-//        endcase
-//    end
 
     /* METADATA UPDATE */
 

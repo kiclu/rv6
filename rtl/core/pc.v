@@ -16,7 +16,7 @@
 
 `include "../config.vh"
 
-module pc(
+module pc (
     output reg [63:0] pc,
 
     input             trap_taken,
@@ -35,7 +35,8 @@ module pc(
     input      [12:0] pr_offs,
 
     input             c_ins,
-    input             stall,
+    input             fence_i,
+    input             stall_if,
     input             rst_n,
     input             clk
 );
@@ -45,13 +46,14 @@ module pc(
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) pc <= `RESET_VECTOR;
-        else if(trap_taken)     pc <= trap_addr;
-        else if(jalr_taken)     pc <= jalr_addr;
-        else if(!stall) begin
-            if(pr_miss)         pc <= br_addr;
-            else if(jal_taken)  pc <= jal_addr;
-            else if(pr_taken)   pc <= pr_addr;
-            else                pc <= n_pc;
+        else if(trap_taken)         pc <= trap_addr;
+        else if(jalr_taken)         pc <= jalr_addr;
+        else if(fence_i && pr_miss) pc <= br_addr;
+        else if(!stall_if) begin
+            if(pr_miss)             pc <= br_addr;
+            else if(jal_taken)      pc <= jal_addr;
+            else if(pr_taken)       pc <= pr_addr;
+            else                    pc <= n_pc;
         end
     end
 

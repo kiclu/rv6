@@ -16,7 +16,7 @@
 
 `include "../config.vh"
 
-module dmem(
+module dmem (
     input                    [63:0] addr,
     input                    [ 2:0] len,
 

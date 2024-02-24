@@ -16,7 +16,7 @@
 
 `include "../config.vh"
 
-module pd(
+module pd (
     input      [63:0] pc_in,
     input      [31:0] ir_in,
 

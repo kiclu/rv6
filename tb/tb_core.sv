@@ -322,7 +322,7 @@ module tb_core;
                     if(!dut.stall_id)  this.pipeline[EX]  = this.pipeline[ID];
                     if(!dut.stall_pd)  this.pipeline[ID]  = this.pipeline[PD];
                     if(!dut.stall_if && !dut.fence_i) begin
-                        this.pipeline[PD]  = new(0, dut.u_csr.privilege_level, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
+                        this.pipeline[PD]  = new(0, dut.u_csr.priv, (dut.c_ins ? {16'b0, dut.ir[15:0]} : dut.ir), dut.pc);
                     end
 
                     if(this.pipeline[MEM]) begin
@@ -489,37 +489,18 @@ module tb_core;
         endtask
     endclass
 
-    task test_failed();
-        env.gen_file_list("rv64mi-p-ma_fetch");
-        env.gen_file_list("rv64mi-p-illegal");
-        env.gen_file_list("rv64mi-p-access");
-        env.gen_file_list("rv64mi-p-breakpoint");
-        env.gen_file_list("rv64mi-p-ma_addr");
-
-        env.gen_file_list("rv64si-p-dirty");
-        env.gen_file_list("rv64si-p-icache-alias");
-
-        env.gen_file_list("rv64uc-p-rvc");
-    endtask
-
-    task test_single();
-        env.gen_file_list("rv64mi-p-access");
-    endtask
-
-    task test_all();
-        env.gen_file_list("rv64mi-p-*");
-        env.gen_file_list("rv64si-p-*");
-        env.gen_file_list("rv64ui-p-*");
-        env.gen_file_list("rv64uc-p-*");
-    endtask
-
     RiscvTestEnv env;
     initial begin
         env = new("/opt/riscv/target/share/riscv-tests/isa/");
 
-        //test_failed();
-        test_single();
-        //test_all();
+`ifndef ELF
+        env.gen_file_list("rv64mi-p-*");
+        env.gen_file_list("rv64si-p-*");
+        env.gen_file_list("rv64ui-p-*");
+        env.gen_file_list("rv64uc-p-*");
+`else
+        env.gen_file_list(`ELF);
+`endif
 
         env.run();
         $stop();

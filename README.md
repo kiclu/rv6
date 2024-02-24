@@ -80,6 +80,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ imem.v           # L1i cache
 │   │   ├─ pc.v             # Program Counter
 │   │   ├─ pd.v             # Instruction Pre-Decoder
+│   │   ├─ pmp.v            # Physical Memory Protection
 │   │   └─ regfile.v        # Register File
 │   └─ config.vh        # Configuration include file
 ├─ sim/             # ModelSim project files

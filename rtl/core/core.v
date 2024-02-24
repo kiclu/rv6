@@ -52,6 +52,9 @@ module rv6_core #(parameter HART_ID = 0) (
     input                   c_clk
 );
 
+    // privilege level
+    wire [1:0] priv;
+
     // pipeline flush
     wire flush_n;
 
@@ -63,6 +66,9 @@ module rv6_core #(parameter HART_ID = 0) (
     // exception signals
     wire dmem_ld_ma;
     wire dmem_st_ma;
+    wire pmp_iaf;
+    wire pmp_laf;
+    wire pmp_saf;
 
     /* IF */
 
@@ -84,6 +90,7 @@ module rv6_core #(parameter HART_ID = 0) (
 
     wire pr_miss;
 
+    wire fence_i;
     wire stall_if;
 
     // program counter
@@ -100,7 +107,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .pr_taken       (pr_taken       ),
         .pr_offs        (pr_offs        ),
         .c_ins          (c_ins          ),
-        .stall          (stall_if       ),
+        .fence_i        (fence_i        ),
+        .stall_if       (stall_if       ),
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
     );
@@ -122,7 +130,6 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [   `IMEM_LINE-1:0] b_data_i;
     wire                     b_rd_i;
     wire                     b_dv_i;
-    wire                     fence_i;
     wire                     stall_imem;
 
     imem u_imem (
@@ -143,7 +150,7 @@ module rv6_core #(parameter HART_ID = 0) (
     reg bfp_pr_taken;
     reg bfp_c_ins;
 
-    wire flush_ena = !stall_if || (jalr_taken && fence_i);
+    wire flush_ena = !stall_if || ((jalr_taken || pr_miss) && fence_i);
     wire flush_pd = !flush_n && flush_ena;
 
     always @(posedge c_clk, negedge c_rst_n) begin
@@ -255,8 +262,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .pr_miss        (pr_miss        ),
         .br_addr        (br_addr        ),
         .pr_taken       (bpd_pr_taken   ),
-        .rst_n          (c_rst_n        ),
-        .stall          (stall_id       )
+        .stall_id       (stall_id       ),
+        .rst_n          (c_rst_n        )
     );
 
     assign flush_n = c_rst_n && (!pr_miss && !jalr_taken);
@@ -412,16 +419,33 @@ module rv6_core #(parameter HART_ID = 0) (
         .clk            (c_clk          )
     );
 
+    wire [63:0] pmpcfg0;
+    wire [63:0] pmpcfg2;
+
+    wire [63:0] pmpaddr0;
+    wire [63:0] pmpaddr1;
+    wire [63:0] pmpaddr2;
+    wire [63:0] pmpaddr3;
+    wire [63:0] pmpaddr4;
+    wire [63:0] pmpaddr5;
+    wire [63:0] pmpaddr6;
+    wire [63:0] pmpaddr7;
+    wire [63:0] pmpaddr8;
+    wire [63:0] pmpaddr9;
+    wire [63:0] pmpaddr10;
+    wire [63:0] pmpaddr11;
+    wire [63:0] pmpaddr12;
+    wire [63:0] pmpaddr13;
+    wire [63:0] pmpaddr14;
+    wire [63:0] pmpaddr15;
+
     wire [63:0] csr_out;
     wire        csr_rd;
-
-    wire csr_addr_invalid;
-    wire csr_wr_invalid;
-    wire csr_pr_invalid;
 
     wire instret;
 
     csr #(.HART_ID(HART_ID)) u_csr (
+        .priv           (priv           ),
         .ir             (bxm_ir         ),
         .csr_in         (bxm_csr_in     ),
         .csr_out        (csr_out        ),
@@ -437,6 +461,10 @@ module rv6_core #(parameter HART_ID = 0) (
         .dmem_ld_ma     (dmem_ld_ma     ),
         .dmem_st_ma     (dmem_st_ma     ),
         .dmem_addr      (bxm_alu_out    ),
+        .pmp_iaf        (pmp_iaf        ),
+        .pmp_laf        (pmp_laf        ),
+        .pmp_saf        (pmp_saf        ),
+        .pmp_addr       (c_addr         ),
         .flush_pd       (t_flush_pd     ),
         .flush_id       (t_flush_id     ),
         .flush_ex       (t_flush_ex     ),
@@ -446,6 +474,24 @@ module rv6_core #(parameter HART_ID = 0) (
         .pc_id          (bpd_pc         ),
         .pc_ex          (bdx_pc         ),
         .pc_mem         (bxm_pc         ),
+        .pmpcfg0        (pmpcfg0        ),
+        .pmpcfg2        (pmpcfg2        ),
+        .pmpaddr0       (pmpaddr0       ),
+        .pmpaddr1       (pmpaddr1       ),
+        .pmpaddr2       (pmpaddr2       ),
+        .pmpaddr3       (pmpaddr3       ),
+        .pmpaddr4       (pmpaddr4       ),
+        .pmpaddr5       (pmpaddr5       ),
+        .pmpaddr6       (pmpaddr6       ),
+        .pmpaddr7       (pmpaddr7       ),
+        .pmpaddr8       (pmpaddr8       ),
+        .pmpaddr9       (pmpaddr9       ),
+        .pmpaddr10      (pmpaddr10      ),
+        .pmpaddr11      (pmpaddr11      ),
+        .pmpaddr12      (pmpaddr12      ),
+        .pmpaddr13      (pmpaddr13      ),
+        .pmpaddr14      (pmpaddr14      ),
+        .pmpaddr15      (pmpaddr15      ),
         .instret        (instret        ),
         .stall          (stall_mem      ),
         .rst_n          (c_rst_n        ),
@@ -574,6 +620,46 @@ module rv6_core #(parameter HART_ID = 0) (
         .c_wdata        (c_wdata        ),
         .c_len          (c_len          ),
         .c_wr           (c_wr           )
+    );
+
+    /* MEMORY MANAGEMENT UNIT */
+
+    // TODO:
+    // mmu u_mmu ();
+
+    /* PHYSICAL MEMORY PROTECTION */
+
+    pmp u_pmp (
+        .b_addr_w_p     (b_addr_w       ),
+        .b_wr_w_p       (b_wr_w         ),
+        .b_addr_i_p     (b_addr_i       ),
+        .b_rd_i_p       (b_rd_i         ),
+        .b_addr_d_p     (b_addr_d       ),
+        .b_rd_d_p       (b_rd_d         ),
+        .priv           (priv           ),
+        .pmpcfg0        (pmpcfg0        ),
+        .pmpcfg2        (pmpcfg2        ),
+        .pmpaddr0       (pmpaddr0       ),
+        .pmpaddr1       (pmpaddr1       ),
+        .pmpaddr2       (pmpaddr2       ),
+        .pmpaddr3       (pmpaddr3       ),
+        .pmpaddr4       (pmpaddr4       ),
+        .pmpaddr5       (pmpaddr5       ),
+        .pmpaddr6       (pmpaddr6       ),
+        .pmpaddr7       (pmpaddr7       ),
+        .pmpaddr8       (pmpaddr8       ),
+        .pmpaddr9       (pmpaddr9       ),
+        .pmpaddr10      (pmpaddr10      ),
+        .pmpaddr11      (pmpaddr11      ),
+        .pmpaddr12      (pmpaddr12      ),
+        .pmpaddr13      (pmpaddr13      ),
+        .pmpaddr14      (pmpaddr14      ),
+        .pmpaddr15      (pmpaddr15      ),
+        .pmp_iaf        (pmp_iaf        ),
+        .pmp_laf        (pmp_laf        ),
+        .pmp_saf        (pmp_saf        ),
+        .rst_n          (c_rst_n        ),
+        .clk            (c_clk          )
     );
 
     /* CONTROL UNIT */
