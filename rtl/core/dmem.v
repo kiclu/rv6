@@ -27,8 +27,8 @@ module dmem (
     input                           wr,
 
     // misaligned access
-    output                          ld_ma,
-    output                          st_ma,
+    output                          exc_lma,
+    output                          exc_sma,
 
     // external bus signals
     output reg  [`DMEM_BLK_LEN-1:0] b_addr_d,
@@ -330,7 +330,7 @@ module dmem (
     end
 `endif//DMEM_MA_NATURAL
 
-    assign ld_ma = ma && rd;
-    assign st_ma = ma && wr;
+    assign exc_lma = ma && rd;
+    assign exc_sma = ma && wr;
 
 endmodule

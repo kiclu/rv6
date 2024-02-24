@@ -201,8 +201,6 @@
 `define CSR_RSI             3'b110
 `define CSR_RCI             3'b111
 
-`define OP_ECALL            32'h00000073
-`define OP_EBREAK           32'h00100073
 `define OP_SRET             32'h10200073
 `define OP_MRET             32'h30200073
 
@@ -214,46 +212,31 @@
 module csr #(parameter HART_ID = 0) (
     output reg [ 1:0] priv,
     input      [31:0] ir,
+    input      [63:0] pc,
 
+    // CSR signals
     input      [63:0] csr_in,
     output reg [63:0] csr_out,
     output            csr_rd,
+    output            csr_ii,
 
-    // PC signals
-    output reg [63:0] trap_addr,
-    output            trap_taken,
+    // trap signals
+    output reg [63:0] t_addr,
+    output            t_taken,
+    output            t_flush,
 
     // interrupt signals
     input             irq_me,
     input             irq_mt,
     input             irq_ms,
-
     input             irq_se,
     input             irq_st,
     input             irq_ss,
 
     // exception signals
-    input             dmem_ld_ma,
-    input             dmem_st_ma,
-    input      [63:0] dmem_addr,
-
-    input             pmp_iaf,
-    input             pmp_laf,
-    input             pmp_saf,
-    input      [63:0] pmp_addr,
-
-    // pipeline flush signals
-    output            flush_pd,
-    output            flush_id,
-    output            flush_ex,
-    output            flush_mem,
-
-    // pipeline status signals
-    input      [63:0] pc_if,
-    input      [63:0] pc_pd,
-    input      [63:0] pc_id,
-    input      [63:0] pc_ex,
-    input      [63:0] pc_mem,
+    input             exc,
+    input      [63:0] exc_cause,
+    input      [63:0] exc_val,
 
     // PMP signals
     output     [63:0] pmpcfg0,
@@ -485,7 +468,7 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] csr_mepc;
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_mepc <= 64'h0;
-        else if(m_trap) csr_mepc <= tcause_pc;
+        else if(m_trap) csr_mepc <= pc;
         else if(csr_wr && csr_addr == `MEPC) csr_mepc <= ncsr;
     end
 
@@ -732,7 +715,7 @@ module csr #(parameter HART_ID = 0) (
     reg [63:0] csr_sepc;
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) csr_sepc <= 64'h0;
-        else if(s_trap) csr_sepc <= tcause_pc;
+        else if(s_trap) csr_sepc <= pc;
         else if(csr_wr && csr_addr == `SEPC) csr_sepc <= ncsr;
     end
 
@@ -813,7 +796,7 @@ module csr #(parameter HART_ID = 0) (
 
     /* PRIVILEGE LEVEL */
 
-    always @(posedge clk, negedge rst_n, negedge rst_n) begin
+    always @(posedge clk, negedge rst_n) begin
         if(!rst_n) priv <= 2'b11;
         else begin
             if(trap) priv <= m_trap ? 2'b11 : 2'b01;
@@ -821,85 +804,31 @@ module csr #(parameter HART_ID = 0) (
         end
     end
 
-    /* PIPELINE FLUSH */
-
-    reg [3:0] flush;
-    assign {flush_pd, flush_id, flush_ex, flush_mem} = flush;
-
     /* TRAP ENTRY / RETURN */
 
-    reg exc;
-
-    wire dmem_ma = dmem_ld_ma || dmem_st_ma;
-    wire csr_exc = csr_addr_invalid || csr_wr_invalid || csr_pr_invalid;
-
-    always @(*) begin
-        tcause    = 64'd0;
-        tcause_pc = 64'h0;
-        tval      = 64'h0;
-        exc       = 1;
-        flush     = 0;
-
-        if(tret) begin
-            flush = `FLUSH_MEM;
-            exc = 0;
-        end
-        else if(pmp_iaf) begin
-            // instruction access fault
-            tcause    = 64'h1;
-            tcause_pc = pc_if;
-            flush     = `FLUSH_PD;
-        end
-        else if(ebreak) begin
-            tcause    = 64'd3;
-            tcause_pc = pc_mem;
-            flush     = `FLUSH_MEM;
-        end
-        else if(ecall) begin
-            case(priv)
-                2'b00: tcause = 64'd8;
-                2'b01: tcause = 64'd9;
-                2'b11: tcause = 64'd11;
-            endcase
-            tcause_pc = pc_mem;
-            flush     = `FLUSH_MEM;
-        end
-        else if(dmem_ma) begin
-            if(dmem_ld_ma) tcause = 64'd4;
-            else           tcause = 64'd6;
-            tcause_pc = pc_mem;
-            tval      = dmem_addr;
-            flush     = `FLUSH_MEM;
-        end
-        else if(csr_exc) begin
-            tcause    = 64'd2;
-            tcause_pc = pc_mem;
-            flush     = `FLUSH_MEM;
-        end
-        else if(pmp_laf) begin
-            // load access fault
-            tcause    = 64'h5;
-            tcause_pc = pc_mem;
-            flush     = `FLUSH_MEM;
-        end
-        else if(pmp_saf) begin
-            // store access fault
-            tcause    = 64'h7;
-            tcause_pc = pc_mem;
-            flush     = `FLUSH_MEM;
-        end
-        else exc = 0;
-    end
+    assign csr_ii = csr_addr_invalid || csr_wr_invalid || csr_pr_invalid || csr_cycle_access_exc ||  csr_time_access_exc || csr_instret_access_exc;
 
     wire [63:0] stvec_offs = (csr_stvec[1:0] == 2'b01 && !tcause[63]) ? (tcause << 2) : 64'b0;
     wire [63:0] mtvec_offs = (csr_mtvec[1:0] == 2'b01 && !tcause[63]) ? (tcause << 2) : 64'b0;
 
     always @(*) begin
-        if(trap) trap_addr = m_trap ? {csr_mtvec[63:2], 2'b00} + mtvec_offs : {csr_stvec[63:2], 2'b00} + stvec_offs;
-        else     trap_addr = mret ? csr_mepc : csr_sepc;
+        if(trap) t_addr = m_trap ? {csr_mtvec[63:2], 2'b00} + mtvec_offs : {csr_stvec[63:2], 2'b00} + stvec_offs;
+        else     t_addr = mret ? csr_mepc : csr_sepc;
     end
 
-    assign trap_taken = trap || tret;
+    assign t_taken = trap || tret;
+
+    /* TRAP CAUSE */
+
+    always @(*) begin
+        tcause = exc_cause;
+    end
+
+    /* TRAP VAL */
+
+    always @(*) begin
+        tval = exc_val;
+    end
 
     /* TRAP DELEGATION */
 
@@ -912,6 +841,10 @@ module csr #(parameter HART_ID = 0) (
             s_trap =  csr_medeleg[tcause] && priv != 2'b11;
         end
     end
+
+    /* PIPELINE FLUSH */
+
+    assign t_flush = t_taken;
 
     /* WPRI MASK */
 

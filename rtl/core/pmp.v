@@ -48,9 +48,9 @@ module pmp (
     input              [63:0] pmpaddr14,
     input              [63:0] pmpaddr15,
 
-    output                    pmp_iaf,
-    output                    pmp_laf,
-    output                    pmp_saf,
+    output                    exc_pmp_iaf,
+    output                    exc_pmp_laf,
+    output                    exc_pmp_saf,
 
     input                     rst_n,
     input                     clk
@@ -69,9 +69,9 @@ module pmp (
     wire pmp_laf_oob = |b_addr_d_p[63-`DMEM_OFFS_LEN -: 8] && b_rd_d_p;
     wire pmp_saf_oob = |b_addr_w_p[63:56] && b_wr_w_p;
 
-    assign pmp_iaf = (~|access_i && b_rd_i_p && priv != 2'b11) || pmp_iaf_oob;
-    assign pmp_laf = (~|access_d && b_rd_d_p && priv != 2'b11) || pmp_laf_oob;
-    assign pmp_saf = (~|access_w && b_wr_w_p && priv != 2'b11) || pmp_saf_oob;
+    assign exc_pmp_iaf = (~|access_i && b_rd_i_p && priv != 2'b11) || pmp_iaf_oob;
+    assign exc_pmp_laf = (~|access_d && b_rd_d_p && priv != 2'b11) || pmp_laf_oob;
+    assign exc_pmp_saf = (~|access_w && b_wr_w_p && priv != 2'b11) || pmp_saf_oob;
 
     wire [63:0] b_addr_w = b_addr_w_p;
     wire [63:0] b_addr_i = {b_addr_i_p, {`IMEM_OFFS_LEN{1'b0}}};

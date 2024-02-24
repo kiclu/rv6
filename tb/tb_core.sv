@@ -212,6 +212,12 @@ module tb_core;
         endfunction
     endclass
 
+    class IllegalInstructionException extends Exception;
+        function new();
+            super.new(2, 0);
+        endfunction
+    endclass
+
     /*--------------------------------------------------------------------------------*/
     /* INSTRUCTION                                                                    */
     /*--------------------------------------------------------------------------------*/
@@ -326,16 +332,16 @@ module tb_core;
                     end
 
                     if(this.pipeline[MEM]) begin
-                        if(dut.t_flush_mem && !this.pipeline[MEM].e && !this.pipeline[MEM].trap_ret) this.pipeline[MEM] = null;
+                        if(dut.t_flush && !this.pipeline[MEM].e && !this.pipeline[MEM].trap_ret) this.pipeline[MEM] = null;
                     end
 
-                    if(dut.t_flush_ex)  this.pipeline[EX] = null;
+                    if(dut.t_flush)  this.pipeline[EX] = null;
 
-                    if(dut.t_flush_id || dut.flush_id) begin
+                    if(dut.t_flush || dut.flush_id) begin
                         this.pipeline[ID] = null;
                     end
 
-                    if(dut.t_flush_pd || dut.flush_pd) begin
+                    if(dut.t_flush || dut.flush_pd) begin
                         this.pipeline[PD] = null;
                     end
                 end
@@ -364,11 +370,11 @@ module tb_core;
             forever begin
                 @(negedge clk) begin
                     if(!this.fd) break;
-                    if(dut.u_csr.ecall && this.pipeline[MEM]) begin
+                    if(dut.u_exc.ecall && this.pipeline[MEM]) begin
                         automatic EcallException ex = new(dut.u_csr.tcause);
                         this.pipeline[MEM].e = ex;
                     end
-                    if(dut.u_csr.ebreak && this.pipeline[MEM]) begin
+                    if(dut.u_exc.ebreak && this.pipeline[MEM]) begin
                         automatic BreakpointException ex = new();
                         this.pipeline[MEM].e = ex;
                     end
@@ -384,11 +390,11 @@ module tb_core;
                         automatic PrivilegeCSRException ex = new();
                         this.pipeline[MEM].e = ex;
                     end
-                    if(dut.u_csr.dmem_ld_ma && this.pipeline[MEM]) begin
+                    if(dut.u_exc.exc_dmem_lma && this.pipeline[MEM]) begin
                         automatic MisalignedLoadAddressException ex = new(dut.u_csr.tval);
                         this.pipeline[MEM].e = ex;
                     end
-                    if(dut.u_csr.dmem_st_ma && this.pipeline[MEM]) begin
+                    if(dut.u_exc.exc_dmem_sma && this.pipeline[MEM]) begin
                         automatic MisalignedStoreAddressException ex = new(dut.u_csr.tval);
                         this.pipeline[MEM].e = ex;
                     end
