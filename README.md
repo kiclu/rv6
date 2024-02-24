@@ -77,6 +77,7 @@ During the Write Back stage, the result from previous stages is written back int
 │   │   ├─ cu.v             # Control Unit
 │   │   ├─ dba.v            # Data Bus Arbiter
 │   │   ├─ dmem.v           # L1d cache
+│   │   ├─ exc.v            # Exception handler
 │   │   ├─ imem.v           # L1i cache
 │   │   ├─ pc.v             # Program Counter
 │   │   ├─ pd.v             # Instruction Pre-Decoder
