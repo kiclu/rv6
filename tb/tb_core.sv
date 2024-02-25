@@ -398,6 +398,10 @@ module tb_core;
                         automatic MisalignedStoreAddressException ex = new(dut.u_csr.tval);
                         this.pipeline[MEM].e = ex;
                     end
+                    if(dut.u_exc.exc_ii_ex && this.pipeline[EX]) begin
+                        automatic IllegalInstructionException ex = new();
+                        this.pipeline[EX].e = ex;
+                    end
                     if(dut.u_csr.tret && this.pipeline[MEM]) begin
                         this.pipeline[MEM].trap_ret = 1;
                     end
