@@ -63,6 +63,7 @@ module exc (
         else if(exc_pmp_iaf) begin
             if_exc       <= 1;
             if_exc_cause <= 6'd1;
+            //if_exc_val   <= pmp_addr;
         end
         else if(!stall_if) begin
             if_exc       <= 0;
@@ -71,7 +72,7 @@ module exc (
 
     reg        pd_exc;
     reg [ 5:0] pd_exc_cause;
-    reg [63:0] pc_exc_val;
+    reg [63:0] pd_exc_val;
 
     always @(posedge clk) begin
         if(!rst_n) pd_exc <= 0;
@@ -81,6 +82,7 @@ module exc (
         else if(!stall_pd) begin
             pd_exc       <= if_exc;
             pd_exc_cause <= if_exc_cause;
+            pd_exc_val   <= if_exc_val;
         end
     end
 
@@ -96,6 +98,7 @@ module exc (
         else if(!stall_id) begin
             id_exc       <= pd_exc;
             id_exc_cause <= pd_exc_cause;
+            id_exc_val   <= pd_exc_val;
         end
     end
 
@@ -111,10 +114,13 @@ module exc (
         else if(exc_ii_ex) begin
             ex_exc       <= 1;
             ex_exc_cause <= 6'd2;
+            // TODO: change illegal instruction val
+            ex_exc_val   <= 64'h0;
         end
         else if(!stall_ex) begin
             ex_exc       <= id_exc;
             ex_exc_cause <= id_exc_cause;
+            ex_exc_val   <= ex_exc_val;
         end
     end
 
@@ -130,6 +136,7 @@ module exc (
         else if(!stall_mem) begin
             mem_exc       <= ex_exc;
             mem_exc_cause <= ex_exc_cause;
+            mem_exc_val   <= ex_exc_val;
         end
     end
 

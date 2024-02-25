@@ -447,6 +447,9 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [63:0] exc_cause;
     wire [63:0] exc_val;
 
+    wire flush_ex  = t_flush;
+    wire flush_mem = t_flush;
+
     exc u_exc (
         .priv           (priv           ),
         .ir             (bxm_ir         ),
