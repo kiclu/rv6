@@ -68,7 +68,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire stall_wb;
 
     // exception signals
-    wire exc_ii_id;
+    wire exc_ii_ex;
     wire exc_ii_csr;
     wire exc_pmp_iaf;
     wire exc_pmp_laf;
@@ -266,7 +266,6 @@ module rv6_core #(parameter HART_ID = 0) (
         .rst_n          (c_rst_n        )
     );
 
-    assign exc_ii_id = bpd_ir == 32'h0;
     assign flush_n = c_rst_n && (!pr_miss && !jalr_taken);
 
     // immediate format mux
@@ -379,6 +378,8 @@ module rv6_core #(parameter HART_ID = 0) (
         end
     end
 
+    assign exc_ii_ex = bdx_ir == 32'h0;
+
     /* MEM */
 
     wire [63:0] dmem_out;
@@ -452,7 +453,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .exc            (exc            ),
         .exc_cause      (exc_cause      ),
         .exc_val        (exc_val        ),
-        .exc_ii_id      (exc_ii_id      ),
+        .exc_ii_ex      (exc_ii_ex      ),
         .exc_ii_csr     (exc_ii_csr     ),
         .exc_pmp_iaf    (exc_pmp_iaf    ),
         .exc_pmp_laf    (exc_pmp_laf    ),

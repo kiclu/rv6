@@ -25,7 +25,7 @@ module exc (
     output reg [63:0] exc_cause,
     output reg [63:0] exc_val,
 
-    input             exc_ii_id,
+    input             exc_ii_ex,
     input             exc_ii_csr,
     input             exc_pmp_iaf,
     input             exc_pmp_laf,
@@ -93,10 +93,6 @@ module exc (
         else if(flush_id) begin
             id_exc       <= 0;
         end
-        else if(exc_ii_id) begin
-            id_exc       <= 1;
-            id_exc_cause <= 6'd2;
-        end
         else if(!stall_id) begin
             id_exc       <= pd_exc;
             id_exc_cause <= pd_exc_cause;
@@ -111,6 +107,10 @@ module exc (
         if(!rst_n) ex_exc <= 0;
         else if(flush_ex) begin
             ex_exc       <= 0;
+        end
+        else if(exc_ii_ex) begin
+            ex_exc       <= 1;
+            ex_exc_cause <= 6'd2;
         end
         else if(!stall_ex) begin
             ex_exc       <= id_exc;

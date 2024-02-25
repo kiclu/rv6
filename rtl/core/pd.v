@@ -168,6 +168,7 @@ module pd (
             // c.addi4spn
             16'b00000: begin
                 ir_out = {2'b0, ir_in[10:7], ir_in[12:11], ir_in[5], ir_in[6], 2'b00, 5'b00010, 3'b000, rvc2, 7'b0010011};
+                if(~|ir_in[12:5]) ir_out = 32'h0;
             end
 
             // c.lw
