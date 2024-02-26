@@ -267,9 +267,6 @@ module csr #(parameter HART_ID = 0) (
 
     wire [11:0] csr_addr = ir[31:20];
 
-    wire ecall  = ir == `OP_ECALL;
-    wire ebreak = ir == `OP_EBREAK;
-
     /* ZICSR */
 
     wire csr_wr;
