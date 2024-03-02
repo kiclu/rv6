@@ -11,6 +11,13 @@ vsim_tb_%:
 vsim_tb_%_c:
 	@${MAKE} -C sim ${@} ELF=${ELF}
 
+# Tools
+
+.PHONY: tools
+
+tools:
+	@${MAKE} -C tools all
+
 # Clean
 
 .PHONY: clean
