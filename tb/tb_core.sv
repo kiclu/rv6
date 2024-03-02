@@ -16,6 +16,8 @@
 
 `include "../rtl/config.vh"
 
+`define OBJCOPY "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
+
 `define DROMAJO_BOOTROM_TRACE "\
 0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000\n\
 0 3 0x0000000000010004 (0x00050663)\n\
