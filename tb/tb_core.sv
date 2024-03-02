@@ -16,10 +16,6 @@
 
 `include "../rtl/config.vh"
 
-`define DROMAJO             "/opt/riscv/bin/dromajo"
-`define DROMAJO_COSIM_TEST  "/opt/riscv/bin/dromajo_cosim_test"
-`define OBJCOPY             "/opt/riscv/bin/riscv64-unknown-elf-objcopy"
-
 `define DROMAJO_BOOTROM_TRACE "\
 0 3 0x0000000000010000 (0xf1402573) x10 0x0000000000000000\n\
 0 3 0x0000000000010004 (0x00050663)\n\
@@ -501,7 +497,7 @@ module tb_core;
 
     RiscvTestEnv env;
     initial begin
-        env = new("/opt/riscv/target/share/riscv-tests/isa/");
+        env = new(`RISCV_TESTS);
 
 `ifndef ELF
         env.gen_file_list("rv64mi-p-*");
