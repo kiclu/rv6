@@ -68,7 +68,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire stall_wb;
 
     // exception signals
-    wire exc_ii_ex;
+    wire exc_ii_if;
     wire exc_ii_csr;
     wire exc_pmp_iaf;
     wire exc_pmp_laf;
@@ -378,7 +378,7 @@ module rv6_core #(parameter HART_ID = 0) (
         end
     end
 
-    assign exc_ii_ex = bdx_ir == 32'h0;
+    assign exc_ii_if = ir == 32'h0;
 
     /* MEM */
 
@@ -447,16 +447,13 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [63:0] exc_cause;
     wire [63:0] exc_val;
 
-    wire flush_ex  = t_flush;
-    wire flush_mem = t_flush;
-
     exc u_exc (
         .priv           (priv           ),
         .ir             (bxm_ir         ),
         .exc            (exc            ),
         .exc_cause      (exc_cause      ),
         .exc_val        (exc_val        ),
-        .exc_ii_ex      (exc_ii_ex      ),
+        .exc_ii_if      (exc_ii_if      ),
         .exc_ii_csr     (exc_ii_csr     ),
         .exc_pmp_iaf    (exc_pmp_iaf    ),
         .exc_pmp_laf    (exc_pmp_laf    ),
@@ -466,8 +463,7 @@ module rv6_core #(parameter HART_ID = 0) (
         .dmem_addr      (bxm_alu_out    ),
         .flush_pd       (flush_pd       ),
         .flush_id       (flush_id       ),
-        .flush_ex       (flush_ex       ),
-        .flush_mem      (flush_mem      ),
+        .t_flush        (t_flush        ),
         .stall_if       (stall_if       ),
         .stall_pd       (stall_pd       ),
         .stall_id       (stall_id       ),
