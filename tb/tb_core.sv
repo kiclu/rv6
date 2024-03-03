@@ -149,7 +149,7 @@ module tb_core;
             this.tval = tval;
         endfunction
 
-        function string what();
+        virtual function string what();
             return $sformatf("exception %-d, tval %16h", this.cause, this.tval);
         endfunction
 
@@ -213,6 +213,16 @@ module tb_core;
     class IllegalInstructionException extends Exception;
         function new();
             super.new(2, 0);
+        endfunction
+    endclass
+
+    class InstructionAccessFaultException extends Exception;
+        function new();
+            super.new(1, 0);
+        endfunction
+
+        function string what();
+            return "";
         endfunction
     endclass
 
@@ -368,40 +378,50 @@ module tb_core;
             forever begin
                 @(negedge clk) begin
                     if(!this.fd) break;
-                    if(dut.u_exc.ecall && this.pipeline[MEM]) begin
-                        automatic EcallException ex = new(dut.u_csr.tcause);
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_exc.ebreak && this.pipeline[MEM]) begin
-                        automatic BreakpointException ex = new();
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_csr.csr_addr_invalid && this.pipeline[MEM]) begin
-                        automatic InvalidCSRException ex = new(dut.u_csr.csr_addr);
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_csr.csr_wr_invalid && this.pipeline[MEM]) begin
-                        automatic WriteInvalidCSRException ex = new();
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_csr.csr_pr_invalid && this.pipeline[MEM]) begin
-                        automatic PrivilegeCSRException ex = new();
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_exc.exc_dmem_lma && this.pipeline[MEM]) begin
-                        automatic MisalignedLoadAddressException ex = new(dut.u_csr.tval);
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_exc.exc_dmem_sma && this.pipeline[MEM]) begin
-                        automatic MisalignedStoreAddressException ex = new(dut.u_csr.tval);
-                        this.pipeline[MEM].e = ex;
-                    end
-                    if(dut.u_exc.exc_ii_ex && this.pipeline[EX]) begin
-                        automatic IllegalInstructionException ex = new();
-                        this.pipeline[EX].e = ex;
-                    end
                     if(dut.u_csr.tret && this.pipeline[MEM]) begin
                         this.pipeline[MEM].trap_ret = 1;
+                    end
+                    else if(dut.u_exc.exc && this.pipeline[MEM]) begin
+                        case(dut.u_exc.exc_cause)
+                            6'd1: begin
+                                automatic InstructionAccessFaultException ex = new();
+                                this.pipeline[MEM].e = ex;
+                            end
+                            6'd2: begin
+                                if(dut.u_csr.csr_addr_invalid) begin
+                                    automatic InvalidCSRException ex = new(dut.u_csr.csr_addr);
+                                    this.pipeline[MEM].e = ex;
+                                end
+                                else if(dut.u_csr.csr_wr_invalid) begin
+                                    automatic WriteInvalidCSRException ex = new();
+                                    this.pipeline[MEM].e = ex;
+                                end
+                                else if(dut.u_csr.csr_pr_invalid) begin
+                                    automatic PrivilegeCSRException ex = new();
+                                    this.pipeline[MEM].e = ex;
+                                end
+                                else begin
+                                    automatic IllegalInstructionException ex = new();
+                                    this.pipeline[MEM].e = ex;
+                                end
+                            end
+                            6'd3: begin
+                                automatic BreakpointException ex = new();
+                                this.pipeline[MEM].e = ex;
+                            end
+                            6'd4: begin
+                                automatic MisalignedLoadAddressException ex = new(dut.u_csr.tval);
+                                this.pipeline[MEM].e = ex;
+                            end
+                            6'd6: begin
+                                automatic MisalignedStoreAddressException ex = new(dut.u_csr.tval);
+                                this.pipeline[MEM].e = ex;
+                            end
+                            6'd8, 6'd9, 6'd11: begin
+                                automatic EcallException ex = new(dut.u_csr.tcause);
+                                this.pipeline[MEM].e = ex;
+                            end
+                        endcase
                     end
                 end
             end
@@ -422,7 +442,11 @@ module tb_core;
         endtask
 
         local task timeout();
-            #200_0000;
+`ifdef ELF
+            #100_000;
+`else
+            #2_000_000;
+`endif
         endtask
 
         task run();
