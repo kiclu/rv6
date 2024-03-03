@@ -125,6 +125,8 @@ module dmem (
 
                 if(rd && rb_hit) dmem_fsm_state_next = `DMEM_S_READY;
                 if(wr && rb_hit) dmem_fsm_state_next = `DMEM_S_WRITE;
+
+                if(exc_lma || exc_sma) dmem_fsm_state_next = `DMEM_S_READY;
             end
             `DMEM_S_FETCH: begin
                 b_rd_d  = 1;
@@ -174,7 +176,7 @@ module dmem (
 
     /* WRITE BUFFER */
 
-    wire wr_nstall = wr && !stall_mem;
+    wire wr_nstall = (wr && !exc_sma) && !stall_mem;
     reg wr_nstall_d;
     always @(posedge clk) wr_nstall_d <= wr_nstall;
     wire wr_nstall_re = wr_nstall && !wr_nstall_d;

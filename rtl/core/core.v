@@ -585,7 +585,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [63:0] b_addr_w    = bxm_alu_out;
     wire [63:0] b_wdata_w   = bxm_rs2_data;
     wire [ 1:0] b_len_w     = len;
-    wire        b_wr_w      = op_store;
+    wire        b_wr_w      = op_store && !exc_dmem_sma;
 
     wire [`CMEM_BLK_LEN-1:0] b_addr_c;
     wire [   `CMEM_LINE-1:0] b_rdata_c;
