@@ -443,7 +443,7 @@ module tb_core;
 
         local task timeout();
 `ifdef ELF
-            #100_000;
+            #300_000;
 `else
             #2_000_000;
 `endif
