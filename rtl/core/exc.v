@@ -25,7 +25,7 @@ module exc (
     output reg [63:0] exc_cause,
     output reg [63:0] exc_val,
 
-    input             exc_ii_ex,
+    input             exc_ii_if,
     input             exc_ii_csr,
     input             exc_pmp_iaf,
     input             exc_pmp_laf,
@@ -37,8 +37,7 @@ module exc (
 
     input             flush_pd,
     input             flush_id,
-    input             flush_ex,
-    input             flush_mem,
+    input             t_flush,
 
     input             stall_if,
     input             stall_pd,
@@ -54,35 +53,27 @@ module exc (
     wire ecall  = ir == `OP_ECALL;
     wire ebreak = ir == `OP_EBREAK;
 
-    reg        if_exc;
-    reg [ 5:0] if_exc_cause;
-    reg [63:0] if_exc_val;
-
-    always @(posedge clk) begin
-        if(!rst_n) if_exc <= 0;
-        else if(exc_pmp_iaf) begin
-            if_exc       <= 1;
-            if_exc_cause <= 6'd1;
-            //if_exc_val   <= pmp_addr;
-        end
-        else if(!stall_if) begin
-            if_exc       <= 0;
-        end
-    end
-
     reg        pd_exc;
     reg [ 5:0] pd_exc_cause;
     reg [63:0] pd_exc_val;
 
     always @(posedge clk) begin
         if(!rst_n) pd_exc <= 0;
-        else if(flush_pd) begin
+        else if(flush_pd || t_flush) begin
             pd_exc       <= 0;
         end
+        else if(exc_pmp_iaf) begin
+            pd_exc       <= 1;
+            pd_exc_cause <= 6'd1;
+            pd_exc_val   <= 64'h0;
+        end
+        else if(exc_ii_if) begin
+            pd_exc       <= 1;
+            pd_exc_cause <= 6'd2;
+            pd_exc_val   <= 64'h0;
+        end
         else if(!stall_pd) begin
-            pd_exc       <= if_exc;
-            pd_exc_cause <= if_exc_cause;
-            pd_exc_val   <= if_exc_val;
+            pd_exc       <= 0;
         end
     end
 
@@ -92,7 +83,7 @@ module exc (
 
     always @(posedge clk) begin
         if(!rst_n) id_exc <= 0;
-        else if(flush_id) begin
+        else if(flush_id || t_flush) begin
             id_exc       <= 0;
         end
         else if(!stall_id) begin
@@ -108,19 +99,13 @@ module exc (
 
     always @(posedge clk) begin
         if(!rst_n) ex_exc <= 0;
-        else if(flush_ex) begin
+        else if(t_flush) begin
             ex_exc       <= 0;
-        end
-        else if(exc_ii_ex) begin
-            ex_exc       <= 1;
-            ex_exc_cause <= 6'd2;
-            // TODO: change illegal instruction val
-            ex_exc_val   <= 64'h0;
         end
         else if(!stall_ex) begin
             ex_exc       <= id_exc;
             ex_exc_cause <= id_exc_cause;
-            ex_exc_val   <= ex_exc_val;
+            ex_exc_val   <= id_exc_val;
         end
     end
 
@@ -130,7 +115,7 @@ module exc (
 
     always @(posedge clk) begin
         if(!rst_n) mem_exc <= 0;
-        else if(flush_mem) begin
+        else if(t_flush) begin
             mem_exc       <= 0;
         end
         else if(!stall_mem) begin
@@ -141,7 +126,7 @@ module exc (
     end
 
     always @(*) begin
-        exc   = 1;
+        exc = 1;
 
         exc_cause = 64'h0;
         exc_val   = 64'h0;
