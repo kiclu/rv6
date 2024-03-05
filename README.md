@@ -33,7 +33,7 @@ Pipeline is split into following 6 stages:
 - Memory (MEM)
 - Write Back (WB)
 
-<img src="./doc/hart-schematic.png">
+<img src="./doc/core-arch.png">
 
 ### Instruction Fetch (IF)
 During the Instruction Fetch stage one instruction is fetched from instruction memory and the program counter is updated.<br>
