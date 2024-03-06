@@ -467,6 +467,7 @@ module tb_core;
                 this.tohost_monitor();
                 this.timeout();
             join_any
+            disable fork;
         endtask
     endclass
 
