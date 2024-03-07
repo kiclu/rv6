@@ -267,6 +267,7 @@ module cmem (
     /* REQUEST ADDRESS */
 
     always @(*) begin
+        b_addr_c = 0;
         case(pend_next)
             `PEND_RD_I: b_addr_c = {addr_i_tag, addr_i_set};
             `PEND_RD_D: b_addr_c = {addr_d_tag, addr_d_set};

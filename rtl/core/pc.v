@@ -19,8 +19,8 @@
 module pc (
     output reg [63:0] pc,
 
-    input             trap_taken,
-    input      [63:0] trap_addr,
+    input             t_taken,
+    input      [63:0] t_addr,
 
     input             jalr_taken,
     input      [63:0] jalr_addr,
@@ -46,7 +46,7 @@ module pc (
 
     always @(posedge clk, negedge rst_n) begin
         if(!rst_n) pc <= `RESET_VECTOR;
-        else if(trap_taken)         pc <= trap_addr;
+        else if(t_taken)            pc <= t_addr;
         else if(jalr_taken)         pc <= jalr_addr;
         else if(fence_i && pr_miss) pc <= br_addr;
         else if(!stall_if) begin

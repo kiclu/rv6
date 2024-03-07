@@ -55,49 +55,53 @@ module rv6_core #(parameter HART_ID = 0) (
     // privilege level
     wire [1:0] priv;
 
-    // pipeline flush
+    // pipeline flush signals
     wire flush_n;
+    wire t_flush;
 
-    wire t_flush_pd;
-    wire t_flush_id;
-    wire t_flush_ex;
-    wire t_flush_mem;
+    // pipeline stall signals
+    wire stall_if;
+    wire stall_pd;
+    wire stall_id;
+    wire stall_ex;
+    wire stall_mem;
+    wire stall_wb;
 
     // exception signals
-    wire dmem_ld_ma;
-    wire dmem_st_ma;
-    wire pmp_iaf;
-    wire pmp_laf;
-    wire pmp_saf;
+    wire exc_ii_if;
+    wire exc_ii_csr;
+    wire exc_pmp_iaf;
+    wire exc_pmp_laf;
+    wire exc_pmp_saf;
+    wire exc_dmem_lma;
+    wire exc_dmem_sma;
 
     /* IF */
 
     wire [63:0] pc;
     wire [31:0] ir;
 
-    wire [63:0] trap_addr;
+    wire [63:0] t_addr;
     wire [63:0] jalr_addr;
     wire [63:0] br_addr;
     wire [63:0] jal_addr;
     wire [12:0] pr_offs;
 
-    wire trap_taken;
+    wire t_taken;
     wire jalr_taken;
     wire jal_taken;
     wire pr_taken;
+    wire pr_miss;
 
     wire c_ins = ir[1:0] != 2'b11;
 
-    wire pr_miss;
-
     wire fence_i;
-    wire stall_if;
 
     // program counter
     pc u_pc (
         .pc             (pc             ),
-        .trap_taken     (trap_taken     ),
-        .trap_addr      (trap_addr      ),
+        .t_taken        (t_taken        ),
+        .t_addr         (t_addr         ),
         .jalr_taken     (jalr_taken     ),
         .jalr_addr      (jalr_addr      ),
         .pr_miss        (pr_miss        ),
@@ -161,7 +165,7 @@ module rv6_core #(parameter HART_ID = 0) (
             bfp_c_ins    <=  1'b0;
         end
         else begin
-            if(flush_pd || t_flush_pd) begin
+            if(flush_pd || t_flush) begin
                 bfp_ir       <=  `NOP;
                 bfp_pc       <= 64'b0;
                 bfp_pr_taken <=  1'b0;
@@ -179,8 +183,6 @@ module rv6_core #(parameter HART_ID = 0) (
     /* PD */
 
     wire [31:0] pd_ir;
-
-    wire stall_pd;
 
     // instruction predecoder
     pd u_pd (
@@ -209,7 +211,7 @@ module rv6_core #(parameter HART_ID = 0) (
             bpd_c_ins    <=  1'b0;
         end
         else begin
-            if(flush_id || t_flush_id) begin
+            if(flush_id || t_flush) begin
                 bpd_ir       <=  `NOP;
                 bpd_pc       <= 64'b0;
                 bpd_pr_taken <=  1'b0;
@@ -248,8 +250,6 @@ module rv6_core #(parameter HART_ID = 0) (
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
     );
-
-    wire stall_id;
 
     // branch alu
     br_alu u_br_alu (
@@ -292,7 +292,7 @@ module rv6_core #(parameter HART_ID = 0) (
     reg [63:0] bdx_imm;
 
     always @(posedge c_clk) begin
-        if(!c_rst_n || t_flush_ex) begin
+        if(!c_rst_n || t_flush) begin
             bdx_ir          <=  `NOP;
             bdx_pc          <= 64'b0;
             bdx_rs1_data    <= 64'b0;
@@ -361,10 +361,8 @@ module rv6_core #(parameter HART_ID = 0) (
     reg [63:0] bxm_csr_in;
     reg [63:0] bxm_rs2_data;
 
-    wire stall_ex;
-
     always @(posedge c_clk) begin
-        if(!c_rst_n || t_flush_mem) begin
+        if(!c_rst_n || t_flush) begin
             bxm_ir          <=  `NOP;
             bxm_pc          <= 64'b0;
             bxm_alu_out     <= 64'b0;
@@ -380,10 +378,11 @@ module rv6_core #(parameter HART_ID = 0) (
         end
     end
 
+    assign exc_ii_if = ir == 32'h0;
+
     /* MEM */
 
     wire [63:0] dmem_out;
-    wire stall_mem;
 
     // data memory / L1d cache
     wire op_load   = bxm_ir[6:0] == `OP_LOAD;
@@ -405,8 +404,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .rd             (op_load        ),
         .wdata          (bxm_rs2_data   ),
         .wr             (op_store       ),
-        .ld_ma          (dmem_ld_ma     ),
-        .st_ma          (dmem_st_ma     ),
+        .exc_lma        (exc_dmem_lma   ),
+        .exc_sma        (exc_dmem_sma   ),
         .b_addr_d       (b_addr_d       ),
         .b_rdata_d      (b_rdata_d      ),
         .b_rd_d         (b_rd_d         ),
@@ -444,36 +443,57 @@ module rv6_core #(parameter HART_ID = 0) (
 
     wire instret;
 
+    wire        exc;
+    wire [63:0] exc_cause;
+    wire [63:0] exc_val;
+
+    exc u_exc (
+        .priv           (priv           ),
+        .ir             (bxm_ir         ),
+        .exc            (exc            ),
+        .exc_cause      (exc_cause      ),
+        .exc_val        (exc_val        ),
+        .exc_ii_if      (exc_ii_if      ),
+        .exc_ii_csr     (exc_ii_csr     ),
+        .exc_pmp_iaf    (exc_pmp_iaf    ),
+        .exc_pmp_laf    (exc_pmp_laf    ),
+        .exc_pmp_saf    (exc_pmp_saf    ),
+        .exc_dmem_lma   (exc_dmem_lma   ),
+        .exc_dmem_sma   (exc_dmem_sma   ),
+        .dmem_addr      (bxm_alu_out    ),
+        .flush_pd       (flush_pd       ),
+        .flush_id       (flush_id       ),
+        .t_flush        (t_flush        ),
+        .stall_if       (stall_if       ),
+        .stall_pd       (stall_pd       ),
+        .stall_id       (stall_id       ),
+        .stall_ex       (stall_ex       ),
+        .stall_mem      (stall_mem      ),
+        .stall_wb       (stall_wb       ),
+        .rst_n          (c_rst_n        ),
+        .clk            (c_clk          )
+    );
+
     csr #(.HART_ID(HART_ID)) u_csr (
         .priv           (priv           ),
         .ir             (bxm_ir         ),
+        .pc             (bxm_pc         ),
         .csr_in         (bxm_csr_in     ),
         .csr_out        (csr_out        ),
         .csr_rd         (csr_rd         ),
-        .trap_taken     (trap_taken     ),
-        .trap_addr      (trap_addr      ),
+        .csr_ii         (csr_ii         ),
+        .t_taken        (t_taken        ),
+        .t_addr         (t_addr         ),
+        .t_flush        (t_flush        ),
         .irq_me         (c_irq_me       ),
         .irq_mt         (c_irq_mt       ),
         .irq_ms         (c_irq_ms       ),
         .irq_se         (c_irq_se       ),
         .irq_st         (c_irq_st       ),
         .irq_ss         (c_irq_ss       ),
-        .dmem_ld_ma     (dmem_ld_ma     ),
-        .dmem_st_ma     (dmem_st_ma     ),
-        .dmem_addr      (bxm_alu_out    ),
-        .pmp_iaf        (pmp_iaf        ),
-        .pmp_laf        (pmp_laf        ),
-        .pmp_saf        (pmp_saf        ),
-        .pmp_addr       (c_addr         ),
-        .flush_pd       (t_flush_pd     ),
-        .flush_id       (t_flush_id     ),
-        .flush_ex       (t_flush_ex     ),
-        .flush_mem      (t_flush_mem    ),
-        .pc_if          (pc             ),
-        .pc_pd          (bfp_pc         ),
-        .pc_id          (bpd_pc         ),
-        .pc_ex          (bdx_pc         ),
-        .pc_mem         (bxm_pc         ),
+        .exc            (exc            ),
+        .exc_cause      (exc_cause      ),
+        .exc_val        (exc_val        ),
         .pmpcfg0        (pmpcfg0        ),
         .pmpcfg2        (pmpcfg2        ),
         .pmpaddr0       (pmpaddr0       ),
@@ -498,6 +518,8 @@ module rv6_core #(parameter HART_ID = 0) (
         .clk            (c_clk          )
     );
 
+    assign exc_ii_csr = csr_ii;
+
     reg [31:0] bmw_ir;
     reg [63:0] bmw_pc;
     reg [63:0] bmw_alu_out;
@@ -514,7 +536,7 @@ module rv6_core #(parameter HART_ID = 0) (
             bmw_csr_out  <= 64'b0;
             bmw_csr_rd   <= 1'b0;
         end
-        else if(!stall_mem && !t_flush_mem) begin
+        else if(!stall_mem && !t_flush) begin
             bmw_ir       <= bxm_ir;
             bmw_pc       <= bxm_pc;
             bmw_alu_out  <= bxm_alu_out;
@@ -539,7 +561,6 @@ module rv6_core #(parameter HART_ID = 0) (
     assign rd       = bmw_ir[11:7];
     assign rd_data  = wb_mux;
 
-    wire stall_wb;
     assign we = (bmw_ir[6:0] != `OP_BRANCH) && (bmw_ir[6:0] != `OP_STORE) && !(bmw_ir[6:0] == `OP_SYSTEM && !bmw_csr_rd) && !stall_wb;
 
     assign instret = bmw_ir != `NOP && !stall_wb;
@@ -564,7 +585,7 @@ module rv6_core #(parameter HART_ID = 0) (
     wire [63:0] b_addr_w    = bxm_alu_out;
     wire [63:0] b_wdata_w   = bxm_rs2_data;
     wire [ 1:0] b_len_w     = len;
-    wire        b_wr_w      = op_store;
+    wire        b_wr_w      = op_store && !exc_dmem_sma;
 
     wire [`CMEM_BLK_LEN-1:0] b_addr_c;
     wire [   `CMEM_LINE-1:0] b_rdata_c;
@@ -655,9 +676,9 @@ module rv6_core #(parameter HART_ID = 0) (
         .pmpaddr13      (pmpaddr13      ),
         .pmpaddr14      (pmpaddr14      ),
         .pmpaddr15      (pmpaddr15      ),
-        .pmp_iaf        (pmp_iaf        ),
-        .pmp_laf        (pmp_laf        ),
-        .pmp_saf        (pmp_saf        ),
+        .exc_pmp_iaf    (exc_pmp_iaf    ),
+        .exc_pmp_laf    (exc_pmp_laf    ),
+        .exc_pmp_saf    (exc_pmp_saf    ),
         .rst_n          (c_rst_n        ),
         .clk            (c_clk          )
     );

@@ -27,8 +27,8 @@ module dmem (
     input                           wr,
 
     // misaligned access
-    output                          ld_ma,
-    output                          st_ma,
+    output                          exc_lma,
+    output                          exc_sma,
 
     // external bus signals
     output reg  [`DMEM_BLK_LEN-1:0] b_addr_d,
@@ -125,6 +125,8 @@ module dmem (
 
                 if(rd && rb_hit) dmem_fsm_state_next = `DMEM_S_READY;
                 if(wr && rb_hit) dmem_fsm_state_next = `DMEM_S_WRITE;
+
+                if(exc_lma || exc_sma) dmem_fsm_state_next = `DMEM_S_READY;
             end
             `DMEM_S_FETCH: begin
                 b_rd_d  = 1;
@@ -174,7 +176,7 @@ module dmem (
 
     /* WRITE BUFFER */
 
-    wire wr_nstall = wr && !stall_mem;
+    wire wr_nstall = (wr && !exc_sma) && !stall_mem;
     reg wr_nstall_d;
     always @(posedge clk) wr_nstall_d <= wr_nstall;
     wire wr_nstall_re = wr_nstall && !wr_nstall_d;
@@ -330,7 +332,7 @@ module dmem (
     end
 `endif//DMEM_MA_NATURAL
 
-    assign ld_ma = ma && rd;
-    assign st_ma = ma && wr;
+    assign exc_lma = ma && rd;
+    assign exc_sma = ma && wr;
 
 endmodule

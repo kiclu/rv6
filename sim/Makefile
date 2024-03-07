@@ -7,7 +7,11 @@ DIR_TRACE	= trace
 DIR_DROMAJO = dromajo
 
 OPTS_RTL = -incr
-OPTS_TB  = -incr -sv +define+ANSI_COLORS +define+DROMAJO_VERBOSE
+OPTS_TB  = -incr -sv
+OPTS_TB += +define+RISCV_TESTS=\"${RISCV_TESTS}\"
+OPTS_TB += +define+DROMAJO_COSIM_TEST=\"${DROMAJO_COSIM_TEST}\"
+OPTS_TB += +define+DROMAJO_VERBOSE
+OPTS_TB += +define+ANSI_COLORS
 
 ifdef ELF
 OPTS_TB += +define+ELF=\"${ELF}\"
