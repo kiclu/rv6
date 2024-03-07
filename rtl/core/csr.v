@@ -868,14 +868,12 @@ module csr #(parameter HART_ID = 0) (
     /* NCSR */
 
     always @(*) begin
-        case(ir[14:12])
-            `CSR_RW:  ncsr =  csr_in;
-            `CSR_RS:  ncsr =  csr_in | csr_out;
-            `CSR_RC:  ncsr = ~csr_in & csr_out;
-            `CSR_RWI: ncsr = {59'b0,  ir[19:15]};
-            `CSR_RSI: ncsr = {59'b0,  ir[19:15]} | csr_out;
-            `CSR_RCI: ncsr = {59'b0, ~ir[19:15]} & csr_out;
-            default:  ncsr = 64'h0;
+        ncsr = ir[14] ? {59'b0, ir[19:15]} : csr_in;
+        case(ir[13:12])
+            2'b00: ncsr = 64'h0;
+            2'b01: ncsr =  ncsr;
+            2'b10: ncsr =  ncsr | csr_out;
+            2'b11: ncsr = ~ncsr & csr_out;
         endcase
         ncsr = ncsr & ~wp_mask | csr_out & wp_mask;
     end
